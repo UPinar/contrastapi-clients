@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.vsix
+*.mcpb
+__pycache__/
+.pytest_cache/
+venv/
+.venv/
