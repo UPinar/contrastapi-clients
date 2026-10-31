@@ -1,10 +1,14 @@
 import * as vscode from "vscode";
 import { SecretStore } from "../utils/secrets";
 import { readBaseUrl, readMcpRegisterSetting } from "../utils/settings";
-import { buildServerDefinitionHeaders, isRegistrationEnabled, mcpServerUrl } from "./registration";
+import { buildServerDefinitionHeaders, checkServerKey, isRegistrationEnabled, mcpServerUrl } from "./registration";
 
 const PROVIDER_ID = "contrastapi";
 const SERVER_LABEL = "ContrastAPI";
+
+/** KEY_REFUSED_MESSAGE tells the user why the MCP server did not start and how to fix it. */
+const KEY_REFUSED_MESSAGE =
+  "ContrastAPI: the server refused the API key, so the MCP server was not started. Run ContrastAPI: Set API Key.";
 
 /**
  * Offers ContrastAPI to VS Code chat as an MCP server, only while contrastapi.mcp.register is "on".
@@ -45,6 +49,8 @@ export class ContrastMcpServerProvider
    * The trust check reads the definition's own URI, so the key goes only where VS Code will connect.
    * The headers are replaced, not merged, so a cleared key does not linger on a reused definition.
    * A server resolved after the setting was turned off is not started.
+   * A key the server refuses also stops the start, with a warning.
+   * Otherwise VS Code would read the server's 401 as an OAuth challenge and open a client registration dialog.
    */
   async resolveMcpServerDefinition(
     server: vscode.McpHttpServerDefinition,
@@ -53,7 +59,12 @@ export class ContrastMcpServerProvider
       return undefined;
     }
     const apiKey = (await this.secrets.getApiKey()) ?? "";
-    server.headers = buildServerDefinitionHeaders(server.uri.toString(true), apiKey);
+    const headers = buildServerDefinitionHeaders(server.uri.toString(true), apiKey);
+    if (Object.keys(headers).length > 0 && (await checkServerKey(server.uri.toString(true), headers)) === "refused") {
+      void vscode.window.showWarningMessage(KEY_REFUSED_MESSAGE);
+      return undefined;
+    }
+    server.headers = headers;
     return server;
   }
 

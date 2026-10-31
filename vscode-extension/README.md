@@ -42,7 +42,7 @@ Run `ContrastAPI: Set API Key` from the Command Palette, or click the status bar
 ## Settings
 
 - `contrastapi.baseUrl`: the server URL. The default is `https://api.contrastcyber.com`. It must use https, except for localhost. It is an application-level setting, so a workspace cannot change it.
-- `contrastapi.mcp.register`: `off` (default) or `on`. With `on`, the extension also registers the server with VS Code's own MCP support. An agent in VS Code chat can then call the tools with your API key and your credits. The server marks most tools read-only, and VS Code runs tools marked read-only without asking. Leave it `off` if you do not want that. It is an application-level setting too, so a workspace cannot turn it on.
+- `contrastapi.mcp.register`: `off` (default) or `on`. With `on`, the extension also registers the server with VS Code's own MCP support. An agent in VS Code chat can then call the tools with your API key and your credits. The server marks most tools read-only, and VS Code runs tools marked read-only without asking. Leave it `off` if you do not want that. It is an application-level setting too, so a workspace cannot turn it on. If the server refuses your API key, the extension does not start the MCP server and shows a warning instead.
 
 ## Requirements
 
