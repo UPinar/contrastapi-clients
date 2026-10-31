@@ -1,19 +1,77 @@
 # ContrastAPI Security Tools — Claude Desktop Extension
 
-55 security tools for Claude, with **no signup and no API key required**. This extension is a thin local bridge to the hosted [ContrastAPI](https://api.contrastcyber.com) MCP server (`https://api.contrastcyber.com/mcp/`).
+ContrastAPI gives Claude security tools. They cover CVE intelligence, package vulnerabilities, domain and IP intelligence, threat defense, and CVE and domain monitoring. Most tools need **no signup and no API key**. This extension is a thin local bridge to the hosted [ContrastAPI](https://api.contrastcyber.com) MCP server (`https://api.contrastcyber.com/mcp/`).
 
 ## What you get
 
-All 55 tools are **read-only** lookups — no writes, no destructive actions — and each carries a human-readable title (e.g. `cve_lookup` → "CVE Lookup").
+Each tool carries a human-readable title (e.g. `cve_lookup` → "CVE Lookup").
 
-- **Vulnerability intelligence** — `cve_lookup`, `cve_search`, `cve_leading`, `bulk_cve_lookup`, `kev_detail`, `exploit_lookup`, `get_cvss_details`, `cwe_lookup`, `calculate_risk_score`
-- **Threat intelligence** — `ioc_lookup`, `bulk_ioc_lookup`, `hash_lookup`, `ip_lookup`, `threat_intel`, `threat_report`, `phishing_check`
-- **Infrastructure & web recon** — `dns_lookup`, `whois_lookup`, `ssl_check`, `subdomain_enum`, `tech_fingerprint`, `scan_headers`, `check_headers`, `redirect_chain`, `wayback_lookup`, `asn_lookup`, `robots_txt`, `seo_audit`, `brand_assets`, `domain_report`, `audit_domain`, `contrast_scan`
-- **Email security** — `email_verify`, `email_mx`, `email_disposable`, `email_security_posture`
-- **OSINT / identity** — `username_lookup`, `phone_lookup`, `password_check` (HIBP k-anonymity)
-- **Code security** — `check_secrets`, `check_injection`, `check_dependencies`, `tech_stack_cve_audit`
-- **Detection engineering** — `sigma_rule_lookup`, `bulk_sigma_rule_lookup`, MITRE ATLAS & D3FEND lookups + ATT&CK→D3FEND mapping
-- Plus 3 guided Prompts and MCP Resources (ATLAS / D3FEND / CWE catalog browsing).
+- **Key:** the watchlist tools (`watchlist_edit`, `watchlist_events`) need a Pro API key. Every other tool works without one.
+- **Writes:** `watchlist_edit` changes data: it adds, removes and clears the items of your watchlist. `watchlist_events` keeps your read position on the server. Every other tool only reads.
+
+<!-- tools:start -->
+
+### Operations
+
+- **Health and Data Freshness** — `health`
+- **Privacy: My Data** — `privacy_my_data`
+
+### CVE Intelligence
+
+- **CVE Lookup** — `cve_lookup`
+- **Bulk CVE Lookup** — `cve_lookup_bulk`
+- **CVE Affected Products** — `cve_products`
+- **CVE Search** — `cve_search`
+- **Leading CVEs by EPSS** — `cve_leading`
+- **CISA KEV Lookup** — `kev_lookup`
+- **CWE Lookup** — `cwe_lookup`
+- **CVE Risk Score** — `cve_risk_score`
+- **CVE Exploit Intelligence** — `cve_exploit`
+- **CVE Triage** — `cve_triage`
+- **Bulk CVE Triage** — `cve_triage_bulk`
+- **Product Exposure** — `product_exposure`
+- **CPE Search** — `cpe_search`
+- **CVSS Calculator** — `cvss_calculator`
+
+### Monitoring
+
+- **Watchlist: CVE and Domain Monitoring** — `watchlist_edit`
+- **Monitoring Events** — `watchlist_events`
+
+### Credential Checks
+
+- **Breached Password Check** — `password_check`
+
+### Domain Intelligence
+
+- **DNS Lookup** — `dns_lookup`
+- **Subdomain Takeover Check** — `dns_takeover_check`
+- **Email Authentication Check (SPF, DMARC, DKIM)** — `email_auth_check`
+- **Email Address Check** — `email_address_check`
+- **SSL/TLS Certificate Check** — `ssl_check`
+- **Security Headers Check** — `headers_check`
+- **WHOIS / RDAP Lookup** — `whois_lookup`
+- **Wayback Machine Lookup** — `wayback_lookup`
+- **Certificate Transparency Search** — `cert_search`
+- **Subdomain Enumeration** — `subdomain_enum`
+
+### IP Intelligence
+
+- **IP Lookup** — `ip_lookup`
+- **ASN Lookup** — `asn_lookup`
+
+### Threat Defense
+
+- **D3FEND Defenses for ATT&CK** — `d3fend_for_attack`
+- **Vulnerable Driver Lookup (LOLDrivers)** — `driver_lookup`
+- **Bulk Driver Lookup** — `driver_lookup_bulk`
+
+### Package Vulnerabilities (SBOM)
+
+- **Package Vulnerability Check** — `package_check`
+- **Bulk Package Check (SBOM)** — `package_check_bulk`
+
+<!-- tools:end -->
 
 ## Installation
 
@@ -23,11 +81,11 @@ All 55 tools are **read-only** lookups — no writes, no destructive actions —
 
 ## Configuration
 
-No configuration is required. Optionally, set **Pro API key** in the extension settings to raise rate limits (keys look like `cc_…`; see [pricing](https://api.contrastcyber.com)). The key is stored by Claude Desktop as a sensitive value and sent only to `api.contrastcyber.com` as an `X-API-Key` header.
+No configuration is required. Optionally, set **Pro API key** in the extension settings to raise rate limits and to use the watchlist tools (keys look like `cc_…`; see [pricing](https://api.contrastcyber.com)). The key is stored by Claude Desktop as a sensitive value and sent only to `api.contrastcyber.com` as an `X-API-Key` header.
 
 ## Rate limits
 
-The free keyless tier is rate-limited per IP and returns a clear message when exhausted. A Pro key raises the limit substantially.
+Rate limits are counted in credits. The free keyless tier allows 30 credits per hour per IP and returns a clear message when they run out. A Pro key raises the limit substantially.
 
 ## Privacy Policy
 

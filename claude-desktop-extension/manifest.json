@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "contrastapi",
   "display_name": "ContrastAPI Security Tools",
-  "version": "1.36.0",
-  "description": "55 keyless security tools: CVE/KEV, threat intel, DNS/SSL, email posture, Sigma, MITRE.",
-  "long_description": "ContrastAPI gives Claude 55 security tools with no signup and no API key: vulnerability intelligence (CVE lookup/search, KEV, exploits, CVSS, CWE), threat intelligence (IOC/hash/IP/domain reputation, phishing, threat reports), infrastructure recon (DNS, WHOIS, SSL, subdomains, tech fingerprinting, security headers), email security posture (SPF/DMARC/MX, disposable detection), MITRE ATT&CK/ATLAS/D3FEND mappings, Sigma detection rules, and website scanning. Free tier works out of the box (keyless, rate-limited per IP); an optional Pro key raises limits. This extension is a thin stdio bridge to the hosted API at api.contrastcyber.com — no data is stored locally.",
+  "version": "2.0.0",
+  "description": "Security tools for Claude. Most need no API key. They cover CVE/KEV/EPSS, package vulnerabilities, DNS/SSL/email posture, IP and ASN, D3FEND, and CVE and domain monitoring.",
+  "long_description": "ContrastAPI gives Claude security tools, most with no signup and no API key: CVE intelligence (CVE lookup and search, CISA KEV, EPSS, CVSS, CWE, exploits, risk score and triage, CPE product search), package vulnerabilities (OSV.dev advisories and malicious packages for npm, PyPI, Maven, Go and more, with bulk SBOM checks), domain intelligence (DNS, subdomain takeover, email authentication, email address checks, SSL/TLS, security headers, WHOIS/RDAP, Wayback Machine, Certificate Transparency, subdomains), IP intelligence (IP and ASN lookup), threat defense (MITRE D3FEND defenses for ATT&CK techniques, LOLDrivers vulnerable drivers), breached password checks, service health and the data the server keeps about you, and CVE and domain monitoring through a watchlist. Most tools work out of the box (keyless, 30 credits per hour per IP); an optional Pro key raises limits and is required for the watchlist tools. watchlist_edit changes data: it edits your watchlist. This extension is a thin stdio bridge to the hosted API at api.contrastcyber.com — no data is stored locally.",
   "author": {
     "name": "UPinar",
     "email": "contact@contrastcyber.com",
@@ -36,244 +36,170 @@
     "api_key": {
       "type": "string",
       "title": "Pro API key (optional)",
-      "description": "Optional ContrastAPI Pro key (cc_...) for higher rate limits. Leave empty to use the free keyless tier.",
+      "description": "Optional ContrastAPI Pro key (cc_...) for higher rate limits and the watchlist tools. Leave empty to use the free keyless tier.",
       "sensitive": true,
       "required": false
     }
   },
   "tools": [
     {
-      "name": "domain_report",
-      "description": "Query DNS, WHOIS, SSL, subdomains, and threat intel for a domain in one call."
-    },
-    {
-      "name": "audit_domain",
-      "description": "Perform comprehensive domain audit: combines domain_report + live HTTP security headers + technology fingerprinting."
-    },
-    {
-      "name": "contrast_scan",
-      "description": "Active website security scan: runs the ContrastScan C engine (11 modules — HTTP security headers, SSL/TLS, DNS, redirect chain, information disclosure, cookie…"
-    },
-    {
-      "name": "tech_stack_cve_audit",
-      "description": "Composite tech-stack + CVE audit (MCP-only, no REST endpoint)."
-    },
-    {
-      "name": "threat_report",
-      "description": "Query comprehensive threat profile for an IP: Shodan host data, AbuseIPDB reputation, ASN/geolocation, and open ports."
-    },
-    {
-      "name": "dns_lookup",
-      "description": "Query all DNS record types (A, AAAA, MX, NS, TXT, CNAME, SOA) for a domain."
-    },
-    {
-      "name": "whois_lookup",
-      "description": "Retrieve WHOIS registration data: registrar, creation/expiry dates, nameservers, status."
-    },
-    {
-      "name": "ssl_check",
-      "description": "Analyze SSL/TLS certificate: grade (A/B/C/D/F), protocol version, cipher suite, chain, expiry, Subject Alternative Names, and structured validation findings."
-    },
-    {
-      "name": "subdomain_enum",
-      "description": "Discover subdomains using passive methods: Certificate Transparency logs + DNS brute-force (no active probing)."
-    },
-    {
-      "name": "tech_fingerprint",
-      "description": "Detect website technology stack: CMS, frameworks, CDN, analytics tools, web servers, languages (via HTTP headers + HTML analysis)."
-    },
-    {
-      "name": "threat_intel",
-      "description": "Check domain against abuse.ch URLhaus for known malware-distribution URLs (single source — for multi-feed correlation use ioc_lookup which adds ThreatFox and,…"
-    },
-    {
-      "name": "wayback_lookup",
-      "description": "Retrieve Wayback Machine snapshots for a domain: first capture, latest, total count, snapshot list."
-    },
-    {
-      "name": "scan_headers",
-      "description": "Perform live HTTP GET and analyze security headers: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Permissions-Policy, Referrer-Policy."
-    },
-    {
-      "name": "email_mx",
-      "description": "Analyze email security: MX records, SPF policy, DMARC policy, DKIM probe across common+date-based selectors, mail provider, grade."
-    },
-    {
-      "name": "email_security_posture",
-      "description": "Analyze domain email authentication posture: SPF, DMARC, DKIM with numeric score and findings."
-    },
-    {
-      "name": "email_disposable",
-      "description": "Check if email address uses a known disposable/temporary provider (Guerrilla Mail, Temp Mail, Mailinator, etc.)."
-    },
-    {
-      "name": "email_verify",
-      "description": "One-call email validation combining syntax + MX records + disposable check + role-address detection (admin@/info@/...) + free-provider classification…"
-    },
-    {
-      "name": "robots_txt",
-      "description": "Fetch + parse the target domain's robots.txt — sitemaps, per-User-agent allow/disallow rules, crawl-delay, Host directive."
-    },
-    {
-      "name": "redirect_chain",
-      "description": "Walk an HTTP redirect chain hop-by-hop, returning per-hop {url, status_code, location, latency_ms}."
-    },
-    {
-      "name": "brand_assets",
-      "description": "Scrape a domain's homepage `<head>` for public brand assets — favicon, og:image, theme-color, og:site_name, JSON-LD `Organization.logo`."
-    },
-    {
-      "name": "seo_audit",
-      "description": "One-shot SEO audit of a domain's homepage with a 0-100 composite score + a `missing_signals` list of concrete fixes."
-    },
-    {
-      "name": "geo_audit",
-      "description": "Score a domain's AI-visibility (GEO) readiness 0-100 from structural signals only — llms.txt, AI-crawler robots.txt access, schema.org, SSR — with a `missing_signals` fix list."
-    },
-    {
-      "name": "phone_lookup",
-      "description": "Validate and analyze phone number: country, region, carrier, line type (mobile/landline/VoIP), timezone, formatted versions."
-    },
-    {
-      "name": "ip_lookup",
-      "description": "Query comprehensive IP intelligence: reverse DNS, ASN + holder name + country inline (RIPE Stat, Phase 1), open ports, hostnames, vulnerabilities (Shodan…"
-    },
-    {
-      "name": "asn_lookup",
-      "description": "Look up Autonomous System Number (ASN) for a domain or IP: AS number, organization, IPv4/IPv6 prefixes."
+      "name": "health",
+      "description": "Health and Data Freshness — Database freshness: CVE/KEV/CWE counts and latest entries, and the sync state of each upstream feed."
     },
     {
       "name": "cve_lookup",
-      "description": "Retrieve detailed CVE data by ID: description, CVSS v3.1 + vector, CVSS v2 (always emitted), EPSS score + percentile, CISA KEV status (expanded: due_date,…"
+      "description": "CVE Lookup — Full CVE record by ID (CVSS, EPSS, KEV, CWE, references, CISA SSVC, Nuclei detection templates), with the optional GitHub Security Advisory."
     },
     {
-      "name": "calculate_risk_score",
-      "description": "Composite CVE risk score (0-100) — fuses CVSS, EPSS, KEV, and PoC into a single agent-ready triage signal."
+      "name": "cve_lookup_bulk",
+      "description": "Bulk CVE Lookup — Look up many CVEs at once (max 50)."
     },
     {
-      "name": "get_cvss_details",
-      "description": "Parse a CVSS v3.x vector string into a per-metric breakdown plus a recomputed base score."
+      "name": "cve_products",
+      "description": "CVE Affected Products — The products a CVE affects, one page at a time, with the vulnerable products first."
     },
     {
       "name": "cve_search",
-      "description": "Search CVE database with filters: product/vendor, severity, published date range, EPSS score, CWE, CVSS range, CISA KEV status."
+      "description": "CVE Search — Search and filter CVEs with pagination."
     },
     {
       "name": "cve_leading",
-      "description": "List CVEs indexed from MITRE/GHSA BEFORE NVD publication (early-warning, freshest data)."
+      "description": "Leading CVEs by EPSS — List the CVEs most likely to be exploited, by EPSS score: the probability of exploitation in the next 30 days."
     },
     {
-      "name": "exploit_lookup",
-      "description": "Search public exploits/PoC for a specific CVE across three sources: (1) GitHub Advisory Database (sources.github.advisories[]), (2) Shodan CVEDB references…"
-    },
-    {
-      "name": "bulk_cve_lookup",
-      "description": "Batch query multiple CVEs (up to 50 per call, same for Free and Pro): retrieve full CVE details for all in 1 request instead of N."
-    },
-    {
-      "name": "kev_detail",
-      "description": "Look up CISA KEV (Known Exploited Vulnerabilities) full record for a CVE."
+      "name": "kev_lookup",
+      "description": "CISA KEV Lookup — CISA KEV catalog entry for a CVE."
     },
     {
       "name": "cwe_lookup",
-      "description": "Look up MITRE CWE (Common Weakness Enumeration) catalog record from research view 1000."
+      "description": "CWE Lookup — CWE weakness details (description, mitigations, examples)."
     },
     {
-      "name": "atlas_technique_lookup",
-      "description": "Look up a MITRE ATLAS technique — the AI/ML adversarial attack catalog."
+      "name": "cve_risk_score",
+      "description": "CVE Risk Score — Composite risk score of a CVE (exploitability + impact + evidence), from 0 to 100, for patch priority."
     },
     {
-      "name": "bulk_atlas_technique_lookup",
-      "description": "Bulk ATLAS technique lookup — retrieve full records for up to 50 techniques in a single request instead of N separate atlas_technique_lookup calls."
+      "name": "cve_exploit",
+      "description": "CVE Exploit Intelligence — Public exploit intelligence (GitHub PoCs, Metasploit, NVD exploit references, ExploitDB)."
     },
     {
-      "name": "atlas_technique_search",
-      "description": "Search the MITRE ATLAS catalog of AI/ML attack techniques by keyword, tactic, or maturity."
+      "name": "cve_triage",
+      "description": "CVE Triage — Minimal CVE prioritisation list: asset scope (vendor/product) + a min_risk_score threshold, always ordered by composite risk score."
     },
     {
-      "name": "atlas_case_study_lookup",
-      "description": "Look up a MITRE ATLAS case study — a documented real-world AI/ML attack incident."
+      "name": "cve_triage_bulk",
+      "description": "Bulk CVE Triage — Triage many CVEs at once (max 50), ranked by composite risk score."
     },
     {
-      "name": "atlas_case_study_search",
-      "description": "Search ATLAS case studies (real-world AI/ML attack incidents) by keyword or referenced technique."
+      "name": "product_exposure",
+      "description": "Product Exposure — Aggregate CVE exposure for one vendor+product: severity/KEV/PoC counts, max/avg CVSS, max EPSS, worst composite risk score, plus the top CVEs by risk."
     },
     {
-      "name": "d3fend_defense_lookup",
-      "description": "Look up a MITRE D3FEND defense technique."
+      "name": "cpe_search",
+      "description": "CPE Search — Find the CPE vendor and product names that hold a text, ranked by vulnerable CVE count."
     },
     {
-      "name": "d3fend_defense_search",
-      "description": "Search the MITRE D3FEND catalog of defensive techniques by keyword, tactic, or targeted artifact."
+      "name": "cvss_calculator",
+      "description": "CVSS Calculator — Decode a CVSS v3.0/v3.1 vector into its base metrics and recompute its base, temporal and environmental scores."
     },
     {
-      "name": "d3fend_defense_for_attack",
-      "description": "Reverse lookup: given an ATT&CK T-code, return D3FEND defenses that mitigate it."
+      "name": "watchlist_edit",
+      "description": "Watchlist: CVE and Domain Monitoring — Add, remove, list or clear the items of this API key's watchlist, for CVE and domain monitoring."
     },
     {
-      "name": "d3fend_attack_coverage",
-      "description": "Batch coverage breakdown: given a list of ATT&CK T-codes, return distinct defense counts per D3FEND tactic + identify which techniques have NO D3FEND mapping…"
+      "name": "watchlist_events",
+      "description": "Monitoring Events — Read the monitoring events of this API key's watchlist: the CVE and domain changes that match it, oldest first."
     },
     {
-      "name": "sigma_rule_lookup",
-      "description": "Look up a single Sigma detection rule by UUID from the SigmaHQ corpus (~3,200 rules, refreshed daily at 02:00 UTC)."
-    },
-    {
-      "name": "bulk_sigma_rule_lookup",
-      "description": "Bulk Sigma rule lookup — retrieve full records for up to 50 rule UUIDs in a single request instead of N separate sigma_rule_lookup calls."
-    },
-    {
-      "name": "ioc_lookup",
-      "description": "Enrich Indicator of Compromise (IP/domain/URL/hash) by auto-detecting type and querying abuse.ch feeds."
-    },
-    {
-      "name": "hash_lookup",
-      "description": "Query MalwareBazaar for file hash (MD5/SHA1/SHA256): malware family, file type, size, tags, first/last seen, download count."
+      "name": "privacy_my_data",
+      "description": "Privacy: My Data — What this server keeps about the caller: the hash its credits are counted under, the rate limit left in this hour, and each kind of record it keeps."
     },
     {
       "name": "password_check",
-      "description": "Check if SHA-1 hash appears in Have I Been Pwned (HIBP) breach dataset using k-anonymity (5-char prefix only, full hash never leaves tool)."
+      "description": "Breached Password Check — Check a password's SHA-1 against Have I Been Pwned's Pwned Passwords list."
     },
     {
-      "name": "phishing_check",
-      "description": "Query URLhaus for a specific URL and its host."
+      "name": "dns_lookup",
+      "description": "DNS Lookup — Look up a domain's DNS records: A, AAAA, MX, NS, TXT (such as SPF and verification records), CNAME, SOA and CAA."
     },
     {
-      "name": "bulk_ioc_lookup",
-      "description": "Batch query multiple IOCs (IP/domain/URL/hash, up to 50 per call, same for Free and Pro) in 1 request: auto-detects type + queries abuse.ch feeds per-indicator."
+      "name": "dns_takeover_check",
+      "description": "Subdomain Takeover Check — Check a host name for subdomain takeover through a dangling CNAME: a CNAME that points to a name that does not exist."
     },
     {
-      "name": "check_secrets",
-      "description": "Scan source code (or snippet) for hardcoded secrets — cloud provider keys, API tokens, connection strings, private keys, passwords."
+      "name": "email_auth_check",
+      "description": "Email Authentication Check (SPF, DMARC, DKIM) — Check a domain's mail authentication: its SPF record, the DMARC record that applies to it, its DKIM keys, its MX hosts and its MTA-STS record."
     },
     {
-      "name": "check_injection",
-      "description": "Scan source code for injection vulnerabilities: SQL injection, command injection, path traversal via unsafe string concatenation/unsanitized input."
+      "name": "email_address_check",
+      "description": "Email Address Check — Check an e-mail address without sending mail: whether its domain exists and takes mail, through its MX hosts or, with no MX record, its own address; a null MX takes none."
     },
     {
-      "name": "check_dependencies",
-      "description": "Audit project dependencies (npm/PyPI/Maven/RubyGems/etc.) against CVE database: find known vulnerabilities in your package list."
+      "name": "ssl_check",
+      "description": "SSL/TLS Certificate Check — Check the TLS certificate and the TLS settings of a host name on port 443."
     },
     {
-      "name": "username_lookup",
-      "description": "Search for username across 15+ social/dev platforms (GitHub, Reddit, X/Twitter, LinkedIn, Instagram, TikTok, Discord, YouTube, Keybase, HackerOne, etc.)."
+      "name": "headers_check",
+      "description": "Security Headers Check — Check the security headers of a web site."
     },
     {
-      "name": "check_headers",
-      "description": "Validate HTTP security headers you provide (JSON): CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Permissions-Policy, Referrer-Policy against best…"
+      "name": "whois_lookup",
+      "description": "WHOIS / RDAP Lookup — Look up the registration of a domain name: its registrar and IANA Registrar ID, when it was registered, last changed and expires, its status values, its name servers and whether its delegation is signed with DNSSEC."
+    },
+    {
+      "name": "wayback_lookup",
+      "description": "Wayback Machine Lookup — List when the Internet Archive's Wayback Machine captured the home page of a host name: the first and the last capture day, the years between them, and the latest 10 capture days, each with the HTTP status and the media type of the captured answer and a link to the capture."
+    },
+    {
+      "name": "cert_search",
+      "description": "Certificate Transparency Search — List the unexpired certificates that Certificate Transparency logs hold for a host name, wildcard certificates that match it included, as SSLMate's Cert Spotter finds them."
+    },
+    {
+      "name": "subdomain_enum",
+      "description": "Subdomain Enumeration — List the subdomains of a registrable domain from three sources: Certificate Transparency, as SSLMate's Cert Spotter gives it in the first page of its answer; DNS A queries for 94 common names; and the names the domain's own MX, NS and SPF records give."
+    },
+    {
+      "name": "ip_lookup",
+      "description": "IP Lookup — Look up a public IPv4 or IPv6 address: its AS number, AS name and AS country, its country, the cloud provider and service whose published range holds it, whether it is a CDN, a datacenter or a Tor exit, the DROP prefixes that list it, and its PTR name."
+    },
+    {
+      "name": "asn_lookup",
+      "description": "ASN Lookup — Look up an autonomous system (AS) by its number, such as AS15169, or by a public IPv4 or IPv6 address it holds: its AS number, name and registration country, the prefix that holds the address, how many IPv4 and IPv6 prefixes it has, and one page of up to 50 prefixes of each family in address order."
+    },
+    {
+      "name": "d3fend_for_attack",
+      "description": "D3FEND Defenses for ATT&CK — MITRE D3FEND defenses that counter a MITRE ATT&CK technique."
+    },
+    {
+      "name": "driver_lookup",
+      "description": "Vulnerable Driver Lookup (LOLDrivers) — Look up a Windows driver file in the LOLDrivers catalog of vulnerable and malicious drivers."
+    },
+    {
+      "name": "driver_lookup_bulk",
+      "description": "Bulk Driver Lookup — Look up many driver file hashes in the LOLDrivers catalog at once (max 25)."
+    },
+    {
+      "name": "package_check",
+      "description": "Package Vulnerability Check — Check a package of npm, PyPI, Maven, Go, NuGet, RubyGems, crates.io, Packagist or SwiftURL against the OSV.dev advisories of GitHub, Go, PyPA and RustSec, and the OpenSSF list of malicious packages."
+    },
+    {
+      "name": "package_check_bulk",
+      "description": "Bulk Package Check (SBOM) — Check many packages at once (max 500) against the advisories package_check reads."
     }
   ],
   "keywords": [
     "security",
     "cve",
     "kev",
-    "threat-intel",
+    "epss",
+    "vulnerability",
+    "package-vulnerabilities",
+    "sbom",
     "dns",
     "ssl",
+    "whois",
     "mitre",
-    "sigma",
-    "osint",
-    "vulnerability"
+    "monitoring"
   ],
   "privacy_policies": [
     "https://api.contrastcyber.com/privacy"

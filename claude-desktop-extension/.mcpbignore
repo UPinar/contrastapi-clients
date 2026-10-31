@@ -1,3 +1,5 @@
 /dist/
 *.mcpb
 .mcpbignore
+/scripts/
+/tools_list.json
