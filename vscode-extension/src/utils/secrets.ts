@@ -2,6 +2,10 @@ import * as vscode from "vscode";
 
 const KEY_NAME = "contrastapi.apiKey";
 
+/**
+ * Keeps the API key in VS Code's SecretStorage.
+ * The key never goes into settings, so it is not synced as plain text or committed with a workspace.
+ */
 export class SecretStore {
   private secrets: vscode.SecretStorage;
 
@@ -19,5 +23,17 @@ export class SecretStore {
 
   async clearApiKey(): Promise<void> {
     await this.secrets.delete(KEY_NAME);
+  }
+
+  /**
+   * Calls listener when the stored key changes.
+   * Another window can change the key too, so the client and the MCP provider follow this event.
+   */
+  onDidChangeApiKey(listener: () => void): vscode.Disposable {
+    return this.secrets.onDidChange((e) => {
+      if (e.key === KEY_NAME) {
+        listener();
+      }
+    });
   }
 }

@@ -1,10 +1,19 @@
+/*
+ * The root font size is the editor's, so every rem below follows the user's font setting.
+ * 1rem is the editor font size, 13px by default. Spacing uses steps of a quarter rem.
+ * Only the 1px border lines stay in px, so a hairline stays one pixel at every size.
+ */
+html {
+  font-size: var(--vscode-editor-font-size, 13px);
+}
+
 body {
   background: var(--vscode-editor-background);
   color: var(--vscode-editor-foreground);
   font-family: var(--vscode-editor-font-family), monospace;
-  font-size: 13px;
+  font-size: 1rem;
   margin: 0;
-  padding: 16px;
+  padding: 1.25rem;
   line-height: 1.5;
 }
 
@@ -19,40 +28,49 @@ a:hover {
 
 .result-header {
   border-bottom: 1px solid var(--vscode-panel-border);
-  padding: 12px 0;
-  margin-bottom: 16px;
-  position: relative;
+  padding: 1rem 0;
+  margin-bottom: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .result-header h2 {
-  margin: 0 0 4px 0;
+  margin: 0 0 0.25rem 0;
 }
 
 .timestamp {
-  font-size: 11px;
+  font-size: 0.85rem;
   color: var(--vscode-descriptionForeground);
 }
 
 .result-summary {
-  font-size: 15px;
-  margin: 16px 0;
+  font-size: 1.15rem;
+  margin: 1.25rem 0;
 }
 
 .result-table {
   width: 100%;
   border-collapse: collapse;
-  margin: 8px 0;
+  margin: 0.5rem 0;
 }
 
 .result-table th {
   text-align: left;
   background: var(--vscode-editorGroupHeader-tabsBackground);
-  padding: 8px;
+  padding: 0.5rem;
   font-weight: 600;
 }
 
 .result-table td {
-  padding: 8px;
+  padding: 0.5rem;
   border-bottom: 1px solid var(--vscode-panel-border);
 }
 
@@ -62,9 +80,9 @@ a:hover {
 
 .badge {
   display: inline-block;
-  border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 11px;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
   font-weight: bold;
 }
 
@@ -94,39 +112,41 @@ a:hover {
 }
 
 .copy-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
   background: var(--vscode-button-background);
   color: var(--vscode-button-foreground);
   border: none;
-  padding: 6px 12px;
+  padding: 0.5rem 1rem;
   cursor: pointer;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
 }
 
 .copy-btn:hover {
   background: var(--vscode-button-hoverBackground);
 }
 
+.copy-btn:disabled {
+  opacity: 0.8;
+  cursor: default;
+}
+
 .section {
-  margin: 16px 0;
+  margin: 1.25rem 0;
 }
 
 .section-title {
   font-weight: bold;
-  margin-bottom: 8px;
-  font-size: 14px;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
 }
 
 .kv-row {
   display: flex;
-  padding: 4px 0;
+  padding: 0.25rem 0;
 }
 
 .kv-key {
-  min-width: 180px;
+  min-width: 14rem;
   font-weight: 500;
   color: var(--vscode-descriptionForeground);
 }
@@ -137,18 +157,18 @@ a:hover {
 
 pre {
   background: var(--vscode-textBlockQuote-background);
-  padding: 12px;
-  border-radius: 4px;
+  padding: 1rem;
+  border-radius: 0.25rem;
   overflow-x: auto;
-  font-size: 12px;
+  font-size: 0.9rem;
 }
 
 details {
-  margin-top: 24px;
+  margin-top: 1.75rem;
 }
 
 details summary {
   cursor: pointer;
   color: var(--vscode-descriptionForeground);
-  font-size: 12px;
+  font-size: 0.9rem;
 }

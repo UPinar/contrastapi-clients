@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.0 — Unreleased
+
+- The extension now talks to the server's MCP endpoint. It no longer calls the old REST `/v1/` routes.
+- The sidebar shows the server's tool list, grouped by category. A new server tool appears after the next refresh of the list, without an extension update.
+- New command `ContrastAPI: Run Tool…` opens a form for any tool. Optional fields sit behind **Add filter…**. The menu shows the values already set, and picking one changes or clears it.
+- The palette keeps its shortcuts for CVE Lookup, IP Lookup, DNS Lookup and SSL Check. Package Check is a new shortcut.
+- The tool list is cached. A list older than 24 hours is refreshed at start-up. The refresh button fetches it at any time and costs 1 credit.
+- New Watchlist view (needs a Pro API key): add, remove and clear items, read events, and a Watch button in the result panel.
+- **Fetch New Events** moves the read position of the API key. Clients that share the key share the position. **Refresh Watchlist** does not move it. Clearing the list deletes the read position, and so does removing the last item.
+- The extension sends the API key only to `api.contrastcyber.com` over https, or to localhost. `contrastapi.baseUrl` is now an application-level setting.
+- New opt-in setting `contrastapi.mcp.register` (default `off`) offers the server to VS Code chat. An agent there uses your key and credits. VS Code runs tools marked read-only without asking. It is an application-level setting.
+- The extension needs VS Code 1.101 or newer.
+- The status bar and messages speak of credits.
+- Removed the old REST client and its one palette command per tool. **Run Tool…** and the sidebar open every tool the server lists. Every 0.8.0 command whose tool the server does not have is gone, for example the ATLAS, Sigma, IOC, phone and username commands.
+- The right-click **Lookup Selection** and **Watch this CVE** are gone. **Run Tool…** and the sidebar take the input, and the Watch button in the result panel watches a CVE.
+
 ## 0.7.0 — 2026-05-18
 
 - **Tool count: 53 in 10 categories** (3 new tools below; prior releases under-stated the sidebar count by one)

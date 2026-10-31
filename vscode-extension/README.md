@@ -1,77 +1,58 @@
 # ContrastAPI — Security Intelligence for VS Code
 
-54 security tools in your editor. CVE/KEV/CWE lookup with composite risk scoring (CVSS+EPSS+KEV+PoC fusion) and CVSS v3.x vector parsing, MITRE ATLAS + D3FEND, Sigma detection rules, full-site security scan, domain & web intel, IP reputation, IOC analysis, code security scanning — all free, no API key required.
+Security lookups in your editor. The extension reads its tools from the ContrastAPI server. A new server tool appears after the next refresh of the tool list, without an extension update.
 
-Powered by [ContrastAPI](https://api.contrastcyber.com), the same MCP server [Claude Desktop / Cursor / Windsurf](https://api.contrastcyber.com/mcp-setup) agents use.
+It talks to the server over MCP. This is the same endpoint that agents in Claude Desktop, Cursor and Windsurf use. See the [MCP setup page](https://api.contrastcyber.com/mcp-setup).
 
-## Documentation
+## What you can do
 
-- **[API Documentation](https://github.com/UPinar/contrastapi/blob/main/docs/API_Documentation.md)** — REST reference: 60+ endpoints, authentication, rate limits, token costs.
-- **[MCP Documentation](https://github.com/UPinar/contrastapi/blob/main/docs/MCP_Documentation.md)** — MCP tool-selection guide, 7 Resources, 3 Prompts, example agent prompts.
+- **Browse tools.** Open the ContrastAPI icon in the Activity Bar. The Security Tools view groups the server's tools by category, for example CVE, domain, IP and package checks.
+- **Run any tool.** Command Palette, then `ContrastAPI: Run Tool…`. The form asks for the required fields. Optional fields sit behind **Add filter…**. The menu shows the values already set, and picking one changes or clears it.
+- **Use a shortcut.** The palette has direct commands for CVE Lookup, IP Lookup, DNS Lookup, SSL Check and Package Check.
+- **Read the result.** The result opens in a panel beside the editor. **Copy JSON** puts the raw answer on the clipboard.
 
-## Features
+## Watchlist
 
-### 54 Security Tools in 10 Categories
+The Watchlist view needs a Pro API key. Without one, the view says so. A notification then offers a button that opens the pricing page.
 
-- **Domain Intelligence** — Domain report, DNS, WHOIS, SSL, subdomains, tech fingerprint, threat intel, wayback archive, headers, email MX, full domain audit, certificate transparency search, email security posture (SPF/DMARC/DKIM)
-- **Web Intelligence** — robots.txt parser, redirect-chain walker, brand assets (favicon/logo/OG image), SEO audit (title/meta/h1/canonical/OG/Twitter)
-- **Contact Validation** — Disposable email check, email verify, phone lookup, username OSINT (16 platforms)
-- **IP Intelligence** — IP geolocation & reputation, ASN lookup, threat report (AbuseIPDB + Shodan + ASN)
-- **CVE Intelligence** — CVE lookup, search by product/severity, exploit lookup, **composite risk score** (CVSS+EPSS+KEV+PoC fusion → CRIT/HIGH/MED/LOW + urgency), **CVSS v3.x vector parser** (per-metric breakdown), bulk lookup, leading CVEs (pre-NVD), **CISA KEV detail** (federal patch deadline + ransomware association), **MITRE CWE catalog** (description, mitigations, parent/child weakness chain)
-- **Threat Intel / IOC** — IOC lookup, hash lookup, password breach check, phishing URL check, bulk IOC enrichment
-- **Code Security** — Secret detection, injection vulnerability check, HTTP header analysis, dependency CVE scan
-- **MITRE ATLAS** — AI/ML adversarial threat catalog: technique lookup/search/bulk, case study lookup/search
-- **MITRE D3FEND** — Defensive countermeasures: defense lookup/search, defenses for an ATT&CK technique, full coverage map
-- **Sigma Detection Rules** — Sigma rule lookup by UUID, bulk rule lookup (up to 50) across the in-memory Sigma corpus
+- The view lists your watch items with the count against the limit.
+- Events stand under the item they matched. An event that matches two items shows under both.
+- Add or remove one item, or clear the whole list. Clearing the list deletes the read position, and so does removing the last item.
+- **Fetch New Events** adds the new events to the ones the view shows. When there is no new event, the view keeps its events and a notification says "No new events." The view keeps at most 500 events and drops the oldest first.
+- **Fetch New Events** moves the read position of your API key. Every client that uses the same key shares this position, agents included. An agent's next plain call starts after the events you fetched here.
+- **Refresh Watchlist** re-reads the items and keeps the shown events. It does not move the position.
+- The shown events are kept between sessions on this machine, one set per server. A new API key or a new server URL clears them. The first open without kept events re-reads the last batch of events, which does not move the position.
+- A **Watch** button in the result panel adds the item you just looked up. Only tools the watchlist can watch get the button, for example CVE Lookup, DNS Lookup and SSL/TLS Certificate Check.
 
-### Smart Context Menu
+## Credits and the tool list
 
-Select any text in your editor, right-click → **ContrastAPI: Lookup**. The extension auto-detects:
+Most calls spend 1 credit. A few cost more, and `health` is free. The status bar shows the credits left after your last call. Before the first call it shows no number. Click it to set an API key.
 
-- `CVE-2024-3094` → CVE Lookup
-- `CWE-79` → CWE Lookup
-- `AML.T0043` → ATLAS Technique Lookup
-- `AML.CS0000` → ATLAS Case Study Lookup
-- `D3-NTA` → D3FEND Defense Lookup
-- `T1566` → D3FEND Defenses For ATT&CK
-- `8.8.8.8` → IP Lookup
-- `d41d8cd9...` → Hash Lookup
-- `https://...` → Phishing Check
-- `example.com` → Domain Report
+The extension stores the tool list and reuses it. At start-up it fetches a new list when the stored one is older than 24 hours. The refresh button in the Security Tools view fetches a new list at any time. Fetching the list costs 1 credit.
 
-### Workflow Chains for AI Agents
+You can use the extension without an API key. Anonymous callers get a smaller hourly credit allowance than callers with a key. A key raises it. Get one at [contrastcyber.com](https://contrastcyber.com).
 
-CVE responses embed `next_calls` — `{tool, input, reason}` triples that suggest the next lookup. Look up a CVE → get pivot suggestions for `kev_detail` (when in CISA KEV), `cwe_lookup` (the underlying weakness category), and `exploit_lookup` (public PoCs).
+## API key
 
-### How It Works
+Run `ContrastAPI: Set API Key` from the Command Palette, or click the status bar item. `ContrastAPI: Clear API Key` removes it.
 
-1. Open the **ContrastAPI** panel in the Activity Bar
-2. Click any tool → enter your query
-3. Results appear in a formatted panel beside your editor
+- VS Code stores the key in its SecretStorage.
+- The extension sends the key only to `api.contrastcyber.com` over https, or to localhost over http or https.
 
-No API key needed. Free tier: 30 tokens/hour. Heavy endpoints (audit, threat report) cost 4 tokens; bulk endpoints cost N tokens per item. Status bar shows remaining quota.
+## Settings
+
+- `contrastapi.baseUrl`: the server URL. The default is `https://api.contrastcyber.com`. It must use https, except for localhost. It is an application-level setting, so a workspace cannot change it.
+- `contrastapi.mcp.register`: `off` (default) or `on`. With `on`, the extension also registers the server with VS Code's own MCP support. An agent in VS Code chat can then call the tools with your API key and your credits. The server marks most tools read-only, and VS Code runs tools marked read-only without asking. Leave it `off` if you do not want that. It is an application-level setting too, so a workspace cannot turn it on.
 
 ## Requirements
 
-- VS Code 1.82+
+- VS Code 1.101 or newer
 - Internet connection
-
-## Extension Settings
-
-- `contrastapi.baseUrl`: API server URL (default: `https://api.contrastcyber.com`)
-
-## API Key (Optional)
-
-For higher rate limits, get a key at [contrastcyber.com](https://contrastcyber.com) ($15/mo) and set it via:
-
-- Command Palette → `ContrastAPI: Set API Key`
-- Or click the status bar item
 
 ## Links
 
-- [API Reference](https://api.contrastcyber.com) — 55+ endpoints, interactive playground
-- [MCP Setup](https://api.contrastcyber.com/mcp-setup) — Claude Desktop / Cursor / Windsurf
-- [GitHub](https://github.com/UPinar/contrastapi) — source code, issues, examples
+- [MCP Setup](https://api.contrastcyber.com/mcp-setup) — Claude Desktop, Cursor and Windsurf
+- [GitHub](https://github.com/UPinar/contrastapi) — source code and issues
 - [Website](https://contrastcyber.com)
 
 ## License

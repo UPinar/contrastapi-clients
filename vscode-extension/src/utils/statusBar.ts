@@ -1,6 +1,11 @@
 import * as vscode from "vscode";
-import { RateTracker } from "./rateLimit";
+import type { RateLimitInfo } from "../mcp/client";
+import { RateTracker, creditLabel } from "./rateLimit";
 
+/**
+ * Shows the credits left in the status bar.
+ * The numbers come from the X-RateLimit-* headers of the last MCP call.
+ */
 export class StatusBar {
   private item: vscode.StatusBarItem;
   private tracker: RateTracker;
@@ -14,18 +19,22 @@ export class StatusBar {
     this.item.show();
   }
 
-  updateFromServer(remaining: number, limit: number, resetSeconds: number): void {
-    this.tracker.updateFromServer(remaining, limit, resetSeconds);
+  /** Stores the credit state of one response and redraws the item. */
+  updateFromServer(info: RateLimitInfo): void {
+    this.tracker.updateFromServer(info, Date.now());
     this.update();
   }
 
   private update(): void {
     const remaining = this.tracker.getRemaining();
     const limit = this.tracker.getLimit();
-    this.item.text = `$(shield) ContrastAPI: ${remaining}/${limit}`;
-    this.item.tooltip = `${remaining} requests remaining this hour. Click to set API key for higher limits.`;
+    const label = creditLabel(remaining, limit);
+    this.item.text = label.text;
+    this.item.tooltip = label.tooltip;
 
-    if (remaining <= 0) {
+    if (remaining === undefined || limit === undefined) {
+      this.item.backgroundColor = undefined;
+    } else if (remaining <= 0) {
       this.item.backgroundColor = new vscode.ThemeColor("statusBarItem.errorBackground");
     } else if (remaining <= Math.floor(limit * 0.2)) {
       this.item.backgroundColor = new vscode.ThemeColor("statusBarItem.warningBackground");

@@ -1,8 +1,9 @@
 {
   "name": "contrastapi",
   "displayName": "ContrastAPI — Security Intelligence",
-  "description": "54 security tools for your editor: CVE/KEV/CWE lookup, composite risk scoring (CVSS+EPSS+KEV+PoC fusion), CVSS v3.x vector parser, MITRE ATLAS + D3FEND, Sigma detection rules, dependency scan, full-site security scan, domain & web intel, IP reputation, IOC analysis, code security scanning. Free, no API key required.",
-  "version": "0.8.0",
+  "description": "Security intelligence tools in your editor, read from the ContrastAPI server: vulnerabilities, domains, IP addresses, packages and a watchlist. The tools work without an API key. The watchlist needs a Pro key.",
+  "version": "1.0.0",
+  "private": true,
   "publisher": "ContrastAPI",
   "repository": {
     "type": "git",
@@ -13,7 +14,7 @@
     "url": "https://github.com/UPinar/contrastapi/issues"
   },
   "engines": {
-    "vscode": "^1.82.0"
+    "vscode": "^1.101.0"
   },
   "categories": [
     "AI",
@@ -31,34 +32,14 @@
     "cisa",
     "osint",
     "threat-intelligence",
-    "ioc",
-    "phishing",
-    "malware",
     "domain",
     "mcp",
     "model-context-protocol",
     "ai-agents",
-    "llm",
-    "llm-tools",
+    "dependency-scanner",
     "claude",
     "cursor",
-    "copilot",
-    "secrets",
-    "secret-scanner",
-    "dependency-scanner",
-    "pentest",
-    "owasp",
-    "xss",
-    "sqli",
-    "security-scanner",
-    "mitre-atlas",
-    "mitre-d3fend",
-    "ai-security",
-    "web-intel",
-    "robots",
-    "seo",
-    "email-verify",
-    "certificate-transparency"
+    "copilot"
   ],
   "main": "./dist/extension.js",
   "activationEvents": [],
@@ -80,78 +61,30 @@
           "name": "Security Tools",
           "icon": "resources/icons/logo.svg",
           "contextualTitle": "ContrastAPI"
+        },
+        {
+          "id": "contrastapi-watchlist",
+          "name": "Watchlist",
+          "icon": "resources/icons/logo.svg",
+          "contextualTitle": "ContrastAPI"
         }
       ]
     },
     "commands": [
       {
-        "command": "contrastapi.domainReport",
-        "title": "Domain Report",
+        "command": "contrastapi.runTool",
+        "title": "Run Tool…",
         "category": "ContrastAPI"
       },
       {
-        "command": "contrastapi.dnsLookup",
-        "title": "DNS Lookup",
-        "category": "ContrastAPI"
+        "command": "contrastapi.refreshTools",
+        "title": "Refresh Tool List",
+        "category": "ContrastAPI",
+        "icon": "$(refresh)"
       },
       {
-        "command": "contrastapi.whoisLookup",
-        "title": "WHOIS Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.sslCheck",
-        "title": "SSL Check",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.subdomainEnum",
-        "title": "Subdomain Enumeration",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.techFingerprint",
-        "title": "Tech Fingerprint",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.threatIntel",
-        "title": "Threat Intelligence",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.waybackLookup",
-        "title": "Wayback Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.scanHeaders",
-        "title": "Scan Headers",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.contrastScan",
-        "title": "Contrast Scan",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.emailMx",
-        "title": "Email MX Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.emailDisposable",
-        "title": "Email Disposable Check",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.phoneLookup",
-        "title": "Phone Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.usernameLookup",
-        "title": "Username Lookup",
+        "command": "contrastapi.cveLookup",
+        "title": "CVE Lookup",
         "category": "ContrastAPI"
       },
       {
@@ -160,203 +93,23 @@
         "category": "ContrastAPI"
       },
       {
-        "command": "contrastapi.asnLookup",
-        "title": "ASN Lookup",
+        "command": "contrastapi.dnsLookup",
+        "title": "DNS Lookup",
         "category": "ContrastAPI"
       },
       {
-        "command": "contrastapi.cveLookup",
-        "title": "CVE Lookup",
+        "command": "contrastapi.sslCheck",
+        "title": "SSL Check",
         "category": "ContrastAPI"
       },
       {
-        "command": "contrastapi.cveSearch",
-        "title": "CVE Search",
+        "command": "contrastapi.packageCheck",
+        "title": "Package Check",
         "category": "ContrastAPI"
       },
       {
-        "command": "contrastapi.exploitLookup",
-        "title": "Exploit Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.calculateRiskScore",
-        "title": "Calculate Risk Score (CVSS+EPSS+KEV+PoC)",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.getCvssDetails",
-        "title": "CVSS Vector Details (v3.x parser)",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.kevDetail",
-        "title": "KEV Detail",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.cweLookup",
-        "title": "CWE Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.iocLookup",
-        "title": "IOC Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.hashLookup",
-        "title": "Hash Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.passwordCheck",
-        "title": "Password Check",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.phishingCheck",
-        "title": "Phishing Check",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.checkSecrets",
-        "title": "Check Secrets",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.checkInjection",
-        "title": "Check Injection",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.checkHeaders",
-        "title": "Check Headers",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.auditDomain",
-        "title": "Domain Audit",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.threatReport",
-        "title": "IP Threat Report",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.bulkCveLookup",
-        "title": "Bulk CVE Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.cveLeading",
-        "title": "Leading CVEs",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.checkDependencies",
-        "title": "Check Dependencies",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.bulkIocLookup",
-        "title": "Bulk IOC Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.certSearch",
-        "title": "Certificate Transparency Search",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.robotsTxt",
-        "title": "robots.txt Parser",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.redirectChain",
-        "title": "Redirect Chain Walker",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.brandAssets",
-        "title": "Brand Assets",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.seoAudit",
-        "title": "SEO Audit",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.emailVerify",
-        "title": "Email Verify",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.atlasTechniqueLookup",
-        "title": "ATLAS Technique Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.atlasTechniqueSearch",
-        "title": "ATLAS Technique Search",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.bulkAtlasTechniqueLookup",
-        "title": "Bulk ATLAS Technique Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.atlasCaseStudyLookup",
-        "title": "ATLAS Case Study Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.atlasCaseStudySearch",
-        "title": "ATLAS Case Study Search",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.d3fendDefenseLookup",
-        "title": "D3FEND Defense Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.d3fendDefenseSearch",
-        "title": "D3FEND Defense Search",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.d3fendDefenseForAttack",
-        "title": "D3FEND Defenses For ATT&CK Technique",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.d3fendAttackCoverage",
-        "title": "D3FEND Coverage Map",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.emailSecurityPosture",
-        "title": "Email Security Posture",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.sigmaRuleLookup",
-        "title": "Sigma Rule Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.bulkSigmaRuleLookup",
-        "title": "Bulk Sigma Rule Lookup",
-        "category": "ContrastAPI"
-      },
-      {
-        "command": "contrastapi.lookupSelection",
-        "title": "ContrastAPI: Lookup Selection",
+        "command": "contrastapi.runToolFromTree",
+        "title": "Run Tool From Sidebar",
         "category": "ContrastAPI"
       },
       {
@@ -368,14 +121,90 @@
         "command": "contrastapi.clearApiKey",
         "title": "Clear API Key",
         "category": "ContrastAPI"
+      },
+      {
+        "command": "contrastapi.watchlistAdd",
+        "title": "Add Watch Item…",
+        "category": "ContrastAPI",
+        "icon": "$(add)"
+      },
+      {
+        "command": "contrastapi.watchlistRefresh",
+        "title": "Refresh Watchlist (re-reads the items, keeps the shown events and the read position)",
+        "category": "ContrastAPI",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "contrastapi.watchlistFetchNewEvents",
+        "title": "Fetch New Events (moves the read position shared by every client of this API key)",
+        "category": "ContrastAPI",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "contrastapi.watchlistClear",
+        "title": "Clear Watchlist…",
+        "category": "ContrastAPI",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "contrastapi.watchlistRemove",
+        "title": "Remove Watch Item",
+        "category": "ContrastAPI",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "contrastapi.watchlistOpenEvent",
+        "title": "Open Watch Event",
+        "category": "ContrastAPI"
       }
     ],
     "menus": {
-      "editor/context": [
+      "commandPalette": [
         {
-          "command": "contrastapi.lookupSelection",
-          "when": "editorHasSelection",
-          "group": "contrastapi"
+          "command": "contrastapi.runToolFromTree",
+          "when": "false"
+        },
+        {
+          "command": "contrastapi.watchlistRemove",
+          "when": "false"
+        },
+        {
+          "command": "contrastapi.watchlistOpenEvent",
+          "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "contrastapi.refreshTools",
+          "when": "view == contrastapi-sidebar",
+          "group": "navigation"
+        },
+        {
+          "command": "contrastapi.watchlistAdd",
+          "when": "view == contrastapi-watchlist",
+          "group": "navigation@1"
+        },
+        {
+          "command": "contrastapi.watchlistRefresh",
+          "when": "view == contrastapi-watchlist",
+          "group": "navigation@2"
+        },
+        {
+          "command": "contrastapi.watchlistFetchNewEvents",
+          "when": "view == contrastapi-watchlist",
+          "group": "navigation@3"
+        },
+        {
+          "command": "contrastapi.watchlistClear",
+          "when": "view == contrastapi-watchlist",
+          "group": "navigation@4"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "contrastapi.watchlistRemove",
+          "when": "view == contrastapi-watchlist && viewItem == watchItem",
+          "group": "inline"
         }
       ]
     },
@@ -385,19 +214,46 @@
         "contrastapi.baseUrl": {
           "type": "string",
           "default": "https://api.contrastcyber.com",
-          "description": "Base URL for the ContrastAPI server"
+          "scope": "application",
+          "description": "Base URL of the ContrastAPI server. It must use https (http only for localhost). The API key is sent only to api.contrastcyber.com or localhost."
+        },
+        "contrastapi.mcp.register": {
+          "type": "string",
+          "scope": "application",
+          "enum": [
+            "off",
+            "on"
+          ],
+          "enumDescriptions": [
+            "Do not offer ContrastAPI to VS Code chat.",
+            "Offer ContrastAPI to VS Code chat as an MCP server."
+          ],
+          "default": "off",
+          "description": "Registers ContrastAPI as an MCP server for VS Code chat. An agent in chat then uses your API key and credits. VS Code runs tools marked read-only without asking."
         }
       }
-    }
+    },
+    "viewsWelcome": [
+      {
+        "view": "contrastapi-sidebar",
+        "contents": "No tools loaded yet.\n[Refresh Tool List](command:contrastapi.refreshTools)"
+      }
+    ],
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "contrastapi",
+        "label": "ContrastAPI"
+      }
+    ]
   },
   "scripts": {
     "build": "node esbuild.js",
     "watch": "node esbuild.js --watch",
-    "test": "npx tsx test/suite/detectors.test.ts && npx tsx test/suite/rateLimit.test.ts && npx tsx test/suite/client.test.ts",
+    "test": "for f in test/suite/*.test.ts; do tsx \"$f\" || exit 1; done",
     "package": "vsce package"
   },
   "devDependencies": {
-    "@types/vscode": "^1.82.0",
+    "@types/vscode": "^1.101.0",
     "@vscode/vsce": "2.15.0",
     "esbuild": "^0.28.0",
     "tsx": "^4.21.0",

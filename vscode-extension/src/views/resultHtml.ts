@@ -1,5 +1,4 @@
 import * as crypto from "crypto";
-import * as vscode from "vscode";
 
 function esc(s: string): string {
   return s
@@ -9,14 +8,15 @@ function esc(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+/** Returns a fresh random nonce for the page's script policy. */
 export function generateNonce(): string {
   return crypto.randomBytes(16).toString("hex");
 }
 
-const URL_RE = /^https?:\/\/\S+$/;
+const URL_REGEX = /^https?:\/\/\S+$/;
 
 function isUrl(v: string): boolean {
-  return URL_RE.test(v);
+  return URL_REGEX.test(v);
 }
 
 function formatKey(key: string): string {
@@ -30,9 +30,9 @@ function formatKey(key: string): string {
 function badgeClass(value: string): string {
   const v = value.toLowerCase();
   if (v === "critical") return "badge-critical";
-  if (v === "high") return "badge-high";
-  if (v === "medium") return "badge-medium";
-  if (v === "low") return "badge-low";
+  if (v === "high")     return "badge-high";
+  if (v === "medium")   return "badge-medium";
+  if (v === "low")      return "badge-low";
   return "badge-info";
 }
 
@@ -116,12 +116,44 @@ function renderBody(data: unknown): string {
   return html;
 }
 
+function renderWatchButton(watchLabel: string | undefined): string {
+  return watchLabel === undefined ? "" : `<button class="copy-btn" id="watchBtn">${esc(watchLabel)}</button>`;
+}
+
+function renderWatchScript(watchLabel: string | undefined): string {
+  if (watchLabel === undefined) {
+    return "";
+  }
+  return `
+    const watchBtn = document.getElementById('watchBtn');
+    watchBtn.addEventListener('click', () => {
+      watchBtn.disabled = true;
+      vscode.postMessage({ type: 'watch' });
+    });
+    window.addEventListener('message', (event) => {
+      const msg = event.data;
+      if (msg && msg.type === 'watched' && typeof msg.label === 'string') {
+        watchBtn.textContent = msg.label;
+      } else if (msg && msg.type === 'watchFailed') {
+        watchBtn.disabled = false;
+      }
+    });`;
+}
+
+/**
+ * Renders a tool answer as the result panel's page.
+ * cssUri is the webview URI of result.css as text, so this module needs no vscode import and runs in tests.
+ * watchLabel adds a Watch button next to Copy JSON.
+ * Without watchLabel the page has no Watch button and no watch script.
+ * The label is escaped, and the button's later text is set with textContent, so a label never becomes markup.
+ */
 export function renderResult(
-  toolName: string,
+  title: string,
   data: unknown,
-  cssUri: vscode.Uri,
+  cssUri: string,
   nonce: string,
   cspSource: string,
+  watchLabel?: string,
 ): string {
   const now = new Date().toISOString();
   const jsonStr = JSON.stringify(data, null, 2)
@@ -136,13 +168,18 @@ export function renderResult(
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource}; script-src 'nonce-${nonce}';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="${cssUri}">
-  <title>${esc(toolName)}</title>
+  <title>${esc(title)}</title>
 </head>
 <body>
   <div class="result-header">
-    <h2>${esc(toolName)}</h2>
-    <span class="timestamp">${esc(now)}</span>
-    <button class="copy-btn" id="copyBtn">Copy JSON</button>
+    <div class="header-title">
+      <h2>${esc(title)}</h2>
+      <span class="timestamp">${esc(now)}</span>
+    </div>
+    <div class="header-actions">
+      ${renderWatchButton(watchLabel)}
+      <button class="copy-btn" id="copyBtn">Copy JSON</button>
+    </div>
   </div>
   ${renderBody(data)}
   <details>
@@ -154,7 +191,7 @@ export function renderResult(
     const jsonData = ${JSON.stringify(JSON.stringify(data, null, 2)).replace(/</g, "\\u003c")};
     document.getElementById('copyBtn').addEventListener('click', () => {
       vscode.postMessage({ command: 'copy', text: jsonData });
-    });
+    });${renderWatchScript(watchLabel)}
   </script>
 </body>
 </html>`;
