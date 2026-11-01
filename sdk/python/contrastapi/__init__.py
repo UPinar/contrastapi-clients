@@ -1,39 +1,31 @@
-"""ContrastAPI Python SDK.
+"""Official Python SDK for ContrastAPI."""
 
->>> from contrastapi import ContrastAPI
->>> client = ContrastAPI()
->>> client.cve.lookup("CVE-2021-44228")
-"""
-
+from ._client import AsyncContrastAPI, ContrastAPI, RateLimitInfo
+from ._operations import PackageItem
 from ._version import __version__
-from .client import AsyncContrastAPI, ContrastAPI
 from .exceptions import (
-    AuthRequiredError,
+    APIConnectionError,
+    APITimeoutError,
+    AuthenticationError,
+    BadRequestError,
     ContrastAPIError,
-    InvalidArgumentError,
     NotFoundError,
     RateLimitError,
-    TierLimitError,
-    TransportError,
     UpstreamError,
-    UpstreamTimeoutError,
 )
-from .shortcuts import audit_full, enrich_batch, triage_ioc
 
 __all__ = [
+    "APIConnectionError",
+    "APITimeoutError",
     "AsyncContrastAPI",
-    "AuthRequiredError",
+    "AuthenticationError",
+    "BadRequestError",
     "ContrastAPI",
     "ContrastAPIError",
-    "InvalidArgumentError",
     "NotFoundError",
+    "PackageItem",
     "RateLimitError",
-    "TierLimitError",
-    "TransportError",
+    "RateLimitInfo",
     "UpstreamError",
-    "UpstreamTimeoutError",
     "__version__",
-    "audit_full",
-    "enrich_batch",
-    "triage_ioc",
 ]

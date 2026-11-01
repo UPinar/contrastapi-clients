@@ -1,177 +1,131 @@
-"""Exception hierarchy for ContrastAPI SDK.
+"""Error classes of the ContrastAPI SDK.
 
-Mirrors the server-side `app.exceptions.AppException` tree so SDK users can
-catch typed exceptions instead of inspecting status codes. Each instance carries
-the parsed `ErrorDetail` envelope (dict) from the wire — `.code`, `.message`,
-`.retry_after_seconds`, `.upgrade_url`, `.docs_url`.
+The server answers an error with `{"error": {"code": ..., "message": ...}}`.
+Each error keeps the HTTP status, the code, the Retry-After seconds and the
+rate-limit info of the answer. An error holds neither the request nor the
+response, and its text never repeats the API key.
 """
 
 from __future__ import annotations
 
-import math
-from typing import Any
+import json
+import unicodedata
+from typing import TYPE_CHECKING, Any
 
-# Wire-boundary defensive caps mirror server-side `_ERROR_MESSAGE_MAX_LEN` /
-# `_RETRY_AFTER_MAX_SECONDS` (see app/main.py). Server already enforces these,
-# but the SDK refuses to trust an untrusted response payload.
-_MESSAGE_MAX_LEN = 500
-_RETRY_AFTER_MAX_SECONDS = 3600
+if TYPE_CHECKING:
+    from ._client import RateLimitInfo
+
+MAX_MESSAGE_CHARS = 300
+
+
+_DROPPED_CATEGORIES = frozenset({"Cf", "Cs"})
+
+
+def _clean_text(text: str) -> str:
+    """_clean_text drops control, format and surrogate characters and caps the length.
+
+    The text comes from the server and may reach a terminal or a log.
+    An escape sequence or a newline must not pass. C1 includes the one-byte CSI.
+    A format character (Unicode Cf), such as U+202E, can reorder the text on screen.
+    A lone surrogate makes print() raise UnicodeEncodeError.
+    The cap counts the code points that are left.
+    """
+    kept = "".join(ch for ch in text if ch >= " " and not "\x7f" <= ch <= "\x9f"
+                   and unicodedata.category(ch) not in _DROPPED_CATEGORIES)
+    return kept[:MAX_MESSAGE_CHARS]
+
+
+def _refuse_constant(name: str) -> Any:
+    raise ValueError(f"JSON holds {name}")
+
+
+def _parse_json(content: bytes) -> Any:
+    """_parse_json parses a body as strict UTF-8 JSON and drops one leading BOM.
+
+    json.loads alone would guess UTF-16 or UTF-32 and accept NaN and Infinity.
+    The Node SDK refuses both. _parse_json raises ValueError or RecursionError.
+    """
+    return json.loads(content.decode("utf-8-sig"), parse_constant=_refuse_constant)
 
 
 class ContrastAPIError(Exception):
-    """Base exception for all ContrastAPI SDK errors."""
-
-    code: str = "internal_error"
-    status_code: int | None = None
+    """ContrastAPIError is the base class of every SDK error."""
 
     def __init__(
         self,
-        message: Any,
+        message: str,
         *,
-        status_code: int | None = None,
+        status: int | None = None,
         code: str | None = None,
-        retry_after_seconds: int | None = None,
-        upgrade_url: str | None = None,
-        docs_url: str | None = None,
-        extras: dict[str, Any] | None = None,
+        retry_after: int | None = None,
+        rate_limit: RateLimitInfo | None = None,
     ) -> None:
-        # CRIT (review): coerce to str — server response could send None / int / dict.
-        coerced = "" if message is None else str(message)
-        if len(coerced) > _MESSAGE_MAX_LEN:
-            coerced = coerced[:_MESSAGE_MAX_LEN]
-        super().__init__(coerced)
-        self.message = coerced
-        if status_code is not None:
-            self.status_code = status_code
-        if code is not None:
-            self.code = code
-        self.retry_after_seconds = _coerce_retry_after(retry_after_seconds)
-        self.upgrade_url = upgrade_url
-        self.docs_url = docs_url
-        self.extras = extras or {}
+        cleaned = _clean_text(message)
+        super().__init__(cleaned)
+        self.message = cleaned
+        self.status = status
+        self.code = code
+        self.retry_after = retry_after
+        self.rate_limit = rate_limit
 
 
-def _coerce_retry_after(value: Any) -> int | None:
-    """Validate + clamp retry_after_seconds to [0, 3600].
-
-    Server sends int per ErrorDetail schema, but a malformed/proxied response
-    could deliver str/float/list/bool/inf/NaN. Defensive: ignore garbage
-    rather than crash user code that does `time.sleep(exc.retry_after_seconds)`.
-    """
-    if value is None:
-        return None
-    # Reject bool early — `int(True) == 1` would silently produce 1-second
-    # sleeps from a `{"retry_after_seconds": true}` upstream response. bool
-    # is also a subclass of int, so the `isinstance(value, bool)` guard must
-    # run before the int() coercion below.
-    if isinstance(value, bool):
-        return None
-    # Reject NaN — `int(float('nan'))` raises ValueError but inf raises
-    # OverflowError; both must be silently dropped to None per defensive policy.
-    if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
-        return None
-    try:
-        as_int = int(value)
-    except (TypeError, ValueError, OverflowError):
-        return None
-    return max(0, min(as_int, _RETRY_AFTER_MAX_SECONDS))
+class BadRequestError(ContrastAPIError):
+    """BadRequestError is an HTTP 400 answer."""
 
 
-class InvalidArgumentError(ContrastAPIError):
-    code = "invalid_argument"
-    status_code = 400
-
-
-class AuthRequiredError(ContrastAPIError):
-    code = "auth_required"
-    status_code = 401
-
-
-class TierLimitError(ContrastAPIError):
-    code = "tier_limit"
-    status_code = 403
+class AuthenticationError(ContrastAPIError):
+    """AuthenticationError is an HTTP 401 answer."""
 
 
 class NotFoundError(ContrastAPIError):
-    code = "not_found"
-    status_code = 404
+    """NotFoundError is an HTTP 404 answer."""
 
 
 class RateLimitError(ContrastAPIError):
-    code = "rate_limit_exceeded"
-    status_code = 429
+    """RateLimitError is an HTTP 429 answer."""
 
 
 class UpstreamError(ContrastAPIError):
-    code = "upstream_error"
-    status_code = 502
+    """UpstreamError is an HTTP 502, 503 or 504 answer."""
 
 
-class UpstreamTimeoutError(ContrastAPIError):
-    code = "upstream_timeout"
-    status_code = 504
+class APIConnectionError(ContrastAPIError):
+    """APIConnectionError means no usable answer arrived. Its status is None."""
 
 
-class TransportError(ContrastAPIError):
-    """Raised when the HTTP layer fails before a response is received
-    (DNS error, connection refused, client timeout, TLS handshake fail).
-    """
-
-    code = "transport_error"
+class APITimeoutError(APIConnectionError):
+    """APITimeoutError means the request ran past its timeout."""
 
 
-_CODE_TO_EXCEPTION: dict[str, type[ContrastAPIError]] = {
-    "invalid_argument": InvalidArgumentError,
-    "auth_required": AuthRequiredError,
-    "tier_limit": TierLimitError,
-    "not_found": NotFoundError,
-    "rate_limit_exceeded": RateLimitError,
-    "upstream_error": UpstreamError,
-    "upstream_timeout": UpstreamTimeoutError,
-}
-
-
-_STATUS_TO_EXCEPTION: dict[int, type[ContrastAPIError]] = {
-    400: InvalidArgumentError,
-    401: AuthRequiredError,
-    403: TierLimitError,
+_STATUS_CLASSES: dict[int, type[ContrastAPIError]] = {
+    400: BadRequestError,
+    401: AuthenticationError,
     404: NotFoundError,
-    422: InvalidArgumentError,
     429: RateLimitError,
     502: UpstreamError,
-    504: UpstreamTimeoutError,
+    503: UpstreamError,
+    504: UpstreamError,
 }
 
 
-def _parse_error(status_code: int, body: Any) -> ContrastAPIError:
-    """Convert a wire error envelope into the right typed exception.
+def _error_class_for_status(status: int) -> type[ContrastAPIError]:
+    return _STATUS_CLASSES.get(status, ContrastAPIError)
 
-    Wire shape (v1.22.2+):
-        {"error": {"code": "...", "message": "...", "retry_after_seconds": 60,
-                   "upgrade_url": "...", "docs_url": "..."}, ...top-level extensions}
 
-    Falls back to status-code mapping if the body lacks a parseable envelope.
+def _parse_error_body(content: bytes) -> tuple[str | None, str | None]:
+    """_parse_error_body returns the code and the message of an error body.
+
+    A field that is missing or not a string comes back as None.
+    This function cleans the code. ContrastAPIError cleans the message.
     """
-    if not isinstance(body, dict):
-        cls = _STATUS_TO_EXCEPTION.get(status_code, ContrastAPIError)
-        return cls(f"HTTP {status_code}", status_code=status_code)
-
-    err = body.get("error") if isinstance(body.get("error"), dict) else None
-    if err is None:
-        message = body.get("detail") or body.get("message") or f"HTTP {status_code}"
-        cls = _STATUS_TO_EXCEPTION.get(status_code, ContrastAPIError)
-        return cls(str(message), status_code=status_code, extras=body)
-
-    code = err.get("code") or "upstream_error"
-    message = err.get("message") or f"HTTP {status_code}"
-    cls = _CODE_TO_EXCEPTION.get(code, _STATUS_TO_EXCEPTION.get(status_code, ContrastAPIError))
-    extras = {k: v for k, v in body.items() if k != "error"}
-    return cls(
-        str(message),
-        status_code=status_code,
-        code=code,
-        retry_after_seconds=err.get("retry_after_seconds"),
-        upgrade_url=err.get("upgrade_url"),
-        docs_url=err.get("docs_url"),
-        extras=extras,
-    )
+    try:
+        body: Any = _parse_json(content)
+    except (ValueError, RecursionError):
+        return None, None
+    detail = body.get("error") if isinstance(body, dict) else None
+    if not isinstance(detail, dict):
+        return None, None
+    code = detail.get("code")
+    message = detail.get("message")
+    return (_clean_text(code) if isinstance(code, str) else None,
+            message if isinstance(message, str) else None)

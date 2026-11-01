@@ -1,8 +1,8 @@
 # ContrastAPI Node.js SDK
 
-Official Node.js SDK for [ContrastAPI](https://api.contrastcyber.com) — security intelligence for developers and AI agents.
+Official Node.js SDK for [ContrastAPI](https://api.contrastcyber.com), security intelligence for developers and AI agents.
 
-Zero dependencies. Works with Node.js 14+.
+The SDK has no runtime dependencies. It is an ES module and uses the built-in `fetch`.
 
 ## Install
 
@@ -10,198 +10,171 @@ Zero dependencies. Works with Node.js 14+.
 npm install contrastapi
 ```
 
-## Quick Start
+It needs Node.js 20.19 or newer. The package ships its own TypeScript declarations.
+
+## Quickstart
 
 ```javascript
-const ContrastAPI = require("contrastapi");
-const api = ContrastAPI();
+import { ContrastAPI } from "contrastapi";
 
-async function main() {
-  // Domain intelligence
-  const report = await api.domain.report("example.com");
+const api = new ContrastAPI();
 
-  // CVE lookup
-  const cve = await api.cve.lookup("CVE-2024-3094");
+// A typed method for one operation of the REST API.
+const cve = await api.cveLookup({ cve_id: "CVE-2021-44228" });
 
-  // SSL certificate check
-  const ssl = await api.domain.ssl("example.com");
-
-  // Scan HTTP security headers (live)
-  const headers = await api.scan.headers("example.com");
-
-  // Check code for secrets
-  const secrets = await api.check.secrets("const key = 'AKIA...'", "javascript");
-}
-
-main();
+// The same operation by its id.
+const same = await api.call("cve_lookup", { cve_id: "CVE-2021-44228" });
 ```
 
-## With API Key (Pro)
+Each method takes one object. Its keys are the parameter names of the REST API.
+The client checks the keys and the required values before it sends anything.
+A call with an unknown key or a missing required value fails with `TypeError` and spends no credit.
+A method returns the parsed JSON body.
+
+The methods and their argument types are generated from the OpenAPI document of the server.
+The type declarations of the package list them, so an editor can complete them.
+
+### Raw requests
+
+`request()` sends a request to any path. It uses the same key policy, errors, retries and credit reading as the methods.
 
 ```javascript
-const api = ContrastAPI({ apiKey: "your-api-key" });
+const health = await api.request("GET", "/health");
+const found = await api.request("GET", "/cve_search", { query: { product: "apache" } });
+const bulk = await api.request("POST", "/cve_lookup_bulk", { body: { cve_ids: ["CVE-2021-44228"] } });
 ```
 
-## All Methods
+`request()` sends a JSON body or none. It cannot send raw bytes.
 
-### Credit Costs
+### Not in the SDK
 
-Most endpoints cost 1 credit. Heavy orchestration endpoints cost more:
+`/image_inspect` takes a raw image body (`application/octet-stream`). The SDK sends JSON bodies only, so it has no method for it, and `request()` is no way around that. Call that endpoint with `fetch` or another HTTP client.
 
-| Endpoint | Cost |
+## API key
+
+```javascript
+const api = new ContrastAPI({ apiKey: "your-api-key" });
+```
+
+Without the `apiKey` option, the client reads the `CONTRASTAPI_API_KEY` environment variable and trims ASCII white space from both ends. An empty string sends no key.
+A key may hold only printable ASCII without spaces; any other key throws `TypeError`, and the message does not repeat it.
+The client keeps the key only when it will send it.
+
+The client sends the key in the `X-API-Key` header. It sends it only to `api.contrastcyber.com`, `localhost`, `127.0.0.1` and `[::1]`. For any other host, set `trustHost: true`.
+
+`baseUrl` must use https. Plain http is accepted only for `localhost`, `127.0.0.1` and `[::1]`, written that way.
+`baseUrl` must not hold user info, a query, a fragment, a backslash, a space or an ASCII control character.
+Its path must not hold a `.` or `..` segment.
+The client does not follow redirects: any 3xx answer fails the call with `APIConnectionError("redirect refused")`.
+Before each request, the client checks that the URL keeps the scheme, host and port of `baseUrl` and stays under its path.
+A URL that leaves it throws `TypeError` and sends nothing.
+A request path with a `.` or `..` segment also throws `TypeError` and sends nothing.
+This covers a raw path and a path value of a method, such as `cve_id: ".."`.
+In a raw path, a dot written as `%2e` or `%2E` counts as a dot.
+A method encodes `%` in a path value, so a value of `%2e` is sent.
+The query is not checked.
+
+Get a key at [api.contrastcyber.com/pricing](https://api.contrastcyber.com/pricing).
+Without a key, each client address has a smaller hourly credit budget than a key has. The pricing page lists both limits.
+
+## Credits
+
+Each operation has a price in credits, and some operations are free. The method comment of an operation states its price.
+
+After each response that carries the rate-limit headers, the client keeps the reading:
+
+```javascript
+await api.cveLookup({ cve_id: "CVE-2021-44228" });
+console.log(api.lastRateLimit?.remaining, api.lastRateLimit?.resetHuman);
+
+const watched = new ContrastAPI({
+  onRateLimit: (info) => console.log(info.remaining, "of", info.limit, "credits left"),
+});
+```
+
+`RateLimitInfo` holds `limit`, `remaining`, `resetAt` (a `Date`) and `resetHuman`.
+`lastRateLimit` is `null` until a response has carried the headers.
+An exception that `onRateLimit` throws is ignored.
+
+## Errors
+
+Every error extends `ContrastAPIError`. The server answers an error as `{"error": {"code", "message"}}`, and the client reads both.
+
+| Class | When |
 | --- | --- |
-| `domain.audit()` | 4× |
-| `ip.threatReport()` | 4× |
-| `cve.bulk([...])` | N× (per item) |
-| `ioc.bulk([...])` | N× (per item) |
+| `BadRequestError` | HTTP 400 |
+| `AuthenticationError` | HTTP 401 |
+| `NotFoundError` | HTTP 404 |
+| `RateLimitError` | HTTP 429 |
+| `UpstreamError` | HTTP 502, 503 or 504 |
+| `ContrastAPIError` | any other status outside 200-399; a 2xx body that is not a UTF-8 JSON object or array; a body over 16 MiB; an answer whose `Content-Encoding` is not `identity` |
+| `APIConnectionError` | no usable answer: network failure or refused redirect (`status` is `null`) |
+| `APITimeoutError` | the request ran past `timeoutMs`; it extends `APIConnectionError` |
 
-Bulk endpoints: up to 50 items per call (same cap for Free and Pro). Free tier: 30 credits/hour. Pro tier: 500 credits/hour.
-
-### Domain Intelligence
-```javascript
-api.domain.report("example.com")           // Full domain report
-api.domain.report("example.com", {lite: true}) // Fast lite report
-api.domain.dns("example.com")              // DNS records
-api.domain.whois("example.com")            // WHOIS data
-api.domain.subdomains("example.com")       // Subdomain enumeration
-api.domain.certs("example.com")            // Certificate transparency
-api.domain.ssl("example.com")              // SSL/TLS analysis
-api.domain.tech("example.com")             // Technology fingerprint
-api.domain.threat("example.com")           // Threat intelligence
-api.domain.monitor("example.com")          // Domain monitoring
-api.domain.vulns("example.com")            // Known vulnerabilities
-api.domain.bulk(["a.com", "b.com"])        // Bulk domain reports
-api.domain.audit("example.com")            // Full audit (report + tech + headers) — 4 credits
-api.domain.robots("example.com")           // v1.5.0: robots.txt parser
-api.domain.redirect("https://bit.ly/3xyz") // v1.5.0: redirect-chain walker
-api.domain.brand("example.com")            // v1.5.0: brand assets (favicon/logo/OG)
-api.domain.seo("example.com")              // v1.5.0: SEO audit
-```
-
-### IP & ASN
-```javascript
-api.ip.lookup("8.8.8.8")                   // IP intelligence
-api.ip.threatReport("8.8.8.8")             // Threat report (AbuseIPDB + Shodan + ASN) — 4 credits
-api.asn.lookup("google.com")               // ASN lookup
-```
-
-### CVE Intelligence
-```javascript
-api.cve.lookup("CVE-2024-3094")            // Single CVE — full record
-api.cve.search({product: "apache", severity: "critical"})
-api.cve.leading({limit: 50})               // Fresh CVEs from MITRE/GHSA before NVD enrichment
-api.cve.kev("CVE-2021-44228")              // CISA KEV detail (404 if not in catalog)
-api.cve.exploit("CVE-2024-3094")           // Public exploits + advisories
-api.cve.bulk(["CVE-2024-3094", "CVE-2021-44228"])  // Bulk CVE lookup — N credits
-```
-
-### CWE (MITRE Weakness Catalog)
-```javascript
-api.cwe.lookup("CWE-79")                   // CWE detail (description, mitigations, CVE count)
-```
-
-### MITRE ATLAS (AI/ML Attack Catalog)
-```javascript
-api.atlas.technique("AML.T0043")           // ATLAS technique detail
-api.atlas.techniqueSearch({keyword: "prompt", tactic: "AML.TA0011", limit: 20})
-api.atlas.bulkTechniqueLookup(["AML.T0051", "AML.T0043"])  // v1.4.0: bulk drill
-api.atlas.caseStudy("AML.CS0000")          // Case study detail
-api.atlas.caseStudySearch({keyword: "GPT", limit: 10})
-```
-
-> **v1.4.0 note:** server param renamed from `q` → `keyword`. `q` is still
-> accepted as a back-compat alias on `techniqueSearch` and `caseStudySearch`,
-> but passing both at once throws. Prefer `keyword`.
-
-### MITRE D3FEND (Defense Technique Catalog)
-```javascript
-api.d3fend.defense("CertificatePinning")           // Defense technique detail
-api.d3fend.defenseSearch({keyword: "encryption", tactic: "Harden", limit: 20})
-api.d3fend.defenseForAttack("T1059", {include: "full"})  // v1.4.0: include + exclude_id supported
-api.d3fend.coverage(["T1059", "T1078", "T1190"])   // Batch coverage analysis
-```
-
-> **v1.4.0 note:** `kind` parameter dropped from `defenseSearch` (server doesn't
-> accept it — silently ignored before, removed for clarity). `defenseForAttack`
-> now accepts an optional `{ include, exclude_id }` second argument.
-
-### Threat Intelligence
-```javascript
-api.ioc.lookup("evil.com")                 // IOC enrichment (auto-detect type)
-api.ioc.hash("abc123...")                  // Malware hash lookup
-api.ioc.phishing("https://evil.com/login") // Phishing check
-api.ioc.bulk(["8.8.8.8", "evil.com"])      // Bulk IOC lookup — N credits
-```
-
-### Email & Phone & Username
-```javascript
-api.email.mx("example.com")                // MX + SPF/DMARC/DKIM
-api.email.disposable("user@tempmail.com")  // Disposable email check
-api.email.securityPosture("example.com")   // v1.5.0: SPF/DMARC/DKIM posture + score
-api.email.securityPosture("example.com", {selectors: "s1,s2"}) // custom DKIM selectors
-api.email.verify("user@example.com")       // v1.5.0: deliverability / mailbox verify
-api.phone.lookup("+1234567890")            // Phone validation
-api.username.lookup("octocat")             // v1.4.0: cross-platform username lookup
-```
-
-### Password
-```javascript
-api.password.check("5baa61e4...")          // HIBP breach check (SHA1)
-```
-
-### Wayback Archive (v1.4.0)
-```javascript
-api.domain.wayback("example.com")          // CDX snapshot history
-```
-
-### Sigma Detection Rules (v1.5.0)
-```javascript
-api.sigma.lookup("5013636e-7f4c-...")      // Sigma rule by UUID
-api.sigma.bulk(["uuid1", "uuid2"])         // Bulk lookup (≤50 rule IDs)
-```
-
-### Code Security
-```javascript
-api.check.secrets(code, "python")          // Detect hardcoded secrets
-api.check.injection(code, "javascript")    // SQL/command injection
-api.check.headers({"Content-Security-Policy": "..."})  // Header validation
-api.check.dependencies([{name: "lodash", version: "4.17.0"}])  // CVE check
-api.scan.headers("example.com")            // Live header scan
-api.scan.site("example.com")               // Full-site security scan (A–F grade)
-```
-
-### Meta
-```javascript
-api.status()                               // API health
-api.usage()                                // Usage stats (Pro)
-```
-
-## Error Handling
+An error has these fields: `status`, `code`, `retryAfter` (seconds from the `Retry-After` header, at most 3600, or `null`) and `rateLimit` (a `RateLimitInfo` or `null`).
+The message, the code and `rateLimit.resetHuman` are stripped of control characters (C0, DEL and C1), format characters (Unicode Cf, such as U+202E) and lone surrogates. The message is cut to 300 characters.
 
 ```javascript
+import { ContrastAPI, NotFoundError, RateLimitError } from "contrastapi";
+
 try {
-  const result = await api.cve.lookup("CVE-9999-0000");
+  await api.cveLookup({ cve_id: "CVE-9999-0000" });
 } catch (err) {
-  console.log(err.status);    // 404
-  console.log(err.message);   // "CVE not found"
+  if (err instanceof NotFoundError) console.log(err.status, err.code, err.message);
+  else if (err instanceof RateLimitError) console.log("retry after", err.retryAfter);
+  else throw err;
 }
 ```
 
-## TypeScript
+A wrong argument throws `TypeError` before any request. A path or query value must be a string, a finite number, a boolean or a bigint. A query value of `null` or `undefined` is left out.
+A body must not hold a non-finite number, a function, a symbol or an object that is neither plain nor an array. A `Date` is written as its ISO string.
 
-Full typings ship in `index.d.ts`. As of v1.4.0 every namespace method declares
-a concrete return type (e.g. `Promise<CveResponse>` instead of `Promise<any>`),
-so IDEs autocomplete on response keys and TypeScript catches typos at compile
-time.
+## Retries
 
-```typescript
-import ContrastAPI, { CveResponse, AuditResponse } from "contrastapi";
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `upstreamBusyRetries` | 2 | retries after a 503 with the code `upstream_busy` or `raw_body_busy` |
+| `maxRetries` | 0 | retries after a 429; off unless you set it |
+| `maxRetryWaitMs` | 60000 | a finite number >= 0; the client does not retry when the wait is longer than this many milliseconds |
 
-const api = ContrastAPI();
-const cve: CveResponse = await api.cve.lookup("CVE-2021-44228");
-console.log(cve.kev?.in_kev);   // boolean | undefined
+The wait is the `Retry-After` header, in seconds. A busy 503 without the header waits one second. A 429 without the header is not retried.
+
+## Configuration
+
+```javascript
+const api = new ContrastAPI({
+  apiKey: "...",                          // default: CONTRASTAPI_API_KEY
+  baseUrl: "https://api.contrastcyber.com", // default
+  trustHost: false,                       // true sends the key to other hosts
+  timeoutMs: 30000,                       // default; clamped to 1000-120000
+  maxRetries: 0,
+  upstreamBusyRetries: 2,
+  maxRetryWaitMs: 60000,
+  fetch: globalThis.fetch,                // swap in a test double
+  onRateLimit: (info) => {},
+});
 ```
+
+The client sends `User-Agent: contrastapi-node/<version>`.
+
+The client sends `Accept-Encoding: identity`. It refuses an answer with any other `Content-Encoding` and does not read its body.
+`fetch` would decode a compressed body before the 16 MiB cap could count its bytes.
+
+## Regenerating the methods
+
+The methods come from `sdk/openapi.json`, the output of `make -s openapi` in the server repository.
+After a new document, run this from the root of the repository that holds `sdk/`:
+
+```bash
+python3 sdk/gen/gen_sdk.py          # rewrite the generated files
+python3 sdk/gen/gen_sdk.py --check  # report a difference, exit 1
+```
+
+## Upgrading from 1.x
+
+Version 1.x called `/v1/...` paths. The OpenAPI document of the current server has no such path.
+Version 2.0.0 is a rewrite. The [CHANGELOG](https://github.com/UPinar/contrastapi-clients/blob/master/sdk/node/CHANGELOG.md) in the source repository, [UPinar/contrastapi-clients](https://github.com/UPinar/contrastapi-clients), lists the breaking changes.
 
 ## License
 
-MIT
+MIT. The LICENSE file is part of the package.
