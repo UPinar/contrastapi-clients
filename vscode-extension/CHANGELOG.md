@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 — Unreleased
+## 1.0.0 (2026-11-13)
 
 - The extension now talks to the server's MCP endpoint. It no longer calls the old REST `/v1/` routes.
 - The sidebar shows the server's tool list, grouped by category. A new server tool appears after the next refresh of the list, without an extension update.
