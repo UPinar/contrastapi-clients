@@ -5,6 +5,7 @@
 - The extension now talks to the server's MCP endpoint. It no longer calls the old REST `/v1/` routes.
 - The sidebar shows the server's tool list, grouped by category. A new server tool appears after the next refresh of the list, without an extension update.
 - New command `ContrastAPI: Run Tool…` opens a form for any tool. Optional fields sit behind **Add filter…**. The menu shows the values already set, and picking one changes or clears it.
+- A form field's prompt shows the limits and the default the server's schema gives it, such as "Minimum 1. Maximum 100. Default 20.".
 - The palette keeps its shortcuts for CVE Lookup, IP Lookup, DNS Lookup and SSL Check. Package Check is a new shortcut.
 - The tool list is cached. A list older than 24 hours is refreshed at start-up. The refresh button fetches it at any time and costs 1 credit.
 - New Watchlist view (needs a Pro API key): add, remove and clear items, read events, and a Watch button in the result panel.

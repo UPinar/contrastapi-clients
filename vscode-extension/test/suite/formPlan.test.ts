@@ -80,7 +80,7 @@ test("optionalMenuItems lists every optional step in schema order, each unset on
     assert.strictEqual(item.detail, item.step.prompt, item.label);
     assert.strictEqual(item.step.field, item.label);
   }
-  assert.strictEqual(menuOf(form, {}).get("cwe_id")?.detail, "e.g. CWE-79");
+  assert.strictEqual(menuOf(form, {}).get("cwe_id")?.detail, "e.g. CWE-79. At most 16 characters.");
 });
 
 test("optionalMenuItems keeps a set step in the menu and shows its value", () => {
@@ -98,7 +98,7 @@ test("optionalMenuItems keeps a set step in the menu and shows its value", () =>
   assert.strictEqual(menu.get("offset")?.description, "= 0 ✓");
   assert.strictEqual(menu.get("severity")?.detail, "severity");
   assert.strictEqual(menu.get("product")?.description, undefined);
-  assert.strictEqual(menu.get("min_epss")?.detail, "0.0-1.0");
+  assert.strictEqual(menu.get("min_epss")?.detail, "Minimum 0. Maximum 1.");
 });
 
 test("optionalMenuItems ignores inherited object keys", () => {

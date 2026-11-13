@@ -48,11 +48,11 @@
     },
     {
       "name": "cve_lookup",
-      "description": "CVE Lookup — Full CVE record by ID (CVSS, EPSS, KEV, CWE, references, CISA SSVC, Nuclei detection templates), with the optional GitHub Security Advisory."
+      "description": "CVE Lookup — Full CVE record by ID (CVSS, EPSS, KEV, CWE, references, CISA SSVC, Nuclei templates), with the optional GitHub Security Advisory."
     },
     {
       "name": "cve_lookup_bulk",
-      "description": "Bulk CVE Lookup — Look up many CVEs at once (max 50)."
+      "description": "Bulk CVE Lookup — Look up many CVEs at once, each with the fields of cve_lookup."
     },
     {
       "name": "cve_products",
@@ -60,23 +60,23 @@
     },
     {
       "name": "cve_search",
-      "description": "CVE Search — Search and filter CVEs with pagination."
+      "description": "CVE Search — Search CVEs by severity, CWE, CVSS, EPSS, CISA KEV, ransomware use, Nuclei template, vendor, product and publish date, one page at a time."
     },
     {
       "name": "cve_leading",
-      "description": "Leading CVEs by EPSS — List the CVEs most likely to be exploited, by EPSS score: the probability of exploitation in the next 30 days."
+      "description": "Leading CVEs by EPSS — List the CVEs most likely to be exploited, by EPSS score (the probability of exploitation in the next 30 days), with a verdict on the top score."
     },
     {
       "name": "kev_lookup",
-      "description": "CISA KEV Lookup — CISA KEV catalog entry for a CVE."
+      "description": "CISA KEV Lookup — CISA KEV catalog entry for a CVE: the required action, the patch deadline and known ransomware use."
     },
     {
       "name": "cwe_lookup",
-      "description": "CWE Lookup — CWE weakness details (description, mitigations, examples)."
+      "description": "CWE Lookup — CWE weakness details (description, mitigations, examples), with how many CVEs and CISA KEV entries name it."
     },
     {
       "name": "cve_risk_score",
-      "description": "CVE Risk Score — Composite risk score of a CVE (exploitability + impact + evidence), from 0 to 100, for patch priority."
+      "description": "CVE Risk Score — Composite risk score of a CVE, from 0 to 100, for patch priority."
     },
     {
       "name": "cve_exploit",
@@ -84,15 +84,15 @@
     },
     {
       "name": "cve_triage",
-      "description": "CVE Triage — Minimal CVE prioritisation list: asset scope (vendor/product) + a min_risk_score threshold, always ordered by composite risk score."
+      "description": "CVE Triage — Rank the CVEs of a vendor or product by composite risk score, at or above the optional min_risk_score argument, as lean rows (cve_id, risk_score, label)."
     },
     {
       "name": "cve_triage_bulk",
-      "description": "Bulk CVE Triage — Triage many CVEs at once (max 50), ranked by composite risk score."
+      "description": "Bulk CVE Triage — Triage many CVEs at once, ranked by composite risk score."
     },
     {
       "name": "product_exposure",
-      "description": "Product Exposure — Aggregate CVE exposure for one vendor+product: severity/KEV/PoC counts, max/avg CVSS, max EPSS, worst composite risk score, plus the top CVEs by risk."
+      "description": "Product Exposure — CVE exposure of one vendor and product: severity, KEV and PoC counts, CVSS, EPSS, the worst risk score, the top CVEs and the endoflife.date support dates."
     },
     {
       "name": "cpe_search",
@@ -104,15 +104,19 @@
     },
     {
       "name": "watchlist_edit",
-      "description": "Watchlist: CVE and Domain Monitoring — Add, remove, list or clear the items of this API key's watchlist, for CVE and domain monitoring."
+      "description": "Watchlist: CVE, Package, Domain and IP Monitoring — Add, remove, list or clear the items this API key watches: CVEs, products, CVE searches, packages, domains and IP addresses."
     },
     {
       "name": "watchlist_events",
-      "description": "Monitoring Events — Read the monitoring events of this API key's watchlist: the CVE and domain changes that match it, oldest first."
+      "description": "Monitoring Events — Report what changed on the items this API key watches, such as a new advisory for a package or a certificate about to expire, oldest first."
     },
     {
       "name": "privacy_my_data",
-      "description": "Privacy: My Data — What this server keeps about the caller: the hash its credits are counted under, the rate limit left in this hour, and each kind of record it keeps."
+      "description": "Privacy: My Data — What this server keeps about the caller: the hash its credits are counted under, the rate limit left in this hour and the privacy policy."
+    },
+    {
+      "name": "vendor_key_edit",
+      "description": "Vendor key edit — Save, delete or check your own Shodan and AbuseIPDB keys, which the ip_lookup tool uses."
     },
     {
       "name": "password_check",
@@ -120,51 +124,51 @@
     },
     {
       "name": "dns_lookup",
-      "description": "DNS Lookup — Look up a domain's DNS records: A, AAAA, MX, NS, TXT (such as SPF and verification records), CNAME, SOA and CAA."
+      "description": "DNS Lookup — Look up a domain's DNS records: A, AAAA, MX, NS, TXT, CNAME, SOA and CAA."
     },
     {
       "name": "dns_takeover_check",
-      "description": "Subdomain Takeover Check — Check a host name for subdomain takeover through a dangling CNAME: a CNAME that points to a name that does not exist."
+      "description": "Subdomain Takeover Check — Check a host name for subdomain takeover through a dangling CNAME."
     },
     {
       "name": "email_auth_check",
-      "description": "Email Authentication Check (SPF, DMARC, DKIM) — Check a domain's mail authentication: its SPF record, the DMARC record that applies to it, its DKIM keys, its MX hosts and its MTA-STS record."
+      "description": "Email Authentication Check (SPF, DMARC, DKIM) — Check a domain's mail authentication: SPF, DMARC (from a parent domain when the domain has no record of its own), DKIM, MX and MTA-STS, each check with pass, warn or fail and a severity."
     },
     {
       "name": "email_address_check",
-      "description": "Email Address Check — Check an e-mail address without sending mail: whether its domain exists and takes mail, through its MX hosts or, with no MX record, its own address; a null MX takes none."
+      "description": "Email Address Check — Check an e-mail address without sending mail: whether its domain exists and takes mail, and whether a disposable domain list names it."
     },
     {
       "name": "ssl_check",
-      "description": "SSL/TLS Certificate Check — Check the TLS certificate and the TLS settings of a host name on port 443."
+      "description": "SSL/TLS Certificate Check — Check the TLS certificate and settings of a host name on port 443: version, cipher, trust, OCSP revocation, expiry, DNS names, the chain and an abuse.ch SSL Blacklist listing."
     },
     {
       "name": "headers_check",
-      "description": "Security Headers Check — Check the security headers of a web site."
+      "description": "Security Headers Check — Rate nine security headers of a web site, such as CSP, HSTS and Set-Cookie, from one GET to https://<domain>/ that follows up to 5 redirects on the same host or its www pair."
     },
     {
       "name": "whois_lookup",
-      "description": "WHOIS / RDAP Lookup — Look up the registration of a domain name: its registrar and IANA Registrar ID, when it was registered, last changed and expires, its status values, its name servers and whether its delegation is signed with DNSSEC."
+      "description": "WHOIS / RDAP Lookup — Look up a domain's registration over RDAP, or WHOIS where allowed: registrar, dates, status, name servers and DNSSEC."
     },
     {
       "name": "wayback_lookup",
-      "description": "Wayback Machine Lookup — List when the Internet Archive's Wayback Machine captured the home page of a host name: the first and the last capture day, the years between them, and the latest 10 capture days, each with the HTTP status and the media type of the captured answer and a link to the capture."
+      "description": "Wayback Machine Lookup — List when the Wayback Machine captured a host's home page: the first and last capture, the years between them and the latest 10 captures with links."
     },
     {
       "name": "cert_search",
-      "description": "Certificate Transparency Search — List the unexpired certificates that Certificate Transparency logs hold for a host name, wildcard certificates that match it included, as SSLMate's Cert Spotter finds them."
+      "description": "Certificate Transparency Search — List the unexpired certificates that Certificate Transparency logs hold for a host name, wildcards included, from SSLMate's Cert Spotter: the 10 newest, with issuer, validity and DNS names."
     },
     {
       "name": "subdomain_enum",
-      "description": "Subdomain Enumeration — List the subdomains of a registrable domain from three sources: Certificate Transparency, as SSLMate's Cert Spotter gives it in the first page of its answer; DNS A queries for 94 common names; and the names the domain's own MX, NS and SPF records give."
+      "description": "Subdomain Enumeration — List up to 50 subdomains of a registrable domain from Certificate Transparency, DNS queries for 94 common names and the domain's MX, NS and SPF records."
     },
     {
       "name": "ip_lookup",
-      "description": "IP Lookup — Look up a public IPv4 or IPv6 address: its AS number, AS name and AS country, its country, the cloud provider and service whose published range holds it, whether it is a CDN, a datacenter or a Tor exit, the DROP prefixes that list it, and its PTR name."
+      "description": "IP Lookup — Look up a public IP address: AS, country, cloud provider, CDN, datacenter or Tor exit, DROP listing and PTR name."
     },
     {
       "name": "asn_lookup",
-      "description": "ASN Lookup — Look up an autonomous system (AS) by its number, such as AS15169, or by a public IPv4 or IPv6 address it holds: its AS number, name and registration country, the prefix that holds the address, how many IPv4 and IPv6 prefixes it has, and one page of up to 50 prefixes of each family in address order."
+      "description": "ASN Lookup — Look up an autonomous system by number, such as AS15169, or by an IP address it holds: name, country and one page of its IPv4 and IPv6 prefixes, derived from IPtoASN."
     },
     {
       "name": "d3fend_for_attack",
@@ -172,19 +176,19 @@
     },
     {
       "name": "driver_lookup",
-      "description": "Vulnerable Driver Lookup (LOLDrivers) — Look up a Windows driver file in the LOLDrivers catalog of vulnerable and malicious drivers."
+      "description": "Windows Driver Lookup (LOLDrivers) — Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and malicious drivers."
     },
     {
       "name": "driver_lookup_bulk",
-      "description": "Bulk Driver Lookup — Look up many driver file hashes in the LOLDrivers catalog at once (max 25)."
+      "description": "Bulk Windows Driver Lookup — Look up many driver file hashes in the LOLDrivers catalog at once, each with the fields of driver_lookup."
     },
     {
       "name": "package_check",
-      "description": "Package Vulnerability Check — Check a package of npm, PyPI, Maven, Go, NuGet, RubyGems, crates.io, Packagist or SwiftURL against the OSV.dev advisories of GitHub, Go, PyPA and RustSec, and the OpenSSF list of malicious packages."
+      "description": "Package Vulnerability Check — Check a package against the OSV.dev advisories (GitHub, Go, PyPA, RustSec) and the OpenSSF malicious package list, with the fixed version and endoflife.date dates."
     },
     {
       "name": "package_check_bulk",
-      "description": "Bulk Package Check (SBOM) — Check many packages at once (max 500) against the advisories package_check reads."
+      "description": "Bulk Package Check (SBOM) — Check many packages at once, each an ecosystem, a name and an exact version, against the advisories package_check reads."
     }
   ],
   "keywords": [

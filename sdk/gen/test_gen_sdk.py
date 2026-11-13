@@ -64,6 +64,12 @@ PACKAGE_ITEM = {
     "additionalProperties": False,
 }
 
+
+
+def _ref(name):
+    return {"type": "array", "items": {"$ref": "#/components/schemas/" + name}}
+
+
 FIXTURE = _doc(
     ("/health", "get", _op("health", cost=0, summary="Health", description="Is it up.")),
     ("/cve_lookup/{cve_id}", "get", _op("cve_lookup", params=[
@@ -363,7 +369,11 @@ class RefusalTest(unittest.TestCase):
                        {"type": "array"},
                        {"type": "boolean", "const": False}, {"type": "string", "const": True},
                        {"type": "string", "enum": []}, {"type": "integer", "enum": ["a"]},
-                       {"type": "string", "enum": [1]}):
+                       {"type": "string", "enum": [1]},
+                       {"type": "integer", "default": "20"}, {"type": "integer", "default": True},
+                       {"type": "integer", "default": 1.5}, {"type": "string", "default": "x"},
+                       {"type": "integer", "minimum": 1, "default": 0},
+                       {"type": "integer", "maximum": 5, "default": 6}):
             self.assertRefused(_doc(("/x", "get", _op("x", params=[_param("a", schema)]))))
 
     def test_unknown_request_bodies_are_refused(self):
@@ -387,13 +397,13 @@ class RefusalTest(unittest.TestCase):
         self.assertRefused(_doc(("/x", "get", _op("x", per_item=1))))
 
     def test_package_item_must_be_present_and_plain(self):
-        items = {"type": "array", "items": {"$ref": gen.PACKAGE_ITEM_REF}}
+        items = {"type": "array", "items": {"$ref": "#/components/schemas/PackageItem"}}
         entry = ("/x", "post", _op("x", body=({"items": items}, ["items"])))
         self.assertRefused(_doc(entry))
         self.assertRefused(_doc(entry, schemas={}))
-        partial = copy.deepcopy(PACKAGE_ITEM)
-        partial["required"] = ["ecosystem"]
-        self.assertRefused(_doc(entry, schemas={"PackageItem": partial}))
+        unknown_required = copy.deepcopy(PACKAGE_ITEM)
+        unknown_required["required"].append("other")
+        self.assertRefused(_doc(entry, schemas={"PackageItem": unknown_required}))
         nested = copy.deepcopy(PACKAGE_ITEM)
         nested["properties"]["name"] = {"type": "array", "items": {"type": "string"}}
         self.assertRefused(_doc(entry, schemas={"PackageItem": nested}))
@@ -410,6 +420,12 @@ class RefusalTest(unittest.TestCase):
         bad_name["properties"]["from"] = {"type": "string"}
         bad_name["required"].append("from")
         self.assertRefused(_doc(entry, schemas={"PackageItem": bad_name}))
+
+    def test_item_type_name_must_be_a_free_type_name(self):
+        for name in ("packageItem", "Package-Item", "OperationArgs", "XArgs", "_P", "P/Q"):
+            with self.subTest(name=name):
+                entry = ("/x", "post", _op("x", body=({"items": _ref(name)}, ["items"])))
+                self.assertRefused(_doc(entry, schemas={name: PACKAGE_ITEM}))
 
     def test_a_bad_operation_after_a_raw_body_one_is_still_refused(self):
         self.assertRefused(_doc(("/i", "post", _op("image_inspect", raw_body=True)),
@@ -576,7 +592,7 @@ class TypeMappingTest(unittest.TestCase):
                 self.assertIn(f"    async def x(self, *, {python_param}) -> dict[str, Any]:\n", py)
 
     def test_package_item(self):
-        items = {"type": "array", "items": {"$ref": gen.PACKAGE_ITEM_REF}}
+        items = {"type": "array", "items": {"$ref": "#/components/schemas/PackageItem"}}
         js, dts, py = _render_one(("/x", "post", _op("x", body=({"items": items}, ["items"]))),
                                   schemas={"PackageItem": PACKAGE_ITEM})
         self.assertIn("\n  items: PackageItem[];\n", dts)
@@ -587,6 +603,38 @@ class TypeMappingTest(unittest.TestCase):
         self.assertIn("    def x(self, *, items: list[PackageItem]) -> dict[str, Any]:\n", py)
         self.assertIn('        return self.call("x", {"items": items})\n', py)
 
+    def test_item_type_with_an_optional_field(self):
+        optional = copy.deepcopy(PACKAGE_ITEM)
+        optional["required"] = ["ecosystem", "name"]
+        js, dts, py = _render_one(("/x", "post", _op("x", body=({"items": _ref("Opt")}, ["items"]))),
+                                  schemas={"Opt": optional})
+        self.assertIn("\nexport interface Opt {\n  ecosystem: string;\n  name: string;\n"
+                      "  version?: string;\n}\n", dts)
+        self.assertIn("\n\n\nclass _OptRequired(TypedDict):\n    ecosystem: str\n    name: str\n"
+                      "\n\nclass Opt(_OptRequired, total=False):\n    version: str\n", py)
+        self.assertIn("    def x(self, *, items: list[Opt]) -> dict[str, Any]:\n", py)
+
+    def test_item_type_with_no_required_field(self):
+        optional = copy.deepcopy(PACKAGE_ITEM)
+        optional["required"] = []
+        js, dts, py = _render_one(("/x", "post", _op("x", body=({"items": _ref("Opt")}, ["items"]))),
+                                  schemas={"Opt": optional})
+        self.assertIn("\n\n\nclass Opt(TypedDict, total=False):\n    ecosystem: str\n", py)
+        self.assertNotIn("_OptRequired", py)
+
+    def test_two_item_types_render_once_each_by_name(self):
+        optional = copy.deepcopy(PACKAGE_ITEM)
+        optional["required"] = ["ecosystem", "name"]
+        js, dts, py = _render_one(
+            ("/x", "post", _op("x", body=({"items": _ref("PackageItem")}, ["items"]))),
+            ("/y", "post", _op("y", body=({"items": _ref("Opt")}, ["items"]))),
+            ("/z", "post", _op("z", body=({"items": _ref("PackageItem")}, ["items"]))),
+            schemas={"PackageItem": PACKAGE_ITEM, "Opt": optional, "Unused": PACKAGE_ITEM})
+        self.assertEqual(dts.count("export interface PackageItem {"), 1)
+        self.assertLess(dts.index("export interface Opt {"), dts.index("export interface PackageItem {"))
+        self.assertLess(py.index("class Opt("), py.index("class PackageItem("))
+        self.assertNotIn("Unused", dts + py)
+
     def test_package_item_absent_when_unused(self):
         js, dts, py = _render_one(("/x", "get", _op("x")), schemas={"PackageItem": PACKAGE_ITEM})
         self.assertNotIn("PackageItem", dts)
@@ -595,7 +643,7 @@ class TypeMappingTest(unittest.TestCase):
     def test_package_item_field_types(self):
         schema = copy.deepcopy(PACKAGE_ITEM)
         schema["properties"]["version"] = {"type": "integer", "description": "d"}
-        items = {"type": "array", "items": {"$ref": gen.PACKAGE_ITEM_REF}}
+        items = {"type": "array", "items": {"$ref": "#/components/schemas/PackageItem"}}
         js, dts, py = _render_one(("/x", "post", _op("x", body=({"items": items}, ["items"]))),
                                   schemas={"PackageItem": schema})
         self.assertIn("\n  version: number;\n}\n", dts)
@@ -700,6 +748,9 @@ class TextTest(unittest.TestCase):
              "1 to 50 items."),
             ({"type": "array", "items": {"type": "string"}, "minItems": 2}, "At least 2 items."),
             ({"type": "array", "items": {"type": "string"}, "maxItems": 9}, "At most 9 items."),
+            ({"type": "integer", "minimum": 1, "maximum": 50, "default": 20},
+             "Minimum 1. Maximum 50. Default 20."),
+            ({"type": "integer", "default": 0}, "Default 0."),
         ]
         for schema, text in cases:
             with self.subTest(schema=schema):

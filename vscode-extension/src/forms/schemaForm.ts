@@ -56,6 +56,54 @@ function kindOf(prop: JsonSchemaProperty): FormStepKind {
 }
 
 /**
+ * Returns the limits of a property as sentences, such as "Minimum 1. Maximum 100. Default 20.".
+ * The server writes a property's range and default in the schema, not in its description.
+ * The text is the one the SDKs put in their documentation (sdk/gen/gen_sdk.py, limit_text).
+ * An enum has no length sentence, because its values already show the length.
+ */
+function limitText(prop: JsonSchemaProperty): string {
+  const parts: string[] = [];
+  if (typeof prop.minimum === "number") {
+    parts.push(`Minimum ${prop.minimum}.`);
+  }
+  if (typeof prop.maximum === "number") {
+    parts.push(`Maximum ${prop.maximum}.`);
+  }
+  if (typeof prop.maxLength === "number" && prop.enum === undefined) {
+    parts.push(`At most ${prop.maxLength} characters.`);
+  }
+  const low = typeof prop.minItems === "number" ? prop.minItems : undefined;
+  const high = typeof prop.maxItems === "number" ? prop.maxItems : undefined;
+  if (low !== undefined && high !== undefined) {
+    parts.push(`${low} to ${high} items.`);
+  } else if (low !== undefined) {
+    parts.push(`At least ${low} items.`);
+  } else if (high !== undefined) {
+    parts.push(`At most ${high} items.`);
+  }
+  if (typeof prop.default === "number" || typeof prop.default === "string" || typeof prop.default === "boolean") {
+    parts.push(`Default ${String(prop.default)}.`);
+  }
+  return parts.join(" ");
+}
+
+/**
+ * Returns the prompt of a step: the property's description, then its limits.
+ * A property with neither is prompted by its name.
+ */
+function promptOf(field: string, prop: JsonSchemaProperty): string {
+  const limits = limitText(prop);
+  const description = prop.description ?? "";
+  if (description === "") {
+    return limits === "" ? field : limits;
+  }
+  if (limits === "") {
+    return description;
+  }
+  return `${/[.!?]$/.test(description) ? description : `${description}.`} ${limits}`;
+}
+
+/**
  * Turns a tool's inputSchema into the steps of an input form.
  * Steps keep the schema's property order, so the form reads like the tool's documentation.
  * A required const property is not asked: its value goes into fixed.
@@ -81,7 +129,7 @@ export function buildFormSteps(tool: McpTool): FormSteps {
     }
     const step: FormStep = {
       field,
-      prompt: prop.description ?? field,
+      prompt: promptOf(field, prop),
       required,
       kind: hasConst ? "enum" : kindOf(prop),
     };

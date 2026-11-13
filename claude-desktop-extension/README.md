@@ -15,6 +15,7 @@ Each tool carries a human-readable title (e.g. `cve_lookup` → "CVE Lookup").
 
 - **Health and Data Freshness** — `health`
 - **Privacy: My Data** — `privacy_my_data`
+- **Vendor key edit** — `vendor_key_edit`
 
 ### CVE Intelligence
 
@@ -35,7 +36,7 @@ Each tool carries a human-readable title (e.g. `cve_lookup` → "CVE Lookup").
 
 ### Monitoring
 
-- **Watchlist: CVE and Domain Monitoring** — `watchlist_edit`
+- **Watchlist: CVE, Package, Domain and IP Monitoring** — `watchlist_edit`
 - **Monitoring Events** — `watchlist_events`
 
 ### Credential Checks
@@ -63,8 +64,8 @@ Each tool carries a human-readable title (e.g. `cve_lookup` → "CVE Lookup").
 ### Threat Defense
 
 - **D3FEND Defenses for ATT&CK** — `d3fend_for_attack`
-- **Vulnerable Driver Lookup (LOLDrivers)** — `driver_lookup`
-- **Bulk Driver Lookup** — `driver_lookup_bulk`
+- **Windows Driver Lookup (LOLDrivers)** — `driver_lookup`
+- **Bulk Windows Driver Lookup** — `driver_lookup_bulk`
 
 ### Package Vulnerabilities (SBOM)
 

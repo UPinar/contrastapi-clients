@@ -1,7 +1,7 @@
 """Official Python SDK for ContrastAPI."""
 
 from ._client import AsyncContrastAPI, ContrastAPI, RateLimitInfo
-from ._operations import PackageItem
+from ._operations import PackageItem, PackageItemOptionalVersion
 from ._version import __version__
 from .exceptions import (
     APIConnectionError,
@@ -24,6 +24,7 @@ __all__ = [
     "ContrastAPIError",
     "NotFoundError",
     "PackageItem",
+    "PackageItemOptionalVersion",
     "RateLimitError",
     "RateLimitInfo",
     "UpstreamError",

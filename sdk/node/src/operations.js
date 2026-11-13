@@ -51,6 +51,7 @@ export const OPERATIONS = Object.freeze({
       Object.freeze({ name: "has_nuclei_template", in: "query", required: false }),
       Object.freeze({ name: "published_after", in: "query", required: false }),
       Object.freeze({ name: "published_before", in: "query", required: false }),
+      Object.freeze({ name: "include_rejected", in: "query", required: false }),
       Object.freeze({ name: "sort", in: "query", required: false }),
       Object.freeze({ name: "limit", in: "query", required: false }),
       Object.freeze({ name: "offset", in: "query", required: false }),
@@ -67,6 +68,7 @@ export const OPERATIONS = Object.freeze({
       Object.freeze({ name: "in_kev", in: "query", required: false }),
       Object.freeze({ name: "known_ransomware", in: "query", required: false }),
       Object.freeze({ name: "has_nuclei_template", in: "query", required: false }),
+      Object.freeze({ name: "include_rejected", in: "query", required: false }),
       Object.freeze({ name: "limit", in: "query", required: false }),
     ]),
   }),
@@ -110,6 +112,7 @@ export const OPERATIONS = Object.freeze({
       Object.freeze({ name: "vendor", in: "query", required: false }),
       Object.freeze({ name: "product", in: "query", required: false }),
       Object.freeze({ name: "min_risk_score", in: "query", required: false }),
+      Object.freeze({ name: "include_rejected", in: "query", required: false }),
       Object.freeze({ name: "limit", in: "query", required: false }),
       Object.freeze({ name: "offset", in: "query", required: false }),
     ]),
@@ -129,6 +132,8 @@ export const OPERATIONS = Object.freeze({
     params: Object.freeze([
       Object.freeze({ name: "vendor", in: "query", required: true }),
       Object.freeze({ name: "product", in: "query", required: true }),
+      Object.freeze({ name: "version", in: "query", required: false }),
+      Object.freeze({ name: "include_rejected", in: "query", required: false }),
     ]),
   }),
   cpe_search: Object.freeze({
@@ -165,8 +170,14 @@ export const OPERATIONS = Object.freeze({
       Object.freeze({ name: "min_epss", in: "body", required: false }),
       Object.freeze({ name: "in_kev", in: "body", required: false }),
       Object.freeze({ name: "known_ransomware", in: "body", required: false }),
+      Object.freeze({ name: "has_nuclei_template", in: "body", required: false }),
       Object.freeze({ name: "domain", in: "body", required: false }),
+      Object.freeze({ name: "ecosystem", in: "body", required: false }),
+      Object.freeze({ name: "name", in: "body", required: false }),
+      Object.freeze({ name: "version", in: "body", required: false }),
+      Object.freeze({ name: "ip_address", in: "body", required: false }),
       Object.freeze({ name: "clear", in: "body", required: false }),
+      Object.freeze({ name: "packages", in: "body", required: false }),
     ]),
   }),
   watchlist_events: Object.freeze({
@@ -184,6 +195,19 @@ export const OPERATIONS = Object.freeze({
     method: "GET",
     path: "/privacy_my_data",
     params: Object.freeze([]),
+  }),
+  vendor_key_edit: Object.freeze({
+    methodName: "vendorKeyEdit",
+    method: "POST",
+    path: "/vendor_key_edit",
+    params: Object.freeze([
+      Object.freeze({ name: "action", in: "body", required: true }),
+      Object.freeze({ name: "link", in: "body", required: false }),
+      Object.freeze({ name: "shodan_key", in: "body", required: false }),
+      Object.freeze({ name: "shodan_delete", in: "body", required: false }),
+      Object.freeze({ name: "abuseipdb_key", in: "body", required: false }),
+      Object.freeze({ name: "abuseipdb_delete", in: "body", required: false }),
+    ]),
   }),
   password_check: Object.freeze({
     methodName: "passwordCheck",
@@ -337,5 +361,19 @@ export const OPERATIONS = Object.freeze({
     params: Object.freeze([
       Object.freeze({ name: "items", in: "body", required: true }),
     ]),
+  }),
+  api_key_claim: Object.freeze({
+    methodName: "apiKeyClaim",
+    method: "POST",
+    path: "/api_key_claim",
+    params: Object.freeze([
+      Object.freeze({ name: "order_id", in: "body", required: true }),
+    ]),
+  }),
+  crypto_checkout: Object.freeze({
+    methodName: "cryptoCheckout",
+    method: "POST",
+    path: "/crypto_checkout",
+    params: Object.freeze([]),
   }),
 });

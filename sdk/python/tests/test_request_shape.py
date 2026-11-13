@@ -278,5 +278,6 @@ def test_version_and_exports():
     assert set(contrastapi.__all__) == {
         "APIConnectionError", "APITimeoutError", "AsyncContrastAPI", "AuthenticationError",
         "BadRequestError", "ContrastAPI", "ContrastAPIError", "NotFoundError", "PackageItem",
+        "PackageItemOptionalVersion",
         "RateLimitError", "RateLimitInfo", "UpstreamError", "__version__",
     }

@@ -71,6 +71,11 @@ test("watchEndpoints reads the endpoint enum of watchlist_edit", () => {
     "cve_search",
     "dns_lookup",
     "ssl_check",
+    "whois_lookup",
+    "headers_check",
+    "cert_search",
+    "package_check",
+    "ip_lookup",
   ]);
 });
 
@@ -89,18 +94,24 @@ test("watchableFields on the snapshot: each endpoint gets its fields", () => {
     "min_epss",
     "in_kev",
     "known_ransomware",
+    "has_nuclei_template",
   ]);
   assert.deepStrictEqual(fields("cve_lookup"), ["cve_id"]);
   assert.deepStrictEqual(fields("kev_lookup"), ["cve_id"]);
   assert.deepStrictEqual(fields("cve_exploit"), ["cve_id"]);
-  assert.deepStrictEqual(fields("product_exposure"), ["vendor", "product"]);
+  assert.deepStrictEqual(fields("product_exposure"), ["vendor", "product", "version"]);
   assert.deepStrictEqual(fields("dns_lookup"), ["domain"]);
   assert.deepStrictEqual(fields("ssl_check"), ["domain"]);
+  assert.deepStrictEqual(fields("whois_lookup"), ["domain"]);
+  assert.deepStrictEqual(fields("headers_check"), ["domain"]);
+  assert.deepStrictEqual(fields("cert_search"), ["domain"]);
+  assert.deepStrictEqual(fields("package_check"), ["ecosystem", "name", "version"]);
+  assert.deepStrictEqual(fields("ip_lookup"), ["ip_address"]);
 });
 
-test("watchableFields drops cve_search pagination and sort", () => {
+test("watchableFields drops pagination, sort and the flags watchlist_edit lacks", () => {
   const fields = watchableFields(EDIT, snapshotTool("cve_search"));
-  for (const dropped of ["limit", "offset", "sort", "published_after", "published_before", "has_nuclei_template"]) {
+  for (const dropped of ["limit", "offset", "sort", "published_after", "published_before", "include_rejected"]) {
     assert.ok(!fields.includes(dropped), dropped);
   }
 });
@@ -157,8 +168,17 @@ test("watchItemFor is undefined when a required watchable field is missing", () 
 });
 
 test("watchItemFor is undefined for a tool that is not watchable", () => {
-  assert.strictEqual(watchItemFor(snapshotTool("whois_lookup"), { domain: "watch-sample.test" }, EDIT), undefined);
+  assert.ok(hasDomain(snapshotTool("dns_takeover_check")), "the decoy shares the domain field");
+  assert.strictEqual(watchItemFor(snapshotTool("dns_takeover_check"), { domain: "watch-sample.test" }, EDIT), undefined);
+  assert.deepStrictEqual(watchItemFor(snapshotTool("whois_lookup"), { domain: "watch-sample.test" }, EDIT), {
+    endpoint: "whois_lookup",
+    fields: { domain: "watch-sample.test" },
+  });
 });
+
+function hasDomain(t: McpTool): boolean {
+  return Object.prototype.hasOwnProperty.call(t.inputSchema.properties ?? {}, "domain");
+}
 
 test("watchItemFor refuses a value that breaks the const of watchlist_edit", () => {
   assert.strictEqual(watchItemFor(snapshotTool("cve_search"), { known_ransomware: false }, EDIT), undefined);
@@ -251,10 +271,10 @@ test("removeArgumentsFor never sends clear or a listed action, even without the 
   });
 });
 
-test("addFormTool: product_exposure asks vendor and product, both required", () => {
+test("addFormTool: product_exposure asks vendor and product, both required, and an optional version", () => {
   const form = buildFormSteps(addFormTool(EDIT, snapshotTool("product_exposure")));
   assert.deepStrictEqual(form.required.map((s) => s.field), ["vendor", "product"]);
-  assert.deepStrictEqual(form.optional, []);
+  assert.deepStrictEqual(form.optional.map((s) => s.field), ["version"]);
   assert.strictEqual(form.confirm, false);
   assert.deepStrictEqual(form.fixed, {});
 });
@@ -264,6 +284,7 @@ test("addFormTool: cve_search asks only optional filters, typed from watchlist_e
   assert.deepStrictEqual(form.required, []);
   assert.deepStrictEqual(form.optional.map((s) => s.field).sort(), [
     "cwe_id",
+    "has_nuclei_template",
     "in_kev",
     "known_ransomware",
     "min_cvss",
@@ -276,7 +297,7 @@ test("addFormTool: cve_search asks only optional filters, typed from watchlist_e
   assert.strictEqual(byField.get("min_cvss")?.kind, "number");
   assert.strictEqual(byField.get("severity")?.kind, "enum");
   assert.strictEqual(byField.get("known_ransomware")?.constValue, true);
-  assert.strictEqual(byField.get("vendor")?.prompt, "vendor of a product_exposure or cve_search item");
+  assert.strictEqual(byField.get("vendor")?.prompt, "Vendor, for a product_exposure or cve_search item. At most 128 characters.");
 });
 
 test("addFormTool: a required field of the tool that is not watchable is not asked", () => {

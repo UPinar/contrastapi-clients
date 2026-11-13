@@ -76,7 +76,7 @@
       "get": {
         "operationId": "cve_lookup",
         "summary": "CVE Lookup",
-        "description": "Full CVE record by ID (CVSS, EPSS, KEV, CWE, references, CISA SSVC, Nuclei detection templates), with the optional GitHub Security Advisory. affected_products is the first page of cve_products, with the vulnerable products first. affected_product_count counts all of them, and product_count_by_vendor counts the products of the vendors with the most. refs holds the first references, and ref_count counts all of them. ssvc.mission_wellbeing gives the CISA SSVC decision for each mission and well-being level. Your level is high when Mission Prevalence is Essential or Public Well-being Impact is Irreversible, low when both are Minimal, and medium otherwise. If you do not know your level, use high: it never gives a less urgent decision than low or medium.",
+        "description": "Full CVE record by ID (CVSS, EPSS, KEV, CWE, references, CISA SSVC, Nuclei templates), with the optional GitHub Security Advisory. Call the cve_products tool for every affected product. If your SSVC level is unknown, read high.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -137,7 +137,7 @@
       "post": {
         "operationId": "cve_lookup_bulk",
         "summary": "Bulk CVE Lookup",
-        "description": "Look up many CVEs at once (max 50). Ids beyond the remaining credits come back in not_processed. Each record has the fields of cve_lookup, ssvc included.",
+        "description": "Look up many CVEs at once, each with the fields of cve_lookup. Ids beyond the remaining credits come back in not_processed.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -157,7 +157,7 @@
                     },
                     "minItems": 1,
                     "maxItems": 50,
-                    "description": "CVE IDs (max 50)"
+                    "description": "CVE IDs"
                   }
                 },
                 "required": [
@@ -203,7 +203,7 @@
       "get": {
         "operationId": "cve_products",
         "summary": "CVE Affected Products",
-        "description": "The products a CVE affects, one page at a time, with the vulnerable products first. With no vendor or product and the default limit, the first page is the affected_products of cve_lookup. vendor and product keep the products with that exact name.",
+        "description": "The products a CVE affects, one page at a time, with the vulnerable products first. The vendor and product arguments keep only the products with that exact name.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -223,7 +223,7 @@
             "name": "vendor",
             "in": "query",
             "required": false,
-            "description": "Keep the products of this vendor, written as affected_products writes it",
+            "description": "Exact vendor name, as affected_products writes it",
             "schema": {
               "type": "string",
               "maxLength": 128
@@ -233,7 +233,7 @@
             "name": "product",
             "in": "query",
             "required": false,
-            "description": "Keep the products of this name, written as affected_products writes it",
+            "description": "Exact product name, as affected_products writes it",
             "schema": {
               "type": "string",
               "maxLength": 128
@@ -243,22 +243,21 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "1-50 (default 20)",
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 50
+              "maximum": 50,
+              "default": 20
             }
           },
           {
             "name": "offset",
             "in": "query",
             "required": false,
-            "description": ">=0 (default 0)",
             "schema": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "default": 0
             }
           }
         ],
@@ -297,7 +296,7 @@
       "get": {
         "operationId": "cve_search",
         "summary": "CVE Search",
-        "description": "Search and filter CVEs with pagination. The filters cover severity, CWE, the CVSS and EPSS scores, CISA KEV (known exploited), known ransomware use, a Nuclei template, vendor, product and the publish date. Use cve_lookup for the full record of a CVE.",
+        "description": "Search CVEs by severity, CWE, CVSS, EPSS, CISA KEV, ransomware use, Nuclei template, vendor, product and publish date, one page at a time. Call the cve_lookup tool for a full record, and the cpe_search tool to find the names.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -351,7 +350,7 @@
             "name": "min_cvss",
             "in": "query",
             "required": false,
-            "description": "0.0-10.0; CVSS v3, or v4 when a CVE has no v3",
+            "description": "CVSS v3, or v4 when a CVE has no v3",
             "schema": {
               "type": "number",
               "minimum": 0,
@@ -362,7 +361,6 @@
             "name": "min_epss",
             "in": "query",
             "required": false,
-            "description": "0.0-1.0",
             "schema": {
               "type": "number",
               "minimum": 0,
@@ -381,7 +379,7 @@
             "name": "known_ransomware",
             "in": "query",
             "required": false,
-            "description": "keep the CVEs whose CISA KEV entry notes known ransomware use",
+            "description": "Only CVEs whose CISA KEV entry notes known ransomware use",
             "schema": {
               "type": "boolean",
               "const": true
@@ -391,7 +389,7 @@
             "name": "has_nuclei_template",
             "in": "query",
             "required": false,
-            "description": "keep the CVEs that have a Nuclei detection template",
+            "description": "Only CVEs with a Nuclei detection template",
             "schema": {
               "type": "boolean",
               "const": true
@@ -418,6 +416,15 @@
             }
           },
           {
+            "name": "include_rejected",
+            "in": "query",
+            "required": false,
+            "description": "Also list the CVEs that NVD marks Rejected",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "sort",
             "in": "query",
             "required": false,
@@ -435,22 +442,22 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "1-100 (default 20)",
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 100
+              "maximum": 100,
+              "default": 20
             }
           },
           {
             "name": "offset",
             "in": "query",
             "required": false,
-            "description": ">=0 (default 0)",
             "schema": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 10000,
+              "default": 0
             }
           }
         ],
@@ -489,7 +496,7 @@
       "get": {
         "operationId": "cve_leading",
         "summary": "Leading CVEs by EPSS",
-        "description": "List the CVEs most likely to be exploited, by EPSS score: the probability of exploitation in the next 30 days. verdict grades the top EPSS score as critical, high, moderate or low, or none when no CVE matches. Use cve_triage to rank by composite risk score.",
+        "description": "List the CVEs most likely to be exploited, by EPSS score (the probability of exploitation in the next 30 days), with a verdict on the top score. To rank by composite risk score, call the cve_triage tool.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -517,7 +524,6 @@
             "name": "min_epss",
             "in": "query",
             "required": false,
-            "description": "0.0-1.0",
             "schema": {
               "type": "number",
               "minimum": 0,
@@ -536,7 +542,7 @@
             "name": "known_ransomware",
             "in": "query",
             "required": false,
-            "description": "keep the CVEs whose CISA KEV entry notes known ransomware use",
+            "description": "Only CVEs whose CISA KEV entry notes known ransomware use",
             "schema": {
               "type": "boolean",
               "const": true
@@ -546,21 +552,30 @@
             "name": "has_nuclei_template",
             "in": "query",
             "required": false,
-            "description": "keep the CVEs that have a Nuclei detection template",
+            "description": "Only CVEs with a Nuclei detection template",
             "schema": {
               "type": "boolean",
               "const": true
             }
           },
           {
+            "name": "include_rejected",
+            "in": "query",
+            "required": false,
+            "description": "Also list the CVEs that NVD marks Rejected",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "1-50 (default 20)",
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 50
+              "maximum": 50,
+              "default": 20
             }
           }
         ],
@@ -599,7 +614,7 @@
       "get": {
         "operationId": "kev_lookup",
         "summary": "CISA KEV Lookup",
-        "description": "CISA KEV catalog entry for a CVE. KEV is CISA's catalog of known exploited vulnerabilities, each with a required action, a patch deadline and its known ransomware use. A CVE that left the catalog answers in_kev false.",
+        "description": "CISA KEV catalog entry for a CVE: the required action, the patch deadline and known ransomware use. A CVE that CISA removed answers in_kev false, and one never listed answers \"KEV entry not found\".",
         "tags": [
           "CVE Intelligence"
         ],
@@ -651,7 +666,7 @@
       "get": {
         "operationId": "cwe_lookup",
         "summary": "CWE Lookup",
-        "description": "CWE weakness details (description, mitigations, examples). cve_count counts the CVEs whose cwe_id is this CWE. kev_count counts those in CISA KEV. Use cve_search with cwe_id to list them.",
+        "description": "CWE weakness details (description, mitigations, examples), with how many CVEs and CISA KEV entries name it. To list them, call the cve_search tool with its cwe_id argument.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -703,7 +718,7 @@
       "get": {
         "operationId": "cve_risk_score",
         "summary": "CVE Risk Score",
-        "description": "Composite risk score of a CVE (exploitability + impact + evidence), from 0 to 100, for patch priority. The score reads the EPSS score, a CISA KEV entry, a Metasploit module, the CVSS score, the NVD exploit references and an ExploitDB entry. has_public_poc is null, not false, when no source names a public exploit.",
+        "description": "Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS, CISA KEV, Metasploit, CVSS, NVD exploit references and ExploitDB. has_public_poc is null when no source names an exploit.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -807,7 +822,7 @@
       "get": {
         "operationId": "cve_triage",
         "summary": "CVE Triage",
-        "description": "Minimal CVE prioritisation list: asset scope (vendor/product) + a min_risk_score threshold, always ordered by composite risk score. Returns lean rows (cve_id, risk_score, label). Use cve_lookup for detail.",
+        "description": "Rank the CVEs of a vendor or product by composite risk score, at or above the optional min_risk_score argument, as lean rows (cve_id, risk_score, label). Call the cve_lookup tool for detail, and the cpe_search tool to find the names.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -835,7 +850,7 @@
             "name": "min_risk_score",
             "in": "query",
             "required": false,
-            "description": "0.0-100.0 composite risk-score threshold",
+            "description": "Composite risk-score threshold",
             "schema": {
               "type": "number",
               "minimum": 0,
@@ -843,25 +858,34 @@
             }
           },
           {
+            "name": "include_rejected",
+            "in": "query",
+            "required": false,
+            "description": "Also list the CVEs that NVD marks Rejected",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "1-100 (default 20)",
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 100
+              "maximum": 100,
+              "default": 20
             }
           },
           {
             "name": "offset",
             "in": "query",
             "required": false,
-            "description": ">=0 (default 0)",
             "schema": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 10000,
+              "default": 0
             }
           }
         ],
@@ -900,7 +924,7 @@
       "post": {
         "operationId": "cve_triage_bulk",
         "summary": "Bulk CVE Triage",
-        "description": "Triage many CVEs at once (max 50), ranked by composite risk score. Ids beyond the remaining credits come back in not_processed.",
+        "description": "Triage many CVEs at once, ranked by composite risk score. Ids beyond the remaining credits come back in not_processed.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -920,7 +944,7 @@
                     },
                     "minItems": 1,
                     "maxItems": 50,
-                    "description": "CVE IDs (max 50)"
+                    "description": "CVE IDs"
                   }
                 },
                 "required": [
@@ -966,7 +990,7 @@
       "get": {
         "operationId": "product_exposure",
         "summary": "Product Exposure",
-        "description": "Aggregate CVE exposure for one vendor+product: severity/KEV/PoC counts, max/avg CVSS, max EPSS, worst composite risk score, plus the top CVEs by risk.",
+        "description": "CVE exposure of one vendor and product: severity, KEV and PoC counts, CVSS, EPSS, the worst risk score, the top CVEs and the endoflife.date support dates. To find the names, call the cpe_search tool.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -988,6 +1012,25 @@
             "schema": {
               "type": "string",
               "maxLength": 128
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "description": "Product version, e.g. 22.21.1 or 11-24h2; picks the release cycle of eol",
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          {
+            "name": "include_rejected",
+            "in": "query",
+            "required": false,
+            "description": "Also count and list the CVEs that NVD marks Rejected",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -1026,7 +1069,7 @@
       "get": {
         "operationId": "cpe_search",
         "summary": "CPE Search",
-        "description": "Find the CPE vendor and product names that hold a text, ranked by vulnerable CVE count. Pass a name as it is to the vendor and product filters of cve_search, cve_triage, cve_leading and product_exposure. A name that holds a % is the exception: those filters refuse a %.",
+        "description": "Find the CPE vendor and product names that hold a text, ranked by vulnerable CVE count. Pass a name that holds no % as it is to the vendor and product arguments of the cve_search, cve_triage, cve_leading and product_exposure tools.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -1036,7 +1079,7 @@
             "name": "search",
             "in": "query",
             "required": true,
-            "description": "Text to find in vendor and product names, at least 3 bytes. Case does not matter, and _ matches a space.",
+            "description": "Text in vendor or product names, at least 3 bytes; case does not matter, and _ matches a space",
             "schema": {
               "type": "string",
               "maxLength": 128
@@ -1046,22 +1089,22 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "1-50 (default 20)",
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 50
+              "maximum": 50,
+              "default": 20
             }
           },
           {
             "name": "offset",
             "in": "query",
             "required": false,
-            "description": ">=0 (default 0)",
             "schema": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 10000,
+              "default": 0
             }
           }
         ],
@@ -1151,8 +1194,8 @@
     "/watchlist_edit": {
       "post": {
         "operationId": "watchlist_edit",
-        "summary": "Watchlist: CVE and Domain Monitoring",
-        "description": "Add, remove, list or clear the items of this API key's watchlist, for CVE and domain monitoring. An item names a watchable tool and the values it watches: cve_lookup, kev_lookup or cve_exploit with cve_id; product_exposure with vendor and product; cve_search with any of severity, cwe_id, min_cvss, min_epss, in_kev, known_ransomware, vendor and product; dns_lookup or ssl_check with domain. An add of a domain that does not exist in DNS is refused. watchlist_events reports each problem that a new dns_lookup or ssl_check item's first value of a kind shows. Requires a Pro API key.",
+        "summary": "Watchlist: CVE, Package, Domain and IP Monitoring",
+        "description": "Add, remove, list or clear the items this API key watches: CVEs, products, CVE searches, packages, domains and IP addresses. Read their changes with the watchlist_events tool. Requires a Pro API key.",
         "tags": [
           "Monitoring"
         ],
@@ -1171,7 +1214,7 @@
                       "remove"
                     ],
                     "maxLength": 8,
-                    "description": "add or remove an item; leave out to list the items"
+                    "description": "add or remove; leave out to list the items"
                   },
                   "endpoint": {
                     "type": "string",
@@ -1182,25 +1225,30 @@
                       "product_exposure",
                       "cve_search",
                       "dns_lookup",
-                      "ssl_check"
+                      "ssl_check",
+                      "whois_lookup",
+                      "headers_check",
+                      "cert_search",
+                      "package_check",
+                      "ip_lookup"
                     ],
                     "maxLength": 16,
-                    "description": "the tool the item watches"
+                    "description": "The tool the item watches"
                   },
                   "cve_id": {
                     "type": "string",
                     "maxLength": 24,
-                    "description": "CVE ID of a cve_lookup, kev_lookup or cve_exploit item, e.g. CVE-2021-44228"
+                    "description": "For a cve_lookup, kev_lookup or cve_exploit item, e.g. CVE-2021-44228"
                   },
                   "vendor": {
                     "type": "string",
                     "maxLength": 128,
-                    "description": "vendor of a product_exposure or cve_search item"
+                    "description": "Vendor, for a product_exposure or cve_search item"
                   },
                   "product": {
                     "type": "string",
                     "maxLength": 128,
-                    "description": "product of a product_exposure or cve_search item"
+                    "description": "Product, for a product_exposure or cve_search item"
                   },
                   "severity": {
                     "type": "string",
@@ -1223,13 +1271,13 @@
                     "type": "number",
                     "minimum": 0,
                     "maximum": 10,
-                    "description": "0.0-10.0; CVSS v3, or v4 when a CVE has no v3; cve_search items only"
+                    "description": "CVSS v3, or v4 when a CVE has no v3; cve_search items only"
                   },
                   "min_epss": {
                     "type": "number",
                     "minimum": 0,
                     "maximum": 1,
-                    "description": "0.0-1.0; cve_search items only"
+                    "description": "At most three decimals; cve_search items only"
                   },
                   "in_kev": {
                     "type": "boolean",
@@ -1240,15 +1288,49 @@
                     "const": true,
                     "description": "cve_search items only"
                   },
+                  "has_nuclei_template": {
+                    "type": "boolean",
+                    "const": true,
+                    "description": "cve_search items only"
+                  },
                   "domain": {
                     "type": "string",
                     "maxLength": 253,
-                    "description": "the domain a dns_lookup or ssl_check item watches, such as example.com"
+                    "description": "For a dns_lookup, ssl_check, whois_lookup, headers_check or cert_search item, such as example.com"
+                  },
+                  "ecosystem": {
+                    "type": "string",
+                    "maxLength": 16,
+                    "description": "For a package_check item: npm, PyPI, Maven, Go, NuGet, RubyGems, crates.io, Packagist or SwiftURL"
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 256,
+                    "description": "Package name of a package_check item, e.g. lodash"
+                  },
+                  "version": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "description": "Exact version of a product_exposure or package_check item; leave out to watch every version"
+                  },
+                  "ip_address": {
+                    "type": "string",
+                    "maxLength": 45,
+                    "description": "Public IPv4 or IPv6 address of an ip_lookup item, such as 8.8.8.8, no prefix"
                   },
                   "clear": {
                     "type": "boolean",
                     "const": true,
-                    "description": "deletes every item and the event cursor, and takes no other argument"
+                    "description": "Deletes every item and the event cursor; takes no other argument"
+                  },
+                  "packages": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/PackageItemOptionalVersion"
+                    },
+                    "minItems": 1,
+                    "maxItems": 500,
+                    "description": "package_check items, each with an ecosystem, a name and an optional version"
                   }
                 },
                 "additionalProperties": false
@@ -1291,7 +1373,7 @@
       "get": {
         "operationId": "watchlist_events",
         "summary": "Monitoring Events",
-        "description": "Read the monitoring events of this API key's watchlist: the CVE and domain changes that match it, oldest first. The server keeps your position. The events of an ssl_check item are cert_expiring, cert_invalid, cert_listed and tls_downgraded. An event of a problem in an item's first value of a kind has previous null. Requires a Pro API key.",
+        "description": "Report what changed on the items this API key watches, such as a new advisory for a package or a certificate about to expire, oldest first. A plain call continues where the last one stopped. Requires a Pro API key.",
         "tags": [
           "Monitoring"
         ],
@@ -1301,18 +1383,19 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "1-100 (default 20); repeat=true answers the whole last batch",
+            "description": "Events per call; repeat=true answers the whole last batch",
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 100
+              "maximum": 100,
+              "default": 20
             }
           },
           {
             "name": "cursor",
             "in": "query",
             "required": false,
-            "description": "the next_cursor of an earlier answer; reads after it and leaves the position where it is",
+            "description": "next_cursor of an earlier answer; reads after it and keeps the position",
             "schema": {
               "type": "string",
               "maxLength": 18
@@ -1322,7 +1405,7 @@
             "name": "repeat",
             "in": "query",
             "required": false,
-            "description": "answers the last batch again and cannot be combined with cursor",
+            "description": "Answers the last batch again; cannot be combined with cursor",
             "schema": {
               "type": "boolean",
               "const": true
@@ -1364,7 +1447,7 @@
       "get": {
         "operationId": "privacy_my_data",
         "summary": "Privacy: My Data",
-        "description": "What this server keeps about the caller: the hash its credits are counted under, the rate limit left in this hour, and each kind of record it keeps.",
+        "description": "What this server keeps about the caller: the hash its credits are counted under, the rate limit left in this hour and the privacy policy. For a Pro key, which vendor keys are stored and a 15-minute link to change them.",
         "tags": [
           "Operations"
         ],
@@ -1400,11 +1483,101 @@
         }
       }
     },
+    "/vendor_key_edit": {
+      "post": {
+        "operationId": "vendor_key_edit",
+        "summary": "Vendor key edit",
+        "description": "Save, delete or check your own Shodan and AbuseIPDB keys, which the ip_lookup tool uses. Needs a Pro API key or a manage link. The privacy_my_data tool gives a web link where a person can save the keys without the agent seeing them.",
+        "tags": [
+          "Operations"
+        ],
+        "x-credit-cost": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "apply",
+                      "status"
+                    ],
+                    "maxLength": 6,
+                    "description": "apply saves or deletes keys; status reports the stored keys and needs link"
+                  },
+                  "link": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "The 64 hex digits after #l= in a manage link; leave out to use this Pro API key"
+                  },
+                  "shodan_key": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "description": "a Shodan key to check and save"
+                  },
+                  "shodan_delete": {
+                    "type": "boolean",
+                    "const": true,
+                    "description": "deletes the stored Shodan key"
+                  },
+                  "abuseipdb_key": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "description": "an AbuseIPDB key to check and save"
+                  },
+                  "abuseipdb_delete": {
+                    "type": "boolean",
+                    "const": true,
+                    "description": "deletes the stored AbuseIPDB key"
+                  }
+                },
+                "required": [
+                  "action"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The answer of the endpoint.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "X-RateLimit-Reset-Machine": {
+                "$ref": "#/components/headers/X-RateLimit-Reset-Machine"
+              },
+              "X-RateLimit-Reset-Human": {
+                "$ref": "#/components/headers/X-RateLimit-Reset-Human"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
     "/password_check/{sha1_hash}": {
       "get": {
         "operationId": "password_check",
         "summary": "Breached Password Check",
-        "description": "Check a password's SHA-1 against Have I Been Pwned's Pwned Passwords list. Send the full SHA-1, never the password. Only its first 5 hex digits leave this server.",
+        "description": "Check a password's SHA-1 against Have I Been Pwned's Pwned Passwords list. It takes the full SHA-1, never the password. Only its first 5 hex digits leave this server.",
         "tags": [
           "Credential Checks"
         ],
@@ -1456,7 +1629,7 @@
       "get": {
         "operationId": "dns_lookup",
         "summary": "DNS Lookup",
-        "description": "Look up a domain's DNS records: A, AAAA, MX, NS, TXT (such as SPF and verification records), CNAME, SOA and CAA. A record type the resolver could not answer is listed under unavailable.",
+        "description": "Look up a domain's DNS records: A, AAAA, MX, NS, TXT, CNAME, SOA and CAA. A record type the resolver could not answer is listed under unavailable.",
         "tags": [
           "Domain Intelligence"
         ],
@@ -1508,7 +1681,7 @@
       "get": {
         "operationId": "dns_takeover_check",
         "summary": "Subdomain Takeover Check",
-        "description": "Check a host name for subdomain takeover through a dangling CNAME: a CNAME that points to a name that does not exist. The check knows the services that show in DNS whether anyone can claim that name: Microsoft Azure, AWS Elastic Beanstalk and Discourse. For a CNAME to any other service, takeover_possible is null, because the check cannot tell.",
+        "description": "Check a host name for subdomain takeover through a dangling CNAME. takeover_possible is null when the CNAME points to a service whose DNS does not show whether the name can be claimed.",
         "tags": [
           "Domain Intelligence"
         ],
@@ -1560,7 +1733,7 @@
       "get": {
         "operationId": "email_auth_check",
         "summary": "Email Authentication Check (SPF, DMARC, DKIM)",
-        "description": "Check a domain's mail authentication: its SPF record, the DMARC record that applies to it, its DKIM keys, its MX hosts and its MTA-STS record. A domain without one DMARC record of its own gets the record of a parent domain, found by the tree walk of RFC 9989. The answer lists each check with pass, warn or fail and a severity. Without dkim_selector, the check tries the DKIM selectors of the mail providers that the MX hosts and the SPF record name, or common selectors when no provider names one.",
+        "description": "Check a domain's mail authentication: SPF, DMARC (from a parent domain when the domain has no record of its own), DKIM, MX and MTA-STS, each check with pass, warn or fail and a severity.",
         "tags": [
           "Domain Intelligence"
         ],
@@ -1580,7 +1753,7 @@
             "name": "dkim_selector",
             "in": "query",
             "required": false,
-            "description": "The DKIM selector to check, such as google. Without it, the check tries the selectors of the domain's mail providers, or common selectors when no provider names one",
+            "description": "DKIM selector, such as google; without it the check tries the selectors of the domain's mail providers",
             "schema": {
               "type": "string",
               "maxLength": 238
@@ -1622,7 +1795,7 @@
       "get": {
         "operationId": "email_address_check",
         "summary": "Email Address Check",
-        "description": "Check an e-mail address without sending mail: whether its domain exists and takes mail, through its MX hosts or, with no MX record, its own address; a null MX takes none. It also says whether the disposable domain list names the domain or a parent of it. The list is disposable-email-domains (CC0 1.0). A community keeps it, and it misses a disposable domain it does not name yet. While the list is not loaded, disposable and disposable_listed_domain are null, and unavailable names disposable_listed_domain. No SMTP connection is made, so the answer cannot tell whether the mailbox exists.",
+        "description": "Check an e-mail address without sending mail: whether its domain exists and takes mail, and whether a disposable domain list names it. It cannot tell whether the mailbox exists.",
         "tags": [
           "Domain Intelligence"
         ],
@@ -1674,7 +1847,7 @@
       "get": {
         "operationId": "ssl_check",
         "summary": "SSL/TLS Certificate Check",
-        "description": "Check the TLS certificate and the TLS settings of a host name on port 443. The answer names the TLS version, the cipher, the key exchange group, the ALPN protocol, whether the certificate is trusted and why not, its revocation status from the OCSP response the server staples, the days until it expires, its key and its DNS names, and the chain the server sent. A server that cannot be reached, or whose handshake fails, is an error that says why. It also says whether the SSL Blacklist of abuse.ch lists the certificate, by its SHA-1 fingerprint. A successful answer can be reused for up to an hour, and checked_at says when its check ran.",
+        "description": "Check the TLS certificate and settings of a host name on port 443: version, cipher, trust, OCSP revocation, expiry, DNS names, the chain and an abuse.ch SSL Blacklist listing.",
         "tags": [
           "Domain Intelligence"
         ],
@@ -1726,7 +1899,7 @@
       "get": {
         "operationId": "headers_check",
         "summary": "Security Headers Check",
-        "description": "Check the security headers of a web site. The server sends one GET to https://<domain>/, follows up to 5 redirects that stay on the host name or its www pair, and rates nine headers of the last answer: Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, X-XSS-Protection, Set-Cookie and Access-Control-Allow-Origin. Each finding names its severity, its result (pass, warn, fail or missing), its issues and the header value, and a remediation when it does not pass. The Set-Cookie finding never shows its value; cookie_count gives how many cookies the site set, and only the first 50 are checked. A value, the url or redirect_to longer than 500 code points is cut, and total_value_length, total_url_length or total_redirect_to_length gives its length; include_full_header_values true sends each whole. status_code is the site's own status, so a 403 or 404 page is rated too. A redirect to another host is not followed, and redirect_to shows where it points; redirect_limit_reached true means the 5-redirect limit stopped a chain that stayed on the site. A site that cannot be reached, or whose TLS handshake fails, is an error that says why. An answer can be reused for up to an hour, and checked_at says when its fetch ran.",
+        "description": "Rate nine security headers of a web site, such as CSP, HSTS and Set-Cookie, from one GET to https://<domain>/ that follows up to 5 redirects on the same host or its www pair. Each finding that does not pass has a remediation.",
         "tags": [
           "Domain Intelligence"
         ],
@@ -1787,7 +1960,7 @@
       "get": {
         "operationId": "whois_lookup",
         "summary": "WHOIS / RDAP Lookup",
-        "description": "Look up the registration of a domain name: its registrar and IANA Registrar ID, when it was registered, last changed and expires, its status values, its name servers and whether its delegation is signed with DNSSEC. It asks the RDAP server of the TLD, which rdap_server names. A TLD without one is asked over WHOIS when its registry's terms allow it, and whois_server names that server. A name under a registered domain, such as www.example.co.uk, asks about the registered domain, example.co.uk. A TLD with neither answers available false with reason no_registry_server. When this server has sent as many requests to that registry's server in the current minute as its rule allows, or the server asked it to wait, the answer is available false with reason quota_exhausted, and retry_after_seconds says how long to wait. A name no one has registered is an error that says so. The answer holds no registrant and no contact. An answer that holds a registration can be reused for up to an hour.",
+        "description": "Look up a domain's registration over RDAP, or WHOIS where allowed: registrar, dates, status, name servers and DNSSEC. A name under a registered domain asks about that domain. No registrant data.",
         "tags": [
           "Domain Intelligence"
         ],
@@ -1797,7 +1970,7 @@
             "name": "domain",
             "in": "path",
             "required": true,
-            "description": "Domain name, such as example.com; a name under it, such as www.example.com, asks about example.com",
+            "description": "Domain name, such as example.com; www.example.com asks about example.com",
             "schema": {
               "type": "string",
               "maxLength": 253
@@ -1839,7 +2012,7 @@
       "get": {
         "operationId": "wayback_lookup",
         "summary": "Wayback Machine Lookup",
-        "description": "List when the Internet Archive's Wayback Machine captured the home page of a host name: the first and the last capture day, the years between them, and the latest 10 capture days, each with the HTTP status and the media type of the captured answer and a link to the capture. A host the Wayback Machine never captured answers an empty list. When this server has sent as many requests to the Wayback Machine in the current 10-second window as its rule allows, or the Wayback Machine asked it to wait, the answer is available false with reason quota_exhausted, and retry_after_seconds says how long to wait. A Wayback Machine that gives no answer in 10 seconds is an error that says the upstream service is unavailable. An answer that holds the captures can be reused for up to a day.",
+        "description": "List when the Wayback Machine captured a host's home page: the first and last capture, the years between them and the latest 10 captures with links.",
         "tags": [
           "Domain Intelligence"
         ],
@@ -1891,7 +2064,7 @@
       "get": {
         "operationId": "cert_search",
         "summary": "Certificate Transparency Search",
-        "description": "List the unexpired certificates that Certificate Transparency logs hold for a host name, wildcard certificates that match it included, as SSLMate's Cert Spotter finds them. The server reads only the first page of Cert Spotter's answer. complete is true only when that page is empty. Otherwise later pages may hold more certificates. certificate_count counts the certificates the server read from that page. certificates lists up to 10 whose validity starts last among those read, the latest first. Each names its SHA-256 digest, its issuer, the CAA domains that allow the issuer, its validity, whether it is revoked, and its first 20 DNS names with dns_name_count. When this server has sent as many requests to Cert Spotter in the current hour as its rule allows, or Cert Spotter asked it to wait, the answer is available false with reason quota_exhausted, and retry_after_seconds says how long to wait. A Cert Spotter that gives no usable answer in 5 seconds is an error that says the upstream service is unavailable. An answer that holds the certificates can be reused for up to a day. Costs 2 credits.",
+        "description": "List the unexpired certificates that Certificate Transparency logs hold for a host name, wildcards included, from SSLMate's Cert Spotter: the 10 newest, with issuer, validity and DNS names. Costs 2 credits.",
         "tags": [
           "Domain Intelligence"
         ],
@@ -1943,7 +2116,7 @@
       "get": {
         "operationId": "subdomain_enum",
         "summary": "Subdomain Enumeration",
-        "description": "List the subdomains of a registrable domain from three sources: Certificate Transparency, as SSLMate's Cert Spotter gives it in the first page of its answer; DNS A queries for 94 common names; and the names the domain's own MX, NS and SPF records give. A name under a domain asks about its registrable domain. wildcard_dns says whether the domain answers any name under it: absent, present or undetermined. When it is not absent, the common names that resolved are left out. subdomains lists up to 50 names, those DNS confirms first, then by name. subdomain_count counts every name found, up to 1000, so 1000 means 1000 or more. Each name gives its hostname and lists its sources: certificate_logs, dns_wordlist or dns_records. When certificate_logs_available is true, certificate_logs_complete is true only when Cert Spotter's first page is empty. Otherwise later pages may hold more names. When this server has sent as many requests to Cert Spotter in the current hour as its rule allows, or Cert Spotter asked it to wait, certificate_logs_available is false with certificate_logs_reason quota_exhausted, and retry_after_seconds says how long to wait. When Cert Spotter gives no usable answer in 3 seconds, or the server has no Cert Spotter key, certificate_logs_available is false with certificate_logs_reason upstream_error. Either way the DNS names are still listed. An answer that holds the Certificate Transparency names can be reused for up to a day. One with certificate_logs_reason quota_exhausted can be reused for as long as retry_after_seconds, and for at least 10 minutes. One with certificate_logs_reason upstream_error can be reused for 10 minutes. One whose wildcard_dns is undetermined can be reused for 10 minutes, whatever Cert Spotter answered. retry_after_seconds is the wait when the answer was made, so a reused answer can name a longer wait than is left. Costs 2 credits.",
+        "description": "List up to 50 subdomains of a registrable domain from Certificate Transparency, DNS queries for 94 common names and the domain's MX, NS and SPF records. Costs 2 credits.",
         "tags": [
           "Domain Intelligence"
         ],
@@ -1953,7 +2126,7 @@
             "name": "domain",
             "in": "path",
             "required": true,
-            "description": "Domain name, such as example.com; a name under it, such as www.example.com, asks about example.com",
+            "description": "Domain name, such as example.com; www.example.com asks about example.com",
             "schema": {
               "type": "string",
               "maxLength": 253
@@ -1995,7 +2168,7 @@
       "get": {
         "operationId": "ip_lookup",
         "summary": "IP Lookup",
-        "description": "Look up a public IPv4 or IPv6 address: its AS number, AS name and AS country, its country, the cloud provider and service whose published range holds it, whether it is a CDN, a datacenter or a Tor exit, the DROP prefixes that list it, and its PTR name. A source that is not loaded yet answers null, and unavailable names it. reputation and internet_exposure are reserved: each answers available false with reason not_licensed. It reads IPtoASN (PDDL), DB-IP Lite (CC BY 4.0, IP Geolocation by DB-IP), the Tor Project exit list, the DROP list and the address ranges that cloud providers publish.",
+        "description": "Look up a public IP address: AS, country, cloud provider, CDN, datacenter or Tor exit, DROP listing and PTR name. A Pro key with its own Shodan or AbuseIPDB key adds exposure and reputation.",
         "tags": [
           "IP Intelligence"
         ],
@@ -2047,7 +2220,7 @@
       "get": {
         "operationId": "asn_lookup",
         "summary": "ASN Lookup",
-        "description": "Look up an autonomous system (AS) by its number, such as AS15169, or by a public IPv4 or IPv6 address it holds: its AS number, name and registration country, the prefix that holds the address, how many IPv4 and IPv6 prefixes it has, and one page of up to 50 prefixes of each family in address order. limit and offset pick the page, the same page in both families, and next_offset starts the next one. The prefixes are derived from IPtoASN (PDDL) ranges, so they can differ from the prefixes the AS announces in BGP.",
+        "description": "Look up an autonomous system by number, such as AS15169, or by an IP address it holds: name, country and one page of its IPv4 and IPv6 prefixes, derived from IPtoASN.",
         "tags": [
           "IP Intelligence"
         ],
@@ -2067,22 +2240,21 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "1-50 (default 50)",
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 50
+              "maximum": 50,
+              "default": 50
             }
           },
           {
             "name": "offset",
             "in": "query",
             "required": false,
-            "description": ">=0 (default 0)",
             "schema": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "default": 0
             }
           }
         ],
@@ -2121,7 +2293,7 @@
       "get": {
         "operationId": "d3fend_for_attack",
         "summary": "D3FEND Defenses for ATT&CK",
-        "description": "MITRE D3FEND defenses that counter a MITRE ATT&CK technique. A technique id such as T1055 also matches its sub-techniques, such as T1055.012; a sub-technique id matches only itself. An id with no defense answers empty lists. Source: MITRE D3FEND (MIT license).",
+        "description": "MITRE D3FEND defenses that counter a MITRE ATT&CK technique. A technique id such as T1055 also matches its sub-techniques. Source: MITRE D3FEND (MIT license).",
         "tags": [
           "Threat Defense"
         ],
@@ -2172,8 +2344,8 @@
     "/driver_lookup/{file_hash}": {
       "get": {
         "operationId": "driver_lookup",
-        "summary": "Vulnerable Driver Lookup (LOLDrivers)",
-        "description": "Look up a Windows driver file in the LOLDrivers catalog of vulnerable and malicious drivers. An attacker loads such a driver to reach the kernel, as in a bring-your-own-vulnerable-driver attack. A hash the catalog does not hold answers found false. Source: LOLDrivers (Apache-2.0).",
+        "summary": "Windows Driver Lookup (LOLDrivers)",
+        "description": "Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and malicious drivers. Block on the file and Authenticode hashes, not on the detection rules. Source: LOLDrivers (Apache-2.0).",
         "tags": [
           "Threat Defense"
         ],
@@ -2233,8 +2405,8 @@
     "/driver_lookup_bulk": {
       "post": {
         "operationId": "driver_lookup_bulk",
-        "summary": "Bulk Driver Lookup",
-        "description": "Look up many driver file hashes in the LOLDrivers catalog at once (max 25). Each hash gets the fields of driver_lookup, without command text. Hashes beyond the remaining credits come back in not_processed. Source: LOLDrivers (Apache-2.0).",
+        "summary": "Bulk Windows Driver Lookup",
+        "description": "Look up many driver file hashes in the LOLDrivers catalog at once, each with the fields of driver_lookup. Hashes beyond the remaining credits come back in not_processed.",
         "tags": [
           "Threat Defense"
         ],
@@ -2253,8 +2425,8 @@
                       "type": "string"
                     },
                     "minItems": 1,
-                    "maxItems": 25,
-                    "description": "MD5, SHA1 or SHA256 hashes of driver files or of their Authentihash (max 25)"
+                    "maxItems": 20,
+                    "description": "MD5, SHA1 or SHA256 of driver files or of their Authentihash"
                   }
                 },
                 "required": [
@@ -2300,7 +2472,7 @@
       "get": {
         "operationId": "package_check",
         "summary": "Package Vulnerability Check",
-        "description": "Check a package of npm, PyPI, Maven, Go, NuGet, RubyGems, crates.io, Packagist or SwiftURL against the OSV.dev advisories of GitHub, Go, PyPA and RustSec, and the OpenSSF list of malicious packages. One result is one vulnerability; the other advisories of it come in aliases. With version, only the results that affect it or may are listed, each with affects_version and fixed_version, and fixed_version names the lowest version that leaves them all. For severity, pass the CVE ids of aliases to cve_triage_bulk.",
+        "description": "Check a package against the OSV.dev advisories (GitHub, Go, PyPA, RustSec) and the OpenSSF malicious package list, with the fixed version and endoflife.date dates. For severity, pass the CVE aliases to the cve_triage_bulk tool.",
         "tags": [
           "Package Vulnerabilities (SBOM)"
         ],
@@ -2320,7 +2492,7 @@
             "name": "name",
             "in": "query",
             "required": true,
-            "description": "Package name as the dependency file writes it, e.g. lodash, @babel/core, org.apache.logging.log4j:log4j-core (Maven groupId:artifactId), golang.org/x/net (Go module path), github.com/apple/swift-nio (SwiftURL)",
+            "description": "Package name as the dependency file writes it, e.g. lodash, @babel/core, org.apache.logging.log4j:log4j-core, golang.org/x/net",
             "schema": {
               "type": "string",
               "maxLength": 256
@@ -2330,7 +2502,7 @@
             "name": "version",
             "in": "query",
             "required": false,
-            "description": "Exact version, e.g. 4.17.20. Without it every result of the package is listed.",
+            "description": "Exact version, e.g. 4.17.20; without it every result is listed",
             "schema": {
               "type": "string",
               "maxLength": 128
@@ -2340,22 +2512,21 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "1-50 (default 20)",
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 50
+              "maximum": 50,
+              "default": 20
             }
           },
           {
             "name": "offset",
             "in": "query",
             "required": false,
-            "description": ">=0 (default 0)",
             "schema": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "default": 0
             }
           }
         ],
@@ -2394,7 +2565,7 @@
       "post": {
         "operationId": "package_check_bulk",
         "summary": "Bulk Package Check (SBOM)",
-        "description": "Check many packages at once (max 500) against the advisories package_check reads. Each item names an ecosystem, a name and an exact version. Each result names the package, has_advisory_data, fixed_version, malicious, advisory_total and up to 10 advisories with id, aliases and affects_version. An item with a version range, without a version or of another ecosystem is skipped. Packages beyond the remaining credits or the request's work budget come back in not_processed, and are not charged. For the summary and the ranges of an advisory, call package_check.",
+        "description": "Check many packages at once, each an ecosystem, a name and an exact version, against the advisories package_check reads. For the summary and ranges of an advisory, call the package_check tool.",
         "tags": [
           "Package Vulnerabilities (SBOM)"
         ],
@@ -2414,7 +2585,7 @@
                     },
                     "minItems": 1,
                     "maxItems": 500,
-                    "description": "Packages to check, each with its ecosystem, name and exact version (max 500)"
+                    "description": "Packages, each with its ecosystem, name and exact version"
                   }
                 },
                 "required": [
@@ -2471,6 +2642,82 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "The answer of the endpoint.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "X-RateLimit-Reset-Machine": {
+                "$ref": "#/components/headers/X-RateLimit-Reset-Machine"
+              },
+              "X-RateLimit-Reset-Human": {
+                "$ref": "#/components/headers/X-RateLimit-Reset-Human"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api_key_claim": {
+      "post": {
+        "operationId": "api_key_claim",
+        "x-credit-cost": 0,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string",
+                    "maxLength": 36
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The answer of the endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/crypto_checkout": {
+      "post": {
+        "operationId": "crypto_checkout",
+        "x-credit-cost": 1,
         "responses": {
           "200": {
             "description": "The answer of the endpoint.",
@@ -2594,6 +2841,25 @@
           "ecosystem",
           "name",
           "version"
+        ],
+        "additionalProperties": false
+      },
+      "PackageItemOptionalVersion": {
+        "type": "object",
+        "properties": {
+          "ecosystem": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ecosystem",
+          "name"
         ],
         "additionalProperties": false
       }

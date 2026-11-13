@@ -59,6 +59,7 @@ OPERATIONS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType({
             {"name": "has_nuclei_template", "in": "query", "required": False},
             {"name": "published_after", "in": "query", "required": False},
             {"name": "published_before", "in": "query", "required": False},
+            {"name": "include_rejected", "in": "query", "required": False},
             {"name": "sort", "in": "query", "required": False},
             {"name": "limit", "in": "query", "required": False},
             {"name": "offset", "in": "query", "required": False},
@@ -75,6 +76,7 @@ OPERATIONS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType({
             {"name": "in_kev", "in": "query", "required": False},
             {"name": "known_ransomware", "in": "query", "required": False},
             {"name": "has_nuclei_template", "in": "query", "required": False},
+            {"name": "include_rejected", "in": "query", "required": False},
             {"name": "limit", "in": "query", "required": False},
         ),
     },
@@ -118,6 +120,7 @@ OPERATIONS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType({
             {"name": "vendor", "in": "query", "required": False},
             {"name": "product", "in": "query", "required": False},
             {"name": "min_risk_score", "in": "query", "required": False},
+            {"name": "include_rejected", "in": "query", "required": False},
             {"name": "limit", "in": "query", "required": False},
             {"name": "offset", "in": "query", "required": False},
         ),
@@ -137,6 +140,8 @@ OPERATIONS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType({
         "params": (
             {"name": "vendor", "in": "query", "required": True},
             {"name": "product", "in": "query", "required": True},
+            {"name": "version", "in": "query", "required": False},
+            {"name": "include_rejected", "in": "query", "required": False},
         ),
     },
     "cpe_search": {
@@ -173,8 +178,14 @@ OPERATIONS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType({
             {"name": "min_epss", "in": "body", "required": False},
             {"name": "in_kev", "in": "body", "required": False},
             {"name": "known_ransomware", "in": "body", "required": False},
+            {"name": "has_nuclei_template", "in": "body", "required": False},
             {"name": "domain", "in": "body", "required": False},
+            {"name": "ecosystem", "in": "body", "required": False},
+            {"name": "name", "in": "body", "required": False},
+            {"name": "version", "in": "body", "required": False},
+            {"name": "ip_address", "in": "body", "required": False},
             {"name": "clear", "in": "body", "required": False},
+            {"name": "packages", "in": "body", "required": False},
         ),
     },
     "watchlist_events": {
@@ -192,6 +203,19 @@ OPERATIONS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType({
         "method": "GET",
         "path": "/privacy_my_data",
         "params": (),
+    },
+    "vendor_key_edit": {
+        "method_name": "vendor_key_edit",
+        "method": "POST",
+        "path": "/vendor_key_edit",
+        "params": (
+            {"name": "action", "in": "body", "required": True},
+            {"name": "link", "in": "body", "required": False},
+            {"name": "shodan_key", "in": "body", "required": False},
+            {"name": "shodan_delete", "in": "body", "required": False},
+            {"name": "abuseipdb_key", "in": "body", "required": False},
+            {"name": "abuseipdb_delete", "in": "body", "required": False},
+        ),
     },
     "password_check": {
         "method_name": "password_check",
@@ -346,12 +370,35 @@ OPERATIONS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType({
             {"name": "items", "in": "body", "required": True},
         ),
     },
+    "api_key_claim": {
+        "method_name": "api_key_claim",
+        "method": "POST",
+        "path": "/api_key_claim",
+        "params": (
+            {"name": "order_id", "in": "body", "required": True},
+        ),
+    },
+    "crypto_checkout": {
+        "method_name": "crypto_checkout",
+        "method": "POST",
+        "path": "/crypto_checkout",
+        "params": (),
+    },
 })
 
 
 class PackageItem(TypedDict):
     ecosystem: str
     name: str
+    version: str
+
+
+class _PackageItemOptionalVersionRequired(TypedDict):
+    ecosystem: str
+    name: str
+
+
+class PackageItemOptionalVersion(_PackageItemOptionalVersionRequired, total=False):
     version: str
 
 
@@ -371,16 +418,8 @@ class _SyncMethods:
         """CVE Lookup
 
         Full CVE record by ID (CVSS, EPSS, KEV, CWE, references, CISA SSVC, Nuclei
-        detection templates), with the optional GitHub Security Advisory.
-        affected_products is the first page of cve_products, with the vulnerable
-        products first. affected_product_count counts all of them, and
-        product_count_by_vendor counts the products of the vendors with the most. refs
-        holds the first references, and ref_count counts all of them.
-        ssvc.mission_wellbeing gives the CISA SSVC decision for each mission and
-        well-being level. Your level is high when Mission Prevalence is Essential or
-        Public Well-being Impact is Irreversible, low when both are Minimal, and medium
-        otherwise. If you do not know your level, use high: it never gives a less urgent
-        decision than low or medium.
+        templates), with the optional GitHub Security Advisory. Call the cve_products
+        tool for every affected product. If your SSVC level is unknown, read high.
 
         Costs 1 credit.
 
@@ -397,13 +436,13 @@ class _SyncMethods:
     def cve_lookup_bulk(self, *, cve_ids: list[str]) -> dict[str, Any]:
         """Bulk CVE Lookup
 
-        Look up many CVEs at once (max 50). Ids beyond the remaining credits come back
-        in not_processed. Each record has the fields of cve_lookup, ssvc included.
+        Look up many CVEs at once, each with the fields of cve_lookup. Ids beyond the
+        remaining credits come back in not_processed.
 
         Costs 1 credit per item, at least 1 credit.
 
         Args:
-            cve_ids: CVE IDs (max 50). 1 to 50 items.
+            cve_ids: CVE IDs. 1 to 50 items.
         """
         return self.call("cve_lookup_bulk", {"cve_ids": cve_ids})
 
@@ -419,20 +458,19 @@ class _SyncMethods:
         """CVE Affected Products
 
         The products a CVE affects, one page at a time, with the vulnerable products
-        first. With no vendor or product and the default limit, the first page is the
-        affected_products of cve_lookup. vendor and product keep the products with that
-        exact name.
+        first. The vendor and product arguments keep only the products with that exact
+        name.
 
         Costs 1 credit.
 
         Args:
             cve_id: CVE ID, e.g. CVE-2021-44228. At most 24 characters.
-            vendor: Keep the products of this vendor, written as affected_products writes
-                it. At most 128 characters.
-            product: Keep the products of this name, written as affected_products writes it.
-                At most 128 characters.
-            limit: 1-50 (default 20). Minimum 1. Maximum 50.
-            offset: >=0 (default 0). Minimum 0. Maximum 2147483647.
+            vendor: Exact vendor name, as affected_products writes it. At most 128
+                characters.
+            product: Exact product name, as affected_products writes it. At most 128
+                characters.
+            limit: Minimum 1. Maximum 50. Default 20.
+            offset: Minimum 0. Default 0.
         """
         args: dict[str, Any] = {"cve_id": cve_id}
         if vendor is not None:
@@ -459,16 +497,16 @@ class _SyncMethods:
         has_nuclei_template: Literal[True] | None = None,
         published_after: str | None = None,
         published_before: str | None = None,
+        include_rejected: bool | None = None,
         sort: Literal["published_time", "epss", "cvss"] | None = None,
         limit: int | None = None,
         offset: int | None = None,
     ) -> dict[str, Any]:
         """CVE Search
 
-        Search and filter CVEs with pagination. The filters cover severity, CWE, the
-        CVSS and EPSS scores, CISA KEV (known exploited), known ransomware use, a Nuclei
-        template, vendor, product and the publish date. Use cve_lookup for the full
-        record of a CVE.
+        Search CVEs by severity, CWE, CVSS, EPSS, CISA KEV, ransomware use, Nuclei
+        template, vendor, product and publish date, one page at a time. Call the
+        cve_lookup tool for a full record, and the cpe_search tool to find the names.
 
         Costs 1 credit.
 
@@ -476,14 +514,15 @@ class _SyncMethods:
             vendor: At most 128 characters.
             product: At most 128 characters.
             cwe_id: e.g. CWE-79. At most 16 characters.
-            min_cvss: 0.0-10.0; CVSS v3, or v4 when a CVE has no v3. Minimum 0. Maximum 10.
-            min_epss: 0.0-1.0. Minimum 0. Maximum 1.
-            known_ransomware: keep the CVEs whose CISA KEV entry notes known ransomware use
-            has_nuclei_template: keep the CVEs that have a Nuclei detection template
+            min_cvss: CVSS v3, or v4 when a CVE has no v3. Minimum 0. Maximum 10.
+            min_epss: Minimum 0. Maximum 1.
+            known_ransomware: Only CVEs whose CISA KEV entry notes known ransomware use
+            has_nuclei_template: Only CVEs with a Nuclei detection template
             published_after: YYYY-MM-DD. At most 31 characters.
             published_before: YYYY-MM-DD. At most 31 characters.
-            limit: 1-100 (default 20). Minimum 1. Maximum 100.
-            offset: >=0 (default 0). Minimum 0. Maximum 2147483647.
+            include_rejected: Also list the CVEs that NVD marks Rejected
+            limit: Minimum 1. Maximum 100. Default 20.
+            offset: Minimum 0. Maximum 10000. Default 0.
         """
         args: dict[str, Any] = {}
         if severity is not None:
@@ -508,6 +547,8 @@ class _SyncMethods:
             args["published_after"] = published_after
         if published_before is not None:
             args["published_before"] = published_before
+        if include_rejected is not None:
+            args["include_rejected"] = include_rejected
         if sort is not None:
             args["sort"] = sort
         if limit is not None:
@@ -525,24 +566,25 @@ class _SyncMethods:
         in_kev: bool | None = None,
         known_ransomware: Literal[True] | None = None,
         has_nuclei_template: Literal[True] | None = None,
+        include_rejected: bool | None = None,
         limit: int | None = None,
     ) -> dict[str, Any]:
         """Leading CVEs by EPSS
 
-        List the CVEs most likely to be exploited, by EPSS score: the probability of
-        exploitation in the next 30 days. verdict grades the top EPSS score as critical,
-        high, moderate or low, or none when no CVE matches. Use cve_triage to rank by
-        composite risk score.
+        List the CVEs most likely to be exploited, by EPSS score (the probability of
+        exploitation in the next 30 days), with a verdict on the top score. To rank by
+        composite risk score, call the cve_triage tool.
 
         Costs 1 credit.
 
         Args:
             vendor: At most 128 characters.
             product: At most 128 characters.
-            min_epss: 0.0-1.0. Minimum 0. Maximum 1.
-            known_ransomware: keep the CVEs whose CISA KEV entry notes known ransomware use
-            has_nuclei_template: keep the CVEs that have a Nuclei detection template
-            limit: 1-50 (default 20). Minimum 1. Maximum 50.
+            min_epss: Minimum 0. Maximum 1.
+            known_ransomware: Only CVEs whose CISA KEV entry notes known ransomware use
+            has_nuclei_template: Only CVEs with a Nuclei detection template
+            include_rejected: Also list the CVEs that NVD marks Rejected
+            limit: Minimum 1. Maximum 50. Default 20.
         """
         args: dict[str, Any] = {}
         if vendor is not None:
@@ -557,6 +599,8 @@ class _SyncMethods:
             args["known_ransomware"] = known_ransomware
         if has_nuclei_template is not None:
             args["has_nuclei_template"] = has_nuclei_template
+        if include_rejected is not None:
+            args["include_rejected"] = include_rejected
         if limit is not None:
             args["limit"] = limit
         return self.call("cve_leading", args)
@@ -564,9 +608,9 @@ class _SyncMethods:
     def kev_lookup(self, *, cve_id: str) -> dict[str, Any]:
         """CISA KEV Lookup
 
-        CISA KEV catalog entry for a CVE. KEV is CISA's catalog of known exploited
-        vulnerabilities, each with a required action, a patch deadline and its known
-        ransomware use. A CVE that left the catalog answers in_kev false.
+        CISA KEV catalog entry for a CVE: the required action, the patch deadline and
+        known ransomware use. A CVE that CISA removed answers in_kev false, and one
+        never listed answers "KEV entry not found".
 
         Costs 1 credit.
 
@@ -578,9 +622,9 @@ class _SyncMethods:
     def cwe_lookup(self, *, cwe_id: str) -> dict[str, Any]:
         """CWE Lookup
 
-        CWE weakness details (description, mitigations, examples). cve_count counts the
-        CVEs whose cwe_id is this CWE. kev_count counts those in CISA KEV. Use
-        cve_search with cwe_id to list them.
+        CWE weakness details (description, mitigations, examples), with how many CVEs
+        and CISA KEV entries name it. To list them, call the cve_search tool with its
+        cwe_id argument.
 
         Costs 1 credit.
 
@@ -592,10 +636,9 @@ class _SyncMethods:
     def cve_risk_score(self, *, cve_id: str) -> dict[str, Any]:
         """CVE Risk Score
 
-        Composite risk score of a CVE (exploitability + impact + evidence), from 0 to
-        100, for patch priority. The score reads the EPSS score, a CISA KEV entry, a
-        Metasploit module, the CVSS score, the NVD exploit references and an ExploitDB
-        entry. has_public_poc is null, not false, when no source names a public exploit.
+        Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS,
+        CISA KEV, Metasploit, CVSS, NVD exploit references and ExploitDB. has_public_poc
+        is null when no source names an exploit.
 
         Costs 1 credit.
 
@@ -624,24 +667,25 @@ class _SyncMethods:
         vendor: str | None = None,
         product: str | None = None,
         min_risk_score: float | None = None,
+        include_rejected: bool | None = None,
         limit: int | None = None,
         offset: int | None = None,
     ) -> dict[str, Any]:
         """CVE Triage
 
-        Minimal CVE prioritisation list: asset scope (vendor/product) + a min_risk_score
-        threshold, always ordered by composite risk score. Returns lean rows (cve_id,
-        risk_score, label). Use cve_lookup for detail.
+        Rank the CVEs of a vendor or product by composite risk score, at or above the
+        optional min_risk_score argument, as lean rows (cve_id, risk_score, label). Call
+        the cve_lookup tool for detail, and the cpe_search tool to find the names.
 
         Costs 1 credit.
 
         Args:
             vendor: At most 128 characters.
             product: At most 128 characters.
-            min_risk_score: 0.0-100.0 composite risk-score threshold. Minimum 0. Maximum
-                100.
-            limit: 1-100 (default 20). Minimum 1. Maximum 100.
-            offset: >=0 (default 0). Minimum 0. Maximum 2147483647.
+            min_risk_score: Composite risk-score threshold. Minimum 0. Maximum 100.
+            include_rejected: Also list the CVEs that NVD marks Rejected
+            limit: Minimum 1. Maximum 100. Default 20.
+            offset: Minimum 0. Maximum 10000. Default 0.
         """
         args: dict[str, Any] = {}
         if vendor is not None:
@@ -650,6 +694,8 @@ class _SyncMethods:
             args["product"] = product
         if min_risk_score is not None:
             args["min_risk_score"] = min_risk_score
+        if include_rejected is not None:
+            args["include_rejected"] = include_rejected
         if limit is not None:
             args["limit"] = limit
         if offset is not None:
@@ -659,29 +705,45 @@ class _SyncMethods:
     def cve_triage_bulk(self, *, cve_ids: list[str]) -> dict[str, Any]:
         """Bulk CVE Triage
 
-        Triage many CVEs at once (max 50), ranked by composite risk score. Ids beyond
-        the remaining credits come back in not_processed.
+        Triage many CVEs at once, ranked by composite risk score. Ids beyond the
+        remaining credits come back in not_processed.
 
         Costs 1 credit per item, at least 1 credit.
 
         Args:
-            cve_ids: CVE IDs (max 50). 1 to 50 items.
+            cve_ids: CVE IDs. 1 to 50 items.
         """
         return self.call("cve_triage_bulk", {"cve_ids": cve_ids})
 
-    def product_exposure(self, *, vendor: str, product: str) -> dict[str, Any]:
+    def product_exposure(
+        self,
+        *,
+        vendor: str,
+        product: str,
+        version: str | None = None,
+        include_rejected: bool | None = None,
+    ) -> dict[str, Any]:
         """Product Exposure
 
-        Aggregate CVE exposure for one vendor+product: severity/KEV/PoC counts, max/avg
-        CVSS, max EPSS, worst composite risk score, plus the top CVEs by risk.
+        CVE exposure of one vendor and product: severity, KEV and PoC counts, CVSS,
+        EPSS, the worst risk score, the top CVEs and the endoflife.date support dates.
+        To find the names, call the cpe_search tool.
 
         Costs 1 credit.
 
         Args:
             vendor: At most 128 characters.
             product: At most 128 characters.
+            version: Product version, e.g. 22.21.1 or 11-24h2; picks the release cycle of
+                eol. At most 128 characters.
+            include_rejected: Also count and list the CVEs that NVD marks Rejected
         """
-        return self.call("product_exposure", {"vendor": vendor, "product": product})
+        args: dict[str, Any] = {"vendor": vendor, "product": product}
+        if version is not None:
+            args["version"] = version
+        if include_rejected is not None:
+            args["include_rejected"] = include_rejected
+        return self.call("product_exposure", args)
 
     def cpe_search(
         self,
@@ -693,17 +755,16 @@ class _SyncMethods:
         """CPE Search
 
         Find the CPE vendor and product names that hold a text, ranked by vulnerable CVE
-        count. Pass a name as it is to the vendor and product filters of cve_search,
-        cve_triage, cve_leading and product_exposure. A name that holds a % is the
-        exception: those filters refuse a %.
+        count. Pass a name that holds no % as it is to the vendor and product arguments
+        of the cve_search, cve_triage, cve_leading and product_exposure tools.
 
         Costs 1 credit.
 
         Args:
-            search: Text to find in vendor and product names, at least 3 bytes. Case does
-                not matter, and _ matches a space. At most 128 characters.
-            limit: 1-50 (default 20). Minimum 1. Maximum 50.
-            offset: >=0 (default 0). Minimum 0. Maximum 2147483647.
+            search: Text in vendor or product names, at least 3 bytes; case does not matter,
+                and _ matches a space. At most 128 characters.
+            limit: Minimum 1. Maximum 50. Default 20.
+            offset: Minimum 0. Maximum 10000. Default 0.
         """
         args: dict[str, Any] = {"search": search}
         if limit is not None:
@@ -730,7 +791,7 @@ class _SyncMethods:
         self,
         *,
         action: Literal["add", "remove"] | None = None,
-        endpoint: Literal["cve_lookup", "kev_lookup", "cve_exploit", "product_exposure", "cve_search", "dns_lookup", "ssl_check"] | None = None,
+        endpoint: Literal["cve_lookup", "kev_lookup", "cve_exploit", "product_exposure", "cve_search", "dns_lookup", "ssl_check", "whois_lookup", "headers_check", "cert_search", "package_check", "ip_lookup"] | None = None,
         cve_id: str | None = None,
         vendor: str | None = None,
         product: str | None = None,
@@ -740,40 +801,52 @@ class _SyncMethods:
         min_epss: float | None = None,
         in_kev: bool | None = None,
         known_ransomware: Literal[True] | None = None,
+        has_nuclei_template: Literal[True] | None = None,
         domain: str | None = None,
+        ecosystem: str | None = None,
+        name: str | None = None,
+        version: str | None = None,
+        ip_address: str | None = None,
         clear: Literal[True] | None = None,
+        packages: list[PackageItemOptionalVersion] | None = None,
     ) -> dict[str, Any]:
-        """Watchlist: CVE and Domain Monitoring
+        """Watchlist: CVE, Package, Domain and IP Monitoring
 
-        Add, remove, list or clear the items of this API key's watchlist, for CVE and
-        domain monitoring. An item names a watchable tool and the values it watches:
-        cve_lookup, kev_lookup or cve_exploit with cve_id; product_exposure with vendor
-        and product; cve_search with any of severity, cwe_id, min_cvss, min_epss,
-        in_kev, known_ransomware, vendor and product; dns_lookup or ssl_check with
-        domain. An add of a domain that does not exist in DNS is refused.
-        watchlist_events reports each problem that a new dns_lookup or ssl_check item's
-        first value of a kind shows. Requires a Pro API key.
+        Add, remove, list or clear the items this API key watches: CVEs, products, CVE
+        searches, packages, domains and IP addresses. Read their changes with the
+        watchlist_events tool. Requires a Pro API key.
 
         Costs 1 credit.
 
         Args:
-            action: add or remove an item; leave out to list the items
-            endpoint: the tool the item watches
-            cve_id: CVE ID of a cve_lookup, kev_lookup or cve_exploit item, e.g.
-                CVE-2021-44228. At most 24 characters.
-            vendor: vendor of a product_exposure or cve_search item. At most 128 characters.
-            product: product of a product_exposure or cve_search item. At most 128
+            action: add or remove; leave out to list the items
+            endpoint: The tool the item watches
+            cve_id: For a cve_lookup, kev_lookup or cve_exploit item, e.g. CVE-2021-44228.
+                At most 24 characters.
+            vendor: Vendor, for a product_exposure or cve_search item. At most 128
+                characters.
+            product: Product, for a product_exposure or cve_search item. At most 128
                 characters.
             severity: cve_search items only
             cwe_id: cve_search items only, e.g. CWE-79. At most 16 characters.
-            min_cvss: 0.0-10.0; CVSS v3, or v4 when a CVE has no v3; cve_search items only.
-                Minimum 0. Maximum 10.
-            min_epss: 0.0-1.0; cve_search items only. Minimum 0. Maximum 1.
+            min_cvss: CVSS v3, or v4 when a CVE has no v3; cve_search items only. Minimum 0.
+                Maximum 10.
+            min_epss: At most three decimals; cve_search items only. Minimum 0. Maximum 1.
             in_kev: cve_search items only
             known_ransomware: cve_search items only
-            domain: the domain a dns_lookup or ssl_check item watches, such as example.com.
-                At most 253 characters.
-            clear: deletes every item and the event cursor, and takes no other argument
+            has_nuclei_template: cve_search items only
+            domain: For a dns_lookup, ssl_check, whois_lookup, headers_check or cert_search
+                item, such as example.com. At most 253 characters.
+            ecosystem: For a package_check item: npm, PyPI, Maven, Go, NuGet, RubyGems,
+                crates.io, Packagist or SwiftURL. At most 16 characters.
+            name: Package name of a package_check item, e.g. lodash. At most 256 characters.
+            version: Exact version of a product_exposure or package_check item; leave out to
+                watch every version. At most 128 characters.
+            ip_address: Public IPv4 or IPv6 address of an ip_lookup item, such as 8.8.8.8,
+                no prefix. At most 45 characters.
+            clear: Deletes every item and the event cursor; takes no other argument
+            packages: package_check items, each with an ecosystem, a name and an optional
+                version. 1 to 500 items.
         """
         args: dict[str, Any] = {}
         if action is not None:
@@ -798,10 +871,22 @@ class _SyncMethods:
             args["in_kev"] = in_kev
         if known_ransomware is not None:
             args["known_ransomware"] = known_ransomware
+        if has_nuclei_template is not None:
+            args["has_nuclei_template"] = has_nuclei_template
         if domain is not None:
             args["domain"] = domain
+        if ecosystem is not None:
+            args["ecosystem"] = ecosystem
+        if name is not None:
+            args["name"] = name
+        if version is not None:
+            args["version"] = version
+        if ip_address is not None:
+            args["ip_address"] = ip_address
         if clear is not None:
             args["clear"] = clear
+        if packages is not None:
+            args["packages"] = packages
         return self.call("watchlist_edit", args)
 
     def watchlist_events(
@@ -813,20 +898,18 @@ class _SyncMethods:
     ) -> dict[str, Any]:
         """Monitoring Events
 
-        Read the monitoring events of this API key's watchlist: the CVE and domain
-        changes that match it, oldest first. The server keeps your position. The events
-        of an ssl_check item are cert_expiring, cert_invalid, cert_listed and
-        tls_downgraded. An event of a problem in an item's first value of a kind has
-        previous null. Requires a Pro API key.
+        Report what changed on the items this API key watches, such as a new advisory
+        for a package or a certificate about to expire, oldest first. A plain call
+        continues where the last one stopped. Requires a Pro API key.
 
         Costs 1 credit.
 
         Args:
-            limit: 1-100 (default 20); repeat=true answers the whole last batch. Minimum 1.
-                Maximum 100.
-            cursor: the next_cursor of an earlier answer; reads after it and leaves the
-                position where it is. At most 18 characters.
-            repeat: answers the last batch again and cannot be combined with cursor
+            limit: Events per call; repeat=true answers the whole last batch. Minimum 1.
+                Maximum 100. Default 20.
+            cursor: next_cursor of an earlier answer; reads after it and keeps the position.
+                At most 18 characters.
+            repeat: Answers the last batch again; cannot be combined with cursor
         """
         args: dict[str, Any] = {}
         if limit is not None:
@@ -841,17 +924,59 @@ class _SyncMethods:
         """Privacy: My Data
 
         What this server keeps about the caller: the hash its credits are counted under,
-        the rate limit left in this hour, and each kind of record it keeps.
+        the rate limit left in this hour and the privacy policy. For a Pro key, which
+        vendor keys are stored and a 15-minute link to change them.
 
         Costs 1 credit.
         """
         return self.call("privacy_my_data", {})
 
+    def vendor_key_edit(
+        self,
+        *,
+        action: Literal["apply", "status"],
+        link: str | None = None,
+        shodan_key: str | None = None,
+        shodan_delete: Literal[True] | None = None,
+        abuseipdb_key: str | None = None,
+        abuseipdb_delete: Literal[True] | None = None,
+    ) -> dict[str, Any]:
+        """Vendor key edit
+
+        Save, delete or check your own Shodan and AbuseIPDB keys, which the ip_lookup
+        tool uses. Needs a Pro API key or a manage link. The privacy_my_data tool gives
+        a web link where a person can save the keys without the agent seeing them.
+
+        Costs 1 credit.
+
+        Args:
+            action: apply saves or deletes keys; status reports the stored keys and needs
+                link
+            link: The 64 hex digits after #l= in a manage link; leave out to use this Pro
+                API key. At most 64 characters.
+            shodan_key: a Shodan key to check and save. At most 128 characters.
+            shodan_delete: deletes the stored Shodan key
+            abuseipdb_key: an AbuseIPDB key to check and save. At most 128 characters.
+            abuseipdb_delete: deletes the stored AbuseIPDB key
+        """
+        args: dict[str, Any] = {"action": action}
+        if link is not None:
+            args["link"] = link
+        if shodan_key is not None:
+            args["shodan_key"] = shodan_key
+        if shodan_delete is not None:
+            args["shodan_delete"] = shodan_delete
+        if abuseipdb_key is not None:
+            args["abuseipdb_key"] = abuseipdb_key
+        if abuseipdb_delete is not None:
+            args["abuseipdb_delete"] = abuseipdb_delete
+        return self.call("vendor_key_edit", args)
+
     def password_check(self, *, sha1_hash: str) -> dict[str, Any]:
         """Breached Password Check
 
-        Check a password's SHA-1 against Have I Been Pwned's Pwned Passwords list. Send
-        the full SHA-1, never the password. Only its first 5 hex digits leave this
+        Check a password's SHA-1 against Have I Been Pwned's Pwned Passwords list. It
+        takes the full SHA-1, never the password. Only its first 5 hex digits leave this
         server.
 
         Costs 1 credit.
@@ -865,9 +990,8 @@ class _SyncMethods:
     def dns_lookup(self, *, domain: str) -> dict[str, Any]:
         """DNS Lookup
 
-        Look up a domain's DNS records: A, AAAA, MX, NS, TXT (such as SPF and
-        verification records), CNAME, SOA and CAA. A record type the resolver could not
-        answer is listed under unavailable.
+        Look up a domain's DNS records: A, AAAA, MX, NS, TXT, CNAME, SOA and CAA. A
+        record type the resolver could not answer is listed under unavailable.
 
         Costs 1 credit.
 
@@ -879,11 +1003,9 @@ class _SyncMethods:
     def dns_takeover_check(self, *, domain: str) -> dict[str, Any]:
         """Subdomain Takeover Check
 
-        Check a host name for subdomain takeover through a dangling CNAME: a CNAME that
-        points to a name that does not exist. The check knows the services that show in
-        DNS whether anyone can claim that name: Microsoft Azure, AWS Elastic Beanstalk
-        and Discourse. For a CNAME to any other service, takeover_possible is null,
-        because the check cannot tell.
+        Check a host name for subdomain takeover through a dangling CNAME.
+        takeover_possible is null when the CNAME points to a service whose DNS does not
+        show whether the name can be claimed.
 
         Costs 1 credit.
 
@@ -900,21 +1022,16 @@ class _SyncMethods:
     ) -> dict[str, Any]:
         """Email Authentication Check (SPF, DMARC, DKIM)
 
-        Check a domain's mail authentication: its SPF record, the DMARC record that
-        applies to it, its DKIM keys, its MX hosts and its MTA-STS record. A domain
-        without one DMARC record of its own gets the record of a parent domain, found by
-        the tree walk of RFC 9989. The answer lists each check with pass, warn or fail
-        and a severity. Without dkim_selector, the check tries the DKIM selectors of the
-        mail providers that the MX hosts and the SPF record name, or common selectors
-        when no provider names one.
+        Check a domain's mail authentication: SPF, DMARC (from a parent domain when the
+        domain has no record of its own), DKIM, MX and MTA-STS, each check with pass,
+        warn or fail and a severity.
 
         Costs 1 credit.
 
         Args:
             domain: Domain name, such as example.com. At most 253 characters.
-            dkim_selector: The DKIM selector to check, such as google. Without it, the check
-                tries the selectors of the domain's mail providers, or common selectors when no
-                provider names one. At most 238 characters.
+            dkim_selector: DKIM selector, such as google; without it the check tries the
+                selectors of the domain's mail providers. At most 238 characters.
         """
         args: dict[str, Any] = {"domain": domain}
         if dkim_selector is not None:
@@ -925,13 +1042,8 @@ class _SyncMethods:
         """Email Address Check
 
         Check an e-mail address without sending mail: whether its domain exists and
-        takes mail, through its MX hosts or, with no MX record, its own address; a null
-        MX takes none. It also says whether the disposable domain list names the domain
-        or a parent of it. The list is disposable-email-domains (CC0 1.0). A community
-        keeps it, and it misses a disposable domain it does not name yet. While the list
-        is not loaded, disposable and disposable_listed_domain are null, and unavailable
-        names disposable_listed_domain. No SMTP connection is made, so the answer cannot
-        tell whether the mailbox exists.
+        takes mail, and whether a disposable domain list names it. It cannot tell
+        whether the mailbox exists.
 
         Costs 1 credit.
 
@@ -943,15 +1055,9 @@ class _SyncMethods:
     def ssl_check(self, *, domain: str) -> dict[str, Any]:
         """SSL/TLS Certificate Check
 
-        Check the TLS certificate and the TLS settings of a host name on port 443. The
-        answer names the TLS version, the cipher, the key exchange group, the ALPN
-        protocol, whether the certificate is trusted and why not, its revocation status
-        from the OCSP response the server staples, the days until it expires, its key
-        and its DNS names, and the chain the server sent. A server that cannot be
-        reached, or whose handshake fails, is an error that says why. It also says
-        whether the SSL Blacklist of abuse.ch lists the certificate, by its SHA-1
-        fingerprint. A successful answer can be reused for up to an hour, and checked_at
-        says when its check ran.
+        Check the TLS certificate and settings of a host name on port 443: version,
+        cipher, trust, OCSP revocation, expiry, DNS names, the chain and an abuse.ch SSL
+        Blacklist listing.
 
         Costs 1 credit.
 
@@ -968,24 +1074,9 @@ class _SyncMethods:
     ) -> dict[str, Any]:
         """Security Headers Check
 
-        Check the security headers of a web site. The server sends one GET to
-        https://<domain>/, follows up to 5 redirects that stay on the host name or its
-        www pair, and rates nine headers of the last answer: Content-Security-Policy,
-        Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options,
-        Referrer-Policy, Permissions-Policy, X-XSS-Protection, Set-Cookie and
-        Access-Control-Allow-Origin. Each finding names its severity, its result (pass,
-        warn, fail or missing), its issues and the header value, and a remediation when
-        it does not pass. The Set-Cookie finding never shows its value; cookie_count
-        gives how many cookies the site set, and only the first 50 are checked. A value,
-        the url or redirect_to longer than 500 code points is cut, and
-        total_value_length, total_url_length or total_redirect_to_length gives its
-        length; include_full_header_values true sends each whole. status_code is the
-        site's own status, so a 403 or 404 page is rated too. A redirect to another host
-        is not followed, and redirect_to shows where it points; redirect_limit_reached
-        true means the 5-redirect limit stopped a chain that stayed on the site. A site
-        that cannot be reached, or whose TLS handshake fails, is an error that says why.
-        An answer can be reused for up to an hour, and checked_at says when its fetch
-        ran.
+        Rate nine security headers of a web site, such as CSP, HSTS and Set-Cookie, from
+        one GET to https://<domain>/ that follows up to 5 redirects on the same host or
+        its www pair. Each finding that does not pass has a remediation.
 
         Costs 1 credit.
 
@@ -1002,42 +1093,23 @@ class _SyncMethods:
     def whois_lookup(self, *, domain: str) -> dict[str, Any]:
         """WHOIS / RDAP Lookup
 
-        Look up the registration of a domain name: its registrar and IANA Registrar ID,
-        when it was registered, last changed and expires, its status values, its name
-        servers and whether its delegation is signed with DNSSEC. It asks the RDAP
-        server of the TLD, which rdap_server names. A TLD without one is asked over
-        WHOIS when its registry's terms allow it, and whois_server names that server. A
-        name under a registered domain, such as www.example.co.uk, asks about the
-        registered domain, example.co.uk. A TLD with neither answers available false
-        with reason no_registry_server. When this server has sent as many requests to
-        that registry's server in the current minute as its rule allows, or the server
-        asked it to wait, the answer is available false with reason quota_exhausted, and
-        retry_after_seconds says how long to wait. A name no one has registered is an
-        error that says so. The answer holds no registrant and no contact. An answer
-        that holds a registration can be reused for up to an hour.
+        Look up a domain's registration over RDAP, or WHOIS where allowed: registrar,
+        dates, status, name servers and DNSSEC. A name under a registered domain asks
+        about that domain. No registrant data.
 
         Costs 1 credit.
 
         Args:
-            domain: Domain name, such as example.com; a name under it, such as
-                www.example.com, asks about example.com. At most 253 characters.
+            domain: Domain name, such as example.com; www.example.com asks about
+                example.com. At most 253 characters.
         """
         return self.call("whois_lookup", {"domain": domain})
 
     def wayback_lookup(self, *, domain: str) -> dict[str, Any]:
         """Wayback Machine Lookup
 
-        List when the Internet Archive's Wayback Machine captured the home page of a
-        host name: the first and the last capture day, the years between them, and the
-        latest 10 capture days, each with the HTTP status and the media type of the
-        captured answer and a link to the capture. A host the Wayback Machine never
-        captured answers an empty list. When this server has sent as many requests to
-        the Wayback Machine in the current 10-second window as its rule allows, or the
-        Wayback Machine asked it to wait, the answer is available false with reason
-        quota_exhausted, and retry_after_seconds says how long to wait. A Wayback
-        Machine that gives no answer in 10 seconds is an error that says the upstream
-        service is unavailable. An answer that holds the captures can be reused for up
-        to a day.
+        List when the Wayback Machine captured a host's home page: the first and last
+        capture, the years between them and the latest 10 captures with links.
 
         Costs 1 credit.
 
@@ -1050,20 +1122,8 @@ class _SyncMethods:
         """Certificate Transparency Search
 
         List the unexpired certificates that Certificate Transparency logs hold for a
-        host name, wildcard certificates that match it included, as SSLMate's Cert
-        Spotter finds them. The server reads only the first page of Cert Spotter's
-        answer. complete is true only when that page is empty. Otherwise later pages may
-        hold more certificates. certificate_count counts the certificates the server
-        read from that page. certificates lists up to 10 whose validity starts last
-        among those read, the latest first. Each names its SHA-256 digest, its issuer,
-        the CAA domains that allow the issuer, its validity, whether it is revoked, and
-        its first 20 DNS names with dns_name_count. When this server has sent as many
-        requests to Cert Spotter in the current hour as its rule allows, or Cert Spotter
-        asked it to wait, the answer is available false with reason quota_exhausted, and
-        retry_after_seconds says how long to wait. A Cert Spotter that gives no usable
-        answer in 5 seconds is an error that says the upstream service is unavailable.
-        An answer that holds the certificates can be reused for up to a day. Costs 2
-        credits.
+        host name, wildcards included, from SSLMate's Cert Spotter: the 10 newest, with
+        issuer, validity and DNS names. Costs 2 credits.
 
         Args:
             domain: Host name, such as example.com or www.example.com. At most 253
@@ -1074,49 +1134,22 @@ class _SyncMethods:
     def subdomain_enum(self, *, domain: str) -> dict[str, Any]:
         """Subdomain Enumeration
 
-        List the subdomains of a registrable domain from three sources: Certificate
-        Transparency, as SSLMate's Cert Spotter gives it in the first page of its
-        answer; DNS A queries for 94 common names; and the names the domain's own MX, NS
-        and SPF records give. A name under a domain asks about its registrable domain.
-        wildcard_dns says whether the domain answers any name under it: absent, present
-        or undetermined. When it is not absent, the common names that resolved are left
-        out. subdomains lists up to 50 names, those DNS confirms first, then by name.
-        subdomain_count counts every name found, up to 1000, so 1000 means 1000 or more.
-        Each name gives its hostname and lists its sources: certificate_logs,
-        dns_wordlist or dns_records. When certificate_logs_available is true,
-        certificate_logs_complete is true only when Cert Spotter's first page is empty.
-        Otherwise later pages may hold more names. When this server has sent as many
-        requests to Cert Spotter in the current hour as its rule allows, or Cert Spotter
-        asked it to wait, certificate_logs_available is false with
-        certificate_logs_reason quota_exhausted, and retry_after_seconds says how long
-        to wait. When Cert Spotter gives no usable answer in 3 seconds, or the server
-        has no Cert Spotter key, certificate_logs_available is false with
-        certificate_logs_reason upstream_error. Either way the DNS names are still
-        listed. An answer that holds the Certificate Transparency names can be reused
-        for up to a day. One with certificate_logs_reason quota_exhausted can be reused
-        for as long as retry_after_seconds, and for at least 10 minutes. One with
-        certificate_logs_reason upstream_error can be reused for 10 minutes. One whose
-        wildcard_dns is undetermined can be reused for 10 minutes, whatever Cert Spotter
-        answered. retry_after_seconds is the wait when the answer was made, so a reused
-        answer can name a longer wait than is left. Costs 2 credits.
+        List up to 50 subdomains of a registrable domain from Certificate Transparency,
+        DNS queries for 94 common names and the domain's MX, NS and SPF records. Costs 2
+        credits.
 
         Args:
-            domain: Domain name, such as example.com; a name under it, such as
-                www.example.com, asks about example.com. At most 253 characters.
+            domain: Domain name, such as example.com; www.example.com asks about
+                example.com. At most 253 characters.
         """
         return self.call("subdomain_enum", {"domain": domain})
 
     def ip_lookup(self, *, ip_address: str) -> dict[str, Any]:
         """IP Lookup
 
-        Look up a public IPv4 or IPv6 address: its AS number, AS name and AS country,
-        its country, the cloud provider and service whose published range holds it,
-        whether it is a CDN, a datacenter or a Tor exit, the DROP prefixes that list it,
-        and its PTR name. A source that is not loaded yet answers null, and unavailable
-        names it. reputation and internet_exposure are reserved: each answers available
-        false with reason not_licensed. It reads IPtoASN (PDDL), DB-IP Lite (CC BY 4.0,
-        IP Geolocation by DB-IP), the Tor Project exit list, the DROP list and the
-        address ranges that cloud providers publish.
+        Look up a public IP address: AS, country, cloud provider, CDN, datacenter or Tor
+        exit, DROP listing and PTR name. A Pro key with its own Shodan or AbuseIPDB key
+        adds exposure and reputation.
 
         Costs 1 credit.
 
@@ -1135,21 +1168,17 @@ class _SyncMethods:
     ) -> dict[str, Any]:
         """ASN Lookup
 
-        Look up an autonomous system (AS) by its number, such as AS15169, or by a public
-        IPv4 or IPv6 address it holds: its AS number, name and registration country, the
-        prefix that holds the address, how many IPv4 and IPv6 prefixes it has, and one
-        page of up to 50 prefixes of each family in address order. limit and offset pick
-        the page, the same page in both families, and next_offset starts the next one.
-        The prefixes are derived from IPtoASN (PDDL) ranges, so they can differ from the
-        prefixes the AS announces in BGP.
+        Look up an autonomous system by number, such as AS15169, or by an IP address it
+        holds: name, country and one page of its IPv4 and IPv6 prefixes, derived from
+        IPtoASN.
 
         Costs 1 credit.
 
         Args:
             target: AS number, such as AS15169 or 15169, or a public IPv4 or IPv6 address,
                 such as 8.8.8.8. At most 45 characters.
-            limit: 1-50 (default 50). Minimum 1. Maximum 50.
-            offset: >=0 (default 0). Minimum 0. Maximum 2147483647.
+            limit: Minimum 1. Maximum 50. Default 50.
+            offset: Minimum 0. Default 0.
         """
         args: dict[str, Any] = {"target": target}
         if limit is not None:
@@ -1162,9 +1191,7 @@ class _SyncMethods:
         """D3FEND Defenses for ATT&CK
 
         MITRE D3FEND defenses that counter a MITRE ATT&CK technique. A technique id such
-        as T1055 also matches its sub-techniques, such as T1055.012; a sub-technique id
-        matches only itself. An id with no defense answers empty lists. Source: MITRE
-        D3FEND (MIT license).
+        as T1055 also matches its sub-techniques. Source: MITRE D3FEND (MIT license).
 
         Costs 1 credit.
 
@@ -1180,12 +1207,11 @@ class _SyncMethods:
         file_hash: str,
         include_commands: bool | None = None,
     ) -> dict[str, Any]:
-        """Vulnerable Driver Lookup (LOLDrivers)
+        """Windows Driver Lookup (LOLDrivers)
 
-        Look up a Windows driver file in the LOLDrivers catalog of vulnerable and
-        malicious drivers. An attacker loads such a driver to reach the kernel, as in a
-        bring-your-own-vulnerable-driver attack. A hash the catalog does not hold
-        answers found false. Source: LOLDrivers (Apache-2.0).
+        Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and
+        malicious drivers. Block on the file and Authenticode hashes, not on the
+        detection rules. Source: LOLDrivers (Apache-2.0).
 
         Costs 1 credit.
 
@@ -1200,17 +1226,17 @@ class _SyncMethods:
         return self.call("driver_lookup", args)
 
     def driver_lookup_bulk(self, *, hashes: list[str]) -> dict[str, Any]:
-        """Bulk Driver Lookup
+        """Bulk Windows Driver Lookup
 
-        Look up many driver file hashes in the LOLDrivers catalog at once (max 25). Each
-        hash gets the fields of driver_lookup, without command text. Hashes beyond the
-        remaining credits come back in not_processed. Source: LOLDrivers (Apache-2.0).
+        Look up many driver file hashes in the LOLDrivers catalog at once, each with the
+        fields of driver_lookup. Hashes beyond the remaining credits come back in
+        not_processed.
 
         Costs 1 credit per item, at least 1 credit.
 
         Args:
-            hashes: MD5, SHA1 or SHA256 hashes of driver files or of their Authentihash (max
-                25). 1 to 25 items.
+            hashes: MD5, SHA1 or SHA256 of driver files or of their Authentihash. 1 to 20
+                items.
         """
         return self.call("driver_lookup_bulk", {"hashes": hashes})
 
@@ -1225,13 +1251,9 @@ class _SyncMethods:
     ) -> dict[str, Any]:
         """Package Vulnerability Check
 
-        Check a package of npm, PyPI, Maven, Go, NuGet, RubyGems, crates.io, Packagist
-        or SwiftURL against the OSV.dev advisories of GitHub, Go, PyPA and RustSec, and
-        the OpenSSF list of malicious packages. One result is one vulnerability; the
-        other advisories of it come in aliases. With version, only the results that
-        affect it or may are listed, each with affects_version and fixed_version, and
-        fixed_version names the lowest version that leaves them all. For severity, pass
-        the CVE ids of aliases to cve_triage_bulk.
+        Check a package against the OSV.dev advisories (GitHub, Go, PyPA, RustSec) and
+        the OpenSSF malicious package list, with the fixed version and endoflife.date
+        dates. For severity, pass the CVE aliases to the cve_triage_bulk tool.
 
         Costs 1 credit.
 
@@ -1239,12 +1261,11 @@ class _SyncMethods:
             ecosystem: npm, PyPI, Maven, Go, NuGet, RubyGems, crates.io, Packagist or
                 SwiftURL. Case does not matter. At most 16 characters.
             name: Package name as the dependency file writes it, e.g. lodash, @babel/core,
-                org.apache.logging.log4j:log4j-core (Maven groupId:artifactId), golang.org/x/net
-                (Go module path), github.com/apple/swift-nio (SwiftURL). At most 256 characters.
-            version: Exact version, e.g. 4.17.20. Without it every result of the package is
-                listed. At most 128 characters.
-            limit: 1-50 (default 20). Minimum 1. Maximum 50.
-            offset: >=0 (default 0). Minimum 0. Maximum 2147483647.
+                org.apache.logging.log4j:log4j-core, golang.org/x/net. At most 256 characters.
+            version: Exact version, e.g. 4.17.20; without it every result is listed. At most
+                128 characters.
+            limit: Minimum 1. Maximum 50. Default 20.
+            offset: Minimum 0. Default 0.
         """
         args: dict[str, Any] = {"ecosystem": ecosystem, "name": name}
         if version is not None:
@@ -1258,22 +1279,30 @@ class _SyncMethods:
     def package_check_bulk(self, *, items: list[PackageItem]) -> dict[str, Any]:
         """Bulk Package Check (SBOM)
 
-        Check many packages at once (max 500) against the advisories package_check
-        reads. Each item names an ecosystem, a name and an exact version. Each result
-        names the package, has_advisory_data, fixed_version, malicious, advisory_total
-        and up to 10 advisories with id, aliases and affects_version. An item with a
-        version range, without a version or of another ecosystem is skipped. Packages
-        beyond the remaining credits or the request's work budget come back in
-        not_processed, and are not charged. For the summary and the ranges of an
-        advisory, call package_check.
+        Check many packages at once, each an ecosystem, a name and an exact version,
+        against the advisories package_check reads. For the summary and ranges of an
+        advisory, call the package_check tool.
 
         Costs 1 credit per item, at least 1 credit.
 
         Args:
-            items: Packages to check, each with its ecosystem, name and exact version (max
-                500). 1 to 500 items.
+            items: Packages, each with its ecosystem, name and exact version. 1 to 500
+                items.
         """
         return self.call("package_check_bulk", {"items": items})
+
+    def api_key_claim(self, *, order_id: str) -> dict[str, Any]:
+        """Free.
+
+        Args:
+            order_id: At most 36 characters.
+        """
+        return self.call("api_key_claim", {"order_id": order_id})
+
+    def crypto_checkout(self) -> dict[str, Any]:
+        """Costs 1 credit.
+        """
+        return self.call("crypto_checkout", {})
 
 
 class _AsyncMethods:
@@ -1292,16 +1321,8 @@ class _AsyncMethods:
         """CVE Lookup
 
         Full CVE record by ID (CVSS, EPSS, KEV, CWE, references, CISA SSVC, Nuclei
-        detection templates), with the optional GitHub Security Advisory.
-        affected_products is the first page of cve_products, with the vulnerable
-        products first. affected_product_count counts all of them, and
-        product_count_by_vendor counts the products of the vendors with the most. refs
-        holds the first references, and ref_count counts all of them.
-        ssvc.mission_wellbeing gives the CISA SSVC decision for each mission and
-        well-being level. Your level is high when Mission Prevalence is Essential or
-        Public Well-being Impact is Irreversible, low when both are Minimal, and medium
-        otherwise. If you do not know your level, use high: it never gives a less urgent
-        decision than low or medium.
+        templates), with the optional GitHub Security Advisory. Call the cve_products
+        tool for every affected product. If your SSVC level is unknown, read high.
 
         Costs 1 credit.
 
@@ -1318,13 +1339,13 @@ class _AsyncMethods:
     async def cve_lookup_bulk(self, *, cve_ids: list[str]) -> dict[str, Any]:
         """Bulk CVE Lookup
 
-        Look up many CVEs at once (max 50). Ids beyond the remaining credits come back
-        in not_processed. Each record has the fields of cve_lookup, ssvc included.
+        Look up many CVEs at once, each with the fields of cve_lookup. Ids beyond the
+        remaining credits come back in not_processed.
 
         Costs 1 credit per item, at least 1 credit.
 
         Args:
-            cve_ids: CVE IDs (max 50). 1 to 50 items.
+            cve_ids: CVE IDs. 1 to 50 items.
         """
         return await self.call("cve_lookup_bulk", {"cve_ids": cve_ids})
 
@@ -1340,20 +1361,19 @@ class _AsyncMethods:
         """CVE Affected Products
 
         The products a CVE affects, one page at a time, with the vulnerable products
-        first. With no vendor or product and the default limit, the first page is the
-        affected_products of cve_lookup. vendor and product keep the products with that
-        exact name.
+        first. The vendor and product arguments keep only the products with that exact
+        name.
 
         Costs 1 credit.
 
         Args:
             cve_id: CVE ID, e.g. CVE-2021-44228. At most 24 characters.
-            vendor: Keep the products of this vendor, written as affected_products writes
-                it. At most 128 characters.
-            product: Keep the products of this name, written as affected_products writes it.
-                At most 128 characters.
-            limit: 1-50 (default 20). Minimum 1. Maximum 50.
-            offset: >=0 (default 0). Minimum 0. Maximum 2147483647.
+            vendor: Exact vendor name, as affected_products writes it. At most 128
+                characters.
+            product: Exact product name, as affected_products writes it. At most 128
+                characters.
+            limit: Minimum 1. Maximum 50. Default 20.
+            offset: Minimum 0. Default 0.
         """
         args: dict[str, Any] = {"cve_id": cve_id}
         if vendor is not None:
@@ -1380,16 +1400,16 @@ class _AsyncMethods:
         has_nuclei_template: Literal[True] | None = None,
         published_after: str | None = None,
         published_before: str | None = None,
+        include_rejected: bool | None = None,
         sort: Literal["published_time", "epss", "cvss"] | None = None,
         limit: int | None = None,
         offset: int | None = None,
     ) -> dict[str, Any]:
         """CVE Search
 
-        Search and filter CVEs with pagination. The filters cover severity, CWE, the
-        CVSS and EPSS scores, CISA KEV (known exploited), known ransomware use, a Nuclei
-        template, vendor, product and the publish date. Use cve_lookup for the full
-        record of a CVE.
+        Search CVEs by severity, CWE, CVSS, EPSS, CISA KEV, ransomware use, Nuclei
+        template, vendor, product and publish date, one page at a time. Call the
+        cve_lookup tool for a full record, and the cpe_search tool to find the names.
 
         Costs 1 credit.
 
@@ -1397,14 +1417,15 @@ class _AsyncMethods:
             vendor: At most 128 characters.
             product: At most 128 characters.
             cwe_id: e.g. CWE-79. At most 16 characters.
-            min_cvss: 0.0-10.0; CVSS v3, or v4 when a CVE has no v3. Minimum 0. Maximum 10.
-            min_epss: 0.0-1.0. Minimum 0. Maximum 1.
-            known_ransomware: keep the CVEs whose CISA KEV entry notes known ransomware use
-            has_nuclei_template: keep the CVEs that have a Nuclei detection template
+            min_cvss: CVSS v3, or v4 when a CVE has no v3. Minimum 0. Maximum 10.
+            min_epss: Minimum 0. Maximum 1.
+            known_ransomware: Only CVEs whose CISA KEV entry notes known ransomware use
+            has_nuclei_template: Only CVEs with a Nuclei detection template
             published_after: YYYY-MM-DD. At most 31 characters.
             published_before: YYYY-MM-DD. At most 31 characters.
-            limit: 1-100 (default 20). Minimum 1. Maximum 100.
-            offset: >=0 (default 0). Minimum 0. Maximum 2147483647.
+            include_rejected: Also list the CVEs that NVD marks Rejected
+            limit: Minimum 1. Maximum 100. Default 20.
+            offset: Minimum 0. Maximum 10000. Default 0.
         """
         args: dict[str, Any] = {}
         if severity is not None:
@@ -1429,6 +1450,8 @@ class _AsyncMethods:
             args["published_after"] = published_after
         if published_before is not None:
             args["published_before"] = published_before
+        if include_rejected is not None:
+            args["include_rejected"] = include_rejected
         if sort is not None:
             args["sort"] = sort
         if limit is not None:
@@ -1446,24 +1469,25 @@ class _AsyncMethods:
         in_kev: bool | None = None,
         known_ransomware: Literal[True] | None = None,
         has_nuclei_template: Literal[True] | None = None,
+        include_rejected: bool | None = None,
         limit: int | None = None,
     ) -> dict[str, Any]:
         """Leading CVEs by EPSS
 
-        List the CVEs most likely to be exploited, by EPSS score: the probability of
-        exploitation in the next 30 days. verdict grades the top EPSS score as critical,
-        high, moderate or low, or none when no CVE matches. Use cve_triage to rank by
-        composite risk score.
+        List the CVEs most likely to be exploited, by EPSS score (the probability of
+        exploitation in the next 30 days), with a verdict on the top score. To rank by
+        composite risk score, call the cve_triage tool.
 
         Costs 1 credit.
 
         Args:
             vendor: At most 128 characters.
             product: At most 128 characters.
-            min_epss: 0.0-1.0. Minimum 0. Maximum 1.
-            known_ransomware: keep the CVEs whose CISA KEV entry notes known ransomware use
-            has_nuclei_template: keep the CVEs that have a Nuclei detection template
-            limit: 1-50 (default 20). Minimum 1. Maximum 50.
+            min_epss: Minimum 0. Maximum 1.
+            known_ransomware: Only CVEs whose CISA KEV entry notes known ransomware use
+            has_nuclei_template: Only CVEs with a Nuclei detection template
+            include_rejected: Also list the CVEs that NVD marks Rejected
+            limit: Minimum 1. Maximum 50. Default 20.
         """
         args: dict[str, Any] = {}
         if vendor is not None:
@@ -1478,6 +1502,8 @@ class _AsyncMethods:
             args["known_ransomware"] = known_ransomware
         if has_nuclei_template is not None:
             args["has_nuclei_template"] = has_nuclei_template
+        if include_rejected is not None:
+            args["include_rejected"] = include_rejected
         if limit is not None:
             args["limit"] = limit
         return await self.call("cve_leading", args)
@@ -1485,9 +1511,9 @@ class _AsyncMethods:
     async def kev_lookup(self, *, cve_id: str) -> dict[str, Any]:
         """CISA KEV Lookup
 
-        CISA KEV catalog entry for a CVE. KEV is CISA's catalog of known exploited
-        vulnerabilities, each with a required action, a patch deadline and its known
-        ransomware use. A CVE that left the catalog answers in_kev false.
+        CISA KEV catalog entry for a CVE: the required action, the patch deadline and
+        known ransomware use. A CVE that CISA removed answers in_kev false, and one
+        never listed answers "KEV entry not found".
 
         Costs 1 credit.
 
@@ -1499,9 +1525,9 @@ class _AsyncMethods:
     async def cwe_lookup(self, *, cwe_id: str) -> dict[str, Any]:
         """CWE Lookup
 
-        CWE weakness details (description, mitigations, examples). cve_count counts the
-        CVEs whose cwe_id is this CWE. kev_count counts those in CISA KEV. Use
-        cve_search with cwe_id to list them.
+        CWE weakness details (description, mitigations, examples), with how many CVEs
+        and CISA KEV entries name it. To list them, call the cve_search tool with its
+        cwe_id argument.
 
         Costs 1 credit.
 
@@ -1513,10 +1539,9 @@ class _AsyncMethods:
     async def cve_risk_score(self, *, cve_id: str) -> dict[str, Any]:
         """CVE Risk Score
 
-        Composite risk score of a CVE (exploitability + impact + evidence), from 0 to
-        100, for patch priority. The score reads the EPSS score, a CISA KEV entry, a
-        Metasploit module, the CVSS score, the NVD exploit references and an ExploitDB
-        entry. has_public_poc is null, not false, when no source names a public exploit.
+        Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS,
+        CISA KEV, Metasploit, CVSS, NVD exploit references and ExploitDB. has_public_poc
+        is null when no source names an exploit.
 
         Costs 1 credit.
 
@@ -1545,24 +1570,25 @@ class _AsyncMethods:
         vendor: str | None = None,
         product: str | None = None,
         min_risk_score: float | None = None,
+        include_rejected: bool | None = None,
         limit: int | None = None,
         offset: int | None = None,
     ) -> dict[str, Any]:
         """CVE Triage
 
-        Minimal CVE prioritisation list: asset scope (vendor/product) + a min_risk_score
-        threshold, always ordered by composite risk score. Returns lean rows (cve_id,
-        risk_score, label). Use cve_lookup for detail.
+        Rank the CVEs of a vendor or product by composite risk score, at or above the
+        optional min_risk_score argument, as lean rows (cve_id, risk_score, label). Call
+        the cve_lookup tool for detail, and the cpe_search tool to find the names.
 
         Costs 1 credit.
 
         Args:
             vendor: At most 128 characters.
             product: At most 128 characters.
-            min_risk_score: 0.0-100.0 composite risk-score threshold. Minimum 0. Maximum
-                100.
-            limit: 1-100 (default 20). Minimum 1. Maximum 100.
-            offset: >=0 (default 0). Minimum 0. Maximum 2147483647.
+            min_risk_score: Composite risk-score threshold. Minimum 0. Maximum 100.
+            include_rejected: Also list the CVEs that NVD marks Rejected
+            limit: Minimum 1. Maximum 100. Default 20.
+            offset: Minimum 0. Maximum 10000. Default 0.
         """
         args: dict[str, Any] = {}
         if vendor is not None:
@@ -1571,6 +1597,8 @@ class _AsyncMethods:
             args["product"] = product
         if min_risk_score is not None:
             args["min_risk_score"] = min_risk_score
+        if include_rejected is not None:
+            args["include_rejected"] = include_rejected
         if limit is not None:
             args["limit"] = limit
         if offset is not None:
@@ -1580,29 +1608,45 @@ class _AsyncMethods:
     async def cve_triage_bulk(self, *, cve_ids: list[str]) -> dict[str, Any]:
         """Bulk CVE Triage
 
-        Triage many CVEs at once (max 50), ranked by composite risk score. Ids beyond
-        the remaining credits come back in not_processed.
+        Triage many CVEs at once, ranked by composite risk score. Ids beyond the
+        remaining credits come back in not_processed.
 
         Costs 1 credit per item, at least 1 credit.
 
         Args:
-            cve_ids: CVE IDs (max 50). 1 to 50 items.
+            cve_ids: CVE IDs. 1 to 50 items.
         """
         return await self.call("cve_triage_bulk", {"cve_ids": cve_ids})
 
-    async def product_exposure(self, *, vendor: str, product: str) -> dict[str, Any]:
+    async def product_exposure(
+        self,
+        *,
+        vendor: str,
+        product: str,
+        version: str | None = None,
+        include_rejected: bool | None = None,
+    ) -> dict[str, Any]:
         """Product Exposure
 
-        Aggregate CVE exposure for one vendor+product: severity/KEV/PoC counts, max/avg
-        CVSS, max EPSS, worst composite risk score, plus the top CVEs by risk.
+        CVE exposure of one vendor and product: severity, KEV and PoC counts, CVSS,
+        EPSS, the worst risk score, the top CVEs and the endoflife.date support dates.
+        To find the names, call the cpe_search tool.
 
         Costs 1 credit.
 
         Args:
             vendor: At most 128 characters.
             product: At most 128 characters.
+            version: Product version, e.g. 22.21.1 or 11-24h2; picks the release cycle of
+                eol. At most 128 characters.
+            include_rejected: Also count and list the CVEs that NVD marks Rejected
         """
-        return await self.call("product_exposure", {"vendor": vendor, "product": product})
+        args: dict[str, Any] = {"vendor": vendor, "product": product}
+        if version is not None:
+            args["version"] = version
+        if include_rejected is not None:
+            args["include_rejected"] = include_rejected
+        return await self.call("product_exposure", args)
 
     async def cpe_search(
         self,
@@ -1614,17 +1658,16 @@ class _AsyncMethods:
         """CPE Search
 
         Find the CPE vendor and product names that hold a text, ranked by vulnerable CVE
-        count. Pass a name as it is to the vendor and product filters of cve_search,
-        cve_triage, cve_leading and product_exposure. A name that holds a % is the
-        exception: those filters refuse a %.
+        count. Pass a name that holds no % as it is to the vendor and product arguments
+        of the cve_search, cve_triage, cve_leading and product_exposure tools.
 
         Costs 1 credit.
 
         Args:
-            search: Text to find in vendor and product names, at least 3 bytes. Case does
-                not matter, and _ matches a space. At most 128 characters.
-            limit: 1-50 (default 20). Minimum 1. Maximum 50.
-            offset: >=0 (default 0). Minimum 0. Maximum 2147483647.
+            search: Text in vendor or product names, at least 3 bytes; case does not matter,
+                and _ matches a space. At most 128 characters.
+            limit: Minimum 1. Maximum 50. Default 20.
+            offset: Minimum 0. Maximum 10000. Default 0.
         """
         args: dict[str, Any] = {"search": search}
         if limit is not None:
@@ -1651,7 +1694,7 @@ class _AsyncMethods:
         self,
         *,
         action: Literal["add", "remove"] | None = None,
-        endpoint: Literal["cve_lookup", "kev_lookup", "cve_exploit", "product_exposure", "cve_search", "dns_lookup", "ssl_check"] | None = None,
+        endpoint: Literal["cve_lookup", "kev_lookup", "cve_exploit", "product_exposure", "cve_search", "dns_lookup", "ssl_check", "whois_lookup", "headers_check", "cert_search", "package_check", "ip_lookup"] | None = None,
         cve_id: str | None = None,
         vendor: str | None = None,
         product: str | None = None,
@@ -1661,40 +1704,52 @@ class _AsyncMethods:
         min_epss: float | None = None,
         in_kev: bool | None = None,
         known_ransomware: Literal[True] | None = None,
+        has_nuclei_template: Literal[True] | None = None,
         domain: str | None = None,
+        ecosystem: str | None = None,
+        name: str | None = None,
+        version: str | None = None,
+        ip_address: str | None = None,
         clear: Literal[True] | None = None,
+        packages: list[PackageItemOptionalVersion] | None = None,
     ) -> dict[str, Any]:
-        """Watchlist: CVE and Domain Monitoring
+        """Watchlist: CVE, Package, Domain and IP Monitoring
 
-        Add, remove, list or clear the items of this API key's watchlist, for CVE and
-        domain monitoring. An item names a watchable tool and the values it watches:
-        cve_lookup, kev_lookup or cve_exploit with cve_id; product_exposure with vendor
-        and product; cve_search with any of severity, cwe_id, min_cvss, min_epss,
-        in_kev, known_ransomware, vendor and product; dns_lookup or ssl_check with
-        domain. An add of a domain that does not exist in DNS is refused.
-        watchlist_events reports each problem that a new dns_lookup or ssl_check item's
-        first value of a kind shows. Requires a Pro API key.
+        Add, remove, list or clear the items this API key watches: CVEs, products, CVE
+        searches, packages, domains and IP addresses. Read their changes with the
+        watchlist_events tool. Requires a Pro API key.
 
         Costs 1 credit.
 
         Args:
-            action: add or remove an item; leave out to list the items
-            endpoint: the tool the item watches
-            cve_id: CVE ID of a cve_lookup, kev_lookup or cve_exploit item, e.g.
-                CVE-2021-44228. At most 24 characters.
-            vendor: vendor of a product_exposure or cve_search item. At most 128 characters.
-            product: product of a product_exposure or cve_search item. At most 128
+            action: add or remove; leave out to list the items
+            endpoint: The tool the item watches
+            cve_id: For a cve_lookup, kev_lookup or cve_exploit item, e.g. CVE-2021-44228.
+                At most 24 characters.
+            vendor: Vendor, for a product_exposure or cve_search item. At most 128
+                characters.
+            product: Product, for a product_exposure or cve_search item. At most 128
                 characters.
             severity: cve_search items only
             cwe_id: cve_search items only, e.g. CWE-79. At most 16 characters.
-            min_cvss: 0.0-10.0; CVSS v3, or v4 when a CVE has no v3; cve_search items only.
-                Minimum 0. Maximum 10.
-            min_epss: 0.0-1.0; cve_search items only. Minimum 0. Maximum 1.
+            min_cvss: CVSS v3, or v4 when a CVE has no v3; cve_search items only. Minimum 0.
+                Maximum 10.
+            min_epss: At most three decimals; cve_search items only. Minimum 0. Maximum 1.
             in_kev: cve_search items only
             known_ransomware: cve_search items only
-            domain: the domain a dns_lookup or ssl_check item watches, such as example.com.
-                At most 253 characters.
-            clear: deletes every item and the event cursor, and takes no other argument
+            has_nuclei_template: cve_search items only
+            domain: For a dns_lookup, ssl_check, whois_lookup, headers_check or cert_search
+                item, such as example.com. At most 253 characters.
+            ecosystem: For a package_check item: npm, PyPI, Maven, Go, NuGet, RubyGems,
+                crates.io, Packagist or SwiftURL. At most 16 characters.
+            name: Package name of a package_check item, e.g. lodash. At most 256 characters.
+            version: Exact version of a product_exposure or package_check item; leave out to
+                watch every version. At most 128 characters.
+            ip_address: Public IPv4 or IPv6 address of an ip_lookup item, such as 8.8.8.8,
+                no prefix. At most 45 characters.
+            clear: Deletes every item and the event cursor; takes no other argument
+            packages: package_check items, each with an ecosystem, a name and an optional
+                version. 1 to 500 items.
         """
         args: dict[str, Any] = {}
         if action is not None:
@@ -1719,10 +1774,22 @@ class _AsyncMethods:
             args["in_kev"] = in_kev
         if known_ransomware is not None:
             args["known_ransomware"] = known_ransomware
+        if has_nuclei_template is not None:
+            args["has_nuclei_template"] = has_nuclei_template
         if domain is not None:
             args["domain"] = domain
+        if ecosystem is not None:
+            args["ecosystem"] = ecosystem
+        if name is not None:
+            args["name"] = name
+        if version is not None:
+            args["version"] = version
+        if ip_address is not None:
+            args["ip_address"] = ip_address
         if clear is not None:
             args["clear"] = clear
+        if packages is not None:
+            args["packages"] = packages
         return await self.call("watchlist_edit", args)
 
     async def watchlist_events(
@@ -1734,20 +1801,18 @@ class _AsyncMethods:
     ) -> dict[str, Any]:
         """Monitoring Events
 
-        Read the monitoring events of this API key's watchlist: the CVE and domain
-        changes that match it, oldest first. The server keeps your position. The events
-        of an ssl_check item are cert_expiring, cert_invalid, cert_listed and
-        tls_downgraded. An event of a problem in an item's first value of a kind has
-        previous null. Requires a Pro API key.
+        Report what changed on the items this API key watches, such as a new advisory
+        for a package or a certificate about to expire, oldest first. A plain call
+        continues where the last one stopped. Requires a Pro API key.
 
         Costs 1 credit.
 
         Args:
-            limit: 1-100 (default 20); repeat=true answers the whole last batch. Minimum 1.
-                Maximum 100.
-            cursor: the next_cursor of an earlier answer; reads after it and leaves the
-                position where it is. At most 18 characters.
-            repeat: answers the last batch again and cannot be combined with cursor
+            limit: Events per call; repeat=true answers the whole last batch. Minimum 1.
+                Maximum 100. Default 20.
+            cursor: next_cursor of an earlier answer; reads after it and keeps the position.
+                At most 18 characters.
+            repeat: Answers the last batch again; cannot be combined with cursor
         """
         args: dict[str, Any] = {}
         if limit is not None:
@@ -1762,17 +1827,59 @@ class _AsyncMethods:
         """Privacy: My Data
 
         What this server keeps about the caller: the hash its credits are counted under,
-        the rate limit left in this hour, and each kind of record it keeps.
+        the rate limit left in this hour and the privacy policy. For a Pro key, which
+        vendor keys are stored and a 15-minute link to change them.
 
         Costs 1 credit.
         """
         return await self.call("privacy_my_data", {})
 
+    async def vendor_key_edit(
+        self,
+        *,
+        action: Literal["apply", "status"],
+        link: str | None = None,
+        shodan_key: str | None = None,
+        shodan_delete: Literal[True] | None = None,
+        abuseipdb_key: str | None = None,
+        abuseipdb_delete: Literal[True] | None = None,
+    ) -> dict[str, Any]:
+        """Vendor key edit
+
+        Save, delete or check your own Shodan and AbuseIPDB keys, which the ip_lookup
+        tool uses. Needs a Pro API key or a manage link. The privacy_my_data tool gives
+        a web link where a person can save the keys without the agent seeing them.
+
+        Costs 1 credit.
+
+        Args:
+            action: apply saves or deletes keys; status reports the stored keys and needs
+                link
+            link: The 64 hex digits after #l= in a manage link; leave out to use this Pro
+                API key. At most 64 characters.
+            shodan_key: a Shodan key to check and save. At most 128 characters.
+            shodan_delete: deletes the stored Shodan key
+            abuseipdb_key: an AbuseIPDB key to check and save. At most 128 characters.
+            abuseipdb_delete: deletes the stored AbuseIPDB key
+        """
+        args: dict[str, Any] = {"action": action}
+        if link is not None:
+            args["link"] = link
+        if shodan_key is not None:
+            args["shodan_key"] = shodan_key
+        if shodan_delete is not None:
+            args["shodan_delete"] = shodan_delete
+        if abuseipdb_key is not None:
+            args["abuseipdb_key"] = abuseipdb_key
+        if abuseipdb_delete is not None:
+            args["abuseipdb_delete"] = abuseipdb_delete
+        return await self.call("vendor_key_edit", args)
+
     async def password_check(self, *, sha1_hash: str) -> dict[str, Any]:
         """Breached Password Check
 
-        Check a password's SHA-1 against Have I Been Pwned's Pwned Passwords list. Send
-        the full SHA-1, never the password. Only its first 5 hex digits leave this
+        Check a password's SHA-1 against Have I Been Pwned's Pwned Passwords list. It
+        takes the full SHA-1, never the password. Only its first 5 hex digits leave this
         server.
 
         Costs 1 credit.
@@ -1786,9 +1893,8 @@ class _AsyncMethods:
     async def dns_lookup(self, *, domain: str) -> dict[str, Any]:
         """DNS Lookup
 
-        Look up a domain's DNS records: A, AAAA, MX, NS, TXT (such as SPF and
-        verification records), CNAME, SOA and CAA. A record type the resolver could not
-        answer is listed under unavailable.
+        Look up a domain's DNS records: A, AAAA, MX, NS, TXT, CNAME, SOA and CAA. A
+        record type the resolver could not answer is listed under unavailable.
 
         Costs 1 credit.
 
@@ -1800,11 +1906,9 @@ class _AsyncMethods:
     async def dns_takeover_check(self, *, domain: str) -> dict[str, Any]:
         """Subdomain Takeover Check
 
-        Check a host name for subdomain takeover through a dangling CNAME: a CNAME that
-        points to a name that does not exist. The check knows the services that show in
-        DNS whether anyone can claim that name: Microsoft Azure, AWS Elastic Beanstalk
-        and Discourse. For a CNAME to any other service, takeover_possible is null,
-        because the check cannot tell.
+        Check a host name for subdomain takeover through a dangling CNAME.
+        takeover_possible is null when the CNAME points to a service whose DNS does not
+        show whether the name can be claimed.
 
         Costs 1 credit.
 
@@ -1821,21 +1925,16 @@ class _AsyncMethods:
     ) -> dict[str, Any]:
         """Email Authentication Check (SPF, DMARC, DKIM)
 
-        Check a domain's mail authentication: its SPF record, the DMARC record that
-        applies to it, its DKIM keys, its MX hosts and its MTA-STS record. A domain
-        without one DMARC record of its own gets the record of a parent domain, found by
-        the tree walk of RFC 9989. The answer lists each check with pass, warn or fail
-        and a severity. Without dkim_selector, the check tries the DKIM selectors of the
-        mail providers that the MX hosts and the SPF record name, or common selectors
-        when no provider names one.
+        Check a domain's mail authentication: SPF, DMARC (from a parent domain when the
+        domain has no record of its own), DKIM, MX and MTA-STS, each check with pass,
+        warn or fail and a severity.
 
         Costs 1 credit.
 
         Args:
             domain: Domain name, such as example.com. At most 253 characters.
-            dkim_selector: The DKIM selector to check, such as google. Without it, the check
-                tries the selectors of the domain's mail providers, or common selectors when no
-                provider names one. At most 238 characters.
+            dkim_selector: DKIM selector, such as google; without it the check tries the
+                selectors of the domain's mail providers. At most 238 characters.
         """
         args: dict[str, Any] = {"domain": domain}
         if dkim_selector is not None:
@@ -1846,13 +1945,8 @@ class _AsyncMethods:
         """Email Address Check
 
         Check an e-mail address without sending mail: whether its domain exists and
-        takes mail, through its MX hosts or, with no MX record, its own address; a null
-        MX takes none. It also says whether the disposable domain list names the domain
-        or a parent of it. The list is disposable-email-domains (CC0 1.0). A community
-        keeps it, and it misses a disposable domain it does not name yet. While the list
-        is not loaded, disposable and disposable_listed_domain are null, and unavailable
-        names disposable_listed_domain. No SMTP connection is made, so the answer cannot
-        tell whether the mailbox exists.
+        takes mail, and whether a disposable domain list names it. It cannot tell
+        whether the mailbox exists.
 
         Costs 1 credit.
 
@@ -1864,15 +1958,9 @@ class _AsyncMethods:
     async def ssl_check(self, *, domain: str) -> dict[str, Any]:
         """SSL/TLS Certificate Check
 
-        Check the TLS certificate and the TLS settings of a host name on port 443. The
-        answer names the TLS version, the cipher, the key exchange group, the ALPN
-        protocol, whether the certificate is trusted and why not, its revocation status
-        from the OCSP response the server staples, the days until it expires, its key
-        and its DNS names, and the chain the server sent. A server that cannot be
-        reached, or whose handshake fails, is an error that says why. It also says
-        whether the SSL Blacklist of abuse.ch lists the certificate, by its SHA-1
-        fingerprint. A successful answer can be reused for up to an hour, and checked_at
-        says when its check ran.
+        Check the TLS certificate and settings of a host name on port 443: version,
+        cipher, trust, OCSP revocation, expiry, DNS names, the chain and an abuse.ch SSL
+        Blacklist listing.
 
         Costs 1 credit.
 
@@ -1889,24 +1977,9 @@ class _AsyncMethods:
     ) -> dict[str, Any]:
         """Security Headers Check
 
-        Check the security headers of a web site. The server sends one GET to
-        https://<domain>/, follows up to 5 redirects that stay on the host name or its
-        www pair, and rates nine headers of the last answer: Content-Security-Policy,
-        Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options,
-        Referrer-Policy, Permissions-Policy, X-XSS-Protection, Set-Cookie and
-        Access-Control-Allow-Origin. Each finding names its severity, its result (pass,
-        warn, fail or missing), its issues and the header value, and a remediation when
-        it does not pass. The Set-Cookie finding never shows its value; cookie_count
-        gives how many cookies the site set, and only the first 50 are checked. A value,
-        the url or redirect_to longer than 500 code points is cut, and
-        total_value_length, total_url_length or total_redirect_to_length gives its
-        length; include_full_header_values true sends each whole. status_code is the
-        site's own status, so a 403 or 404 page is rated too. A redirect to another host
-        is not followed, and redirect_to shows where it points; redirect_limit_reached
-        true means the 5-redirect limit stopped a chain that stayed on the site. A site
-        that cannot be reached, or whose TLS handshake fails, is an error that says why.
-        An answer can be reused for up to an hour, and checked_at says when its fetch
-        ran.
+        Rate nine security headers of a web site, such as CSP, HSTS and Set-Cookie, from
+        one GET to https://<domain>/ that follows up to 5 redirects on the same host or
+        its www pair. Each finding that does not pass has a remediation.
 
         Costs 1 credit.
 
@@ -1923,42 +1996,23 @@ class _AsyncMethods:
     async def whois_lookup(self, *, domain: str) -> dict[str, Any]:
         """WHOIS / RDAP Lookup
 
-        Look up the registration of a domain name: its registrar and IANA Registrar ID,
-        when it was registered, last changed and expires, its status values, its name
-        servers and whether its delegation is signed with DNSSEC. It asks the RDAP
-        server of the TLD, which rdap_server names. A TLD without one is asked over
-        WHOIS when its registry's terms allow it, and whois_server names that server. A
-        name under a registered domain, such as www.example.co.uk, asks about the
-        registered domain, example.co.uk. A TLD with neither answers available false
-        with reason no_registry_server. When this server has sent as many requests to
-        that registry's server in the current minute as its rule allows, or the server
-        asked it to wait, the answer is available false with reason quota_exhausted, and
-        retry_after_seconds says how long to wait. A name no one has registered is an
-        error that says so. The answer holds no registrant and no contact. An answer
-        that holds a registration can be reused for up to an hour.
+        Look up a domain's registration over RDAP, or WHOIS where allowed: registrar,
+        dates, status, name servers and DNSSEC. A name under a registered domain asks
+        about that domain. No registrant data.
 
         Costs 1 credit.
 
         Args:
-            domain: Domain name, such as example.com; a name under it, such as
-                www.example.com, asks about example.com. At most 253 characters.
+            domain: Domain name, such as example.com; www.example.com asks about
+                example.com. At most 253 characters.
         """
         return await self.call("whois_lookup", {"domain": domain})
 
     async def wayback_lookup(self, *, domain: str) -> dict[str, Any]:
         """Wayback Machine Lookup
 
-        List when the Internet Archive's Wayback Machine captured the home page of a
-        host name: the first and the last capture day, the years between them, and the
-        latest 10 capture days, each with the HTTP status and the media type of the
-        captured answer and a link to the capture. A host the Wayback Machine never
-        captured answers an empty list. When this server has sent as many requests to
-        the Wayback Machine in the current 10-second window as its rule allows, or the
-        Wayback Machine asked it to wait, the answer is available false with reason
-        quota_exhausted, and retry_after_seconds says how long to wait. A Wayback
-        Machine that gives no answer in 10 seconds is an error that says the upstream
-        service is unavailable. An answer that holds the captures can be reused for up
-        to a day.
+        List when the Wayback Machine captured a host's home page: the first and last
+        capture, the years between them and the latest 10 captures with links.
 
         Costs 1 credit.
 
@@ -1971,20 +2025,8 @@ class _AsyncMethods:
         """Certificate Transparency Search
 
         List the unexpired certificates that Certificate Transparency logs hold for a
-        host name, wildcard certificates that match it included, as SSLMate's Cert
-        Spotter finds them. The server reads only the first page of Cert Spotter's
-        answer. complete is true only when that page is empty. Otherwise later pages may
-        hold more certificates. certificate_count counts the certificates the server
-        read from that page. certificates lists up to 10 whose validity starts last
-        among those read, the latest first. Each names its SHA-256 digest, its issuer,
-        the CAA domains that allow the issuer, its validity, whether it is revoked, and
-        its first 20 DNS names with dns_name_count. When this server has sent as many
-        requests to Cert Spotter in the current hour as its rule allows, or Cert Spotter
-        asked it to wait, the answer is available false with reason quota_exhausted, and
-        retry_after_seconds says how long to wait. A Cert Spotter that gives no usable
-        answer in 5 seconds is an error that says the upstream service is unavailable.
-        An answer that holds the certificates can be reused for up to a day. Costs 2
-        credits.
+        host name, wildcards included, from SSLMate's Cert Spotter: the 10 newest, with
+        issuer, validity and DNS names. Costs 2 credits.
 
         Args:
             domain: Host name, such as example.com or www.example.com. At most 253
@@ -1995,49 +2037,22 @@ class _AsyncMethods:
     async def subdomain_enum(self, *, domain: str) -> dict[str, Any]:
         """Subdomain Enumeration
 
-        List the subdomains of a registrable domain from three sources: Certificate
-        Transparency, as SSLMate's Cert Spotter gives it in the first page of its
-        answer; DNS A queries for 94 common names; and the names the domain's own MX, NS
-        and SPF records give. A name under a domain asks about its registrable domain.
-        wildcard_dns says whether the domain answers any name under it: absent, present
-        or undetermined. When it is not absent, the common names that resolved are left
-        out. subdomains lists up to 50 names, those DNS confirms first, then by name.
-        subdomain_count counts every name found, up to 1000, so 1000 means 1000 or more.
-        Each name gives its hostname and lists its sources: certificate_logs,
-        dns_wordlist or dns_records. When certificate_logs_available is true,
-        certificate_logs_complete is true only when Cert Spotter's first page is empty.
-        Otherwise later pages may hold more names. When this server has sent as many
-        requests to Cert Spotter in the current hour as its rule allows, or Cert Spotter
-        asked it to wait, certificate_logs_available is false with
-        certificate_logs_reason quota_exhausted, and retry_after_seconds says how long
-        to wait. When Cert Spotter gives no usable answer in 3 seconds, or the server
-        has no Cert Spotter key, certificate_logs_available is false with
-        certificate_logs_reason upstream_error. Either way the DNS names are still
-        listed. An answer that holds the Certificate Transparency names can be reused
-        for up to a day. One with certificate_logs_reason quota_exhausted can be reused
-        for as long as retry_after_seconds, and for at least 10 minutes. One with
-        certificate_logs_reason upstream_error can be reused for 10 minutes. One whose
-        wildcard_dns is undetermined can be reused for 10 minutes, whatever Cert Spotter
-        answered. retry_after_seconds is the wait when the answer was made, so a reused
-        answer can name a longer wait than is left. Costs 2 credits.
+        List up to 50 subdomains of a registrable domain from Certificate Transparency,
+        DNS queries for 94 common names and the domain's MX, NS and SPF records. Costs 2
+        credits.
 
         Args:
-            domain: Domain name, such as example.com; a name under it, such as
-                www.example.com, asks about example.com. At most 253 characters.
+            domain: Domain name, such as example.com; www.example.com asks about
+                example.com. At most 253 characters.
         """
         return await self.call("subdomain_enum", {"domain": domain})
 
     async def ip_lookup(self, *, ip_address: str) -> dict[str, Any]:
         """IP Lookup
 
-        Look up a public IPv4 or IPv6 address: its AS number, AS name and AS country,
-        its country, the cloud provider and service whose published range holds it,
-        whether it is a CDN, a datacenter or a Tor exit, the DROP prefixes that list it,
-        and its PTR name. A source that is not loaded yet answers null, and unavailable
-        names it. reputation and internet_exposure are reserved: each answers available
-        false with reason not_licensed. It reads IPtoASN (PDDL), DB-IP Lite (CC BY 4.0,
-        IP Geolocation by DB-IP), the Tor Project exit list, the DROP list and the
-        address ranges that cloud providers publish.
+        Look up a public IP address: AS, country, cloud provider, CDN, datacenter or Tor
+        exit, DROP listing and PTR name. A Pro key with its own Shodan or AbuseIPDB key
+        adds exposure and reputation.
 
         Costs 1 credit.
 
@@ -2056,21 +2071,17 @@ class _AsyncMethods:
     ) -> dict[str, Any]:
         """ASN Lookup
 
-        Look up an autonomous system (AS) by its number, such as AS15169, or by a public
-        IPv4 or IPv6 address it holds: its AS number, name and registration country, the
-        prefix that holds the address, how many IPv4 and IPv6 prefixes it has, and one
-        page of up to 50 prefixes of each family in address order. limit and offset pick
-        the page, the same page in both families, and next_offset starts the next one.
-        The prefixes are derived from IPtoASN (PDDL) ranges, so they can differ from the
-        prefixes the AS announces in BGP.
+        Look up an autonomous system by number, such as AS15169, or by an IP address it
+        holds: name, country and one page of its IPv4 and IPv6 prefixes, derived from
+        IPtoASN.
 
         Costs 1 credit.
 
         Args:
             target: AS number, such as AS15169 or 15169, or a public IPv4 or IPv6 address,
                 such as 8.8.8.8. At most 45 characters.
-            limit: 1-50 (default 50). Minimum 1. Maximum 50.
-            offset: >=0 (default 0). Minimum 0. Maximum 2147483647.
+            limit: Minimum 1. Maximum 50. Default 50.
+            offset: Minimum 0. Default 0.
         """
         args: dict[str, Any] = {"target": target}
         if limit is not None:
@@ -2083,9 +2094,7 @@ class _AsyncMethods:
         """D3FEND Defenses for ATT&CK
 
         MITRE D3FEND defenses that counter a MITRE ATT&CK technique. A technique id such
-        as T1055 also matches its sub-techniques, such as T1055.012; a sub-technique id
-        matches only itself. An id with no defense answers empty lists. Source: MITRE
-        D3FEND (MIT license).
+        as T1055 also matches its sub-techniques. Source: MITRE D3FEND (MIT license).
 
         Costs 1 credit.
 
@@ -2101,12 +2110,11 @@ class _AsyncMethods:
         file_hash: str,
         include_commands: bool | None = None,
     ) -> dict[str, Any]:
-        """Vulnerable Driver Lookup (LOLDrivers)
+        """Windows Driver Lookup (LOLDrivers)
 
-        Look up a Windows driver file in the LOLDrivers catalog of vulnerable and
-        malicious drivers. An attacker loads such a driver to reach the kernel, as in a
-        bring-your-own-vulnerable-driver attack. A hash the catalog does not hold
-        answers found false. Source: LOLDrivers (Apache-2.0).
+        Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and
+        malicious drivers. Block on the file and Authenticode hashes, not on the
+        detection rules. Source: LOLDrivers (Apache-2.0).
 
         Costs 1 credit.
 
@@ -2121,17 +2129,17 @@ class _AsyncMethods:
         return await self.call("driver_lookup", args)
 
     async def driver_lookup_bulk(self, *, hashes: list[str]) -> dict[str, Any]:
-        """Bulk Driver Lookup
+        """Bulk Windows Driver Lookup
 
-        Look up many driver file hashes in the LOLDrivers catalog at once (max 25). Each
-        hash gets the fields of driver_lookup, without command text. Hashes beyond the
-        remaining credits come back in not_processed. Source: LOLDrivers (Apache-2.0).
+        Look up many driver file hashes in the LOLDrivers catalog at once, each with the
+        fields of driver_lookup. Hashes beyond the remaining credits come back in
+        not_processed.
 
         Costs 1 credit per item, at least 1 credit.
 
         Args:
-            hashes: MD5, SHA1 or SHA256 hashes of driver files or of their Authentihash (max
-                25). 1 to 25 items.
+            hashes: MD5, SHA1 or SHA256 of driver files or of their Authentihash. 1 to 20
+                items.
         """
         return await self.call("driver_lookup_bulk", {"hashes": hashes})
 
@@ -2146,13 +2154,9 @@ class _AsyncMethods:
     ) -> dict[str, Any]:
         """Package Vulnerability Check
 
-        Check a package of npm, PyPI, Maven, Go, NuGet, RubyGems, crates.io, Packagist
-        or SwiftURL against the OSV.dev advisories of GitHub, Go, PyPA and RustSec, and
-        the OpenSSF list of malicious packages. One result is one vulnerability; the
-        other advisories of it come in aliases. With version, only the results that
-        affect it or may are listed, each with affects_version and fixed_version, and
-        fixed_version names the lowest version that leaves them all. For severity, pass
-        the CVE ids of aliases to cve_triage_bulk.
+        Check a package against the OSV.dev advisories (GitHub, Go, PyPA, RustSec) and
+        the OpenSSF malicious package list, with the fixed version and endoflife.date
+        dates. For severity, pass the CVE aliases to the cve_triage_bulk tool.
 
         Costs 1 credit.
 
@@ -2160,12 +2164,11 @@ class _AsyncMethods:
             ecosystem: npm, PyPI, Maven, Go, NuGet, RubyGems, crates.io, Packagist or
                 SwiftURL. Case does not matter. At most 16 characters.
             name: Package name as the dependency file writes it, e.g. lodash, @babel/core,
-                org.apache.logging.log4j:log4j-core (Maven groupId:artifactId), golang.org/x/net
-                (Go module path), github.com/apple/swift-nio (SwiftURL). At most 256 characters.
-            version: Exact version, e.g. 4.17.20. Without it every result of the package is
-                listed. At most 128 characters.
-            limit: 1-50 (default 20). Minimum 1. Maximum 50.
-            offset: >=0 (default 0). Minimum 0. Maximum 2147483647.
+                org.apache.logging.log4j:log4j-core, golang.org/x/net. At most 256 characters.
+            version: Exact version, e.g. 4.17.20; without it every result is listed. At most
+                128 characters.
+            limit: Minimum 1. Maximum 50. Default 20.
+            offset: Minimum 0. Default 0.
         """
         args: dict[str, Any] = {"ecosystem": ecosystem, "name": name}
         if version is not None:
@@ -2179,19 +2182,27 @@ class _AsyncMethods:
     async def package_check_bulk(self, *, items: list[PackageItem]) -> dict[str, Any]:
         """Bulk Package Check (SBOM)
 
-        Check many packages at once (max 500) against the advisories package_check
-        reads. Each item names an ecosystem, a name and an exact version. Each result
-        names the package, has_advisory_data, fixed_version, malicious, advisory_total
-        and up to 10 advisories with id, aliases and affects_version. An item with a
-        version range, without a version or of another ecosystem is skipped. Packages
-        beyond the remaining credits or the request's work budget come back in
-        not_processed, and are not charged. For the summary and the ranges of an
-        advisory, call package_check.
+        Check many packages at once, each an ecosystem, a name and an exact version,
+        against the advisories package_check reads. For the summary and ranges of an
+        advisory, call the package_check tool.
 
         Costs 1 credit per item, at least 1 credit.
 
         Args:
-            items: Packages to check, each with its ecosystem, name and exact version (max
-                500). 1 to 500 items.
+            items: Packages, each with its ecosystem, name and exact version. 1 to 500
+                items.
         """
         return await self.call("package_check_bulk", {"items": items})
+
+    async def api_key_claim(self, *, order_id: str) -> dict[str, Any]:
+        """Free.
+
+        Args:
+            order_id: At most 36 characters.
+        """
+        return await self.call("api_key_claim", {"order_id": order_id})
+
+    async def crypto_checkout(self) -> dict[str, Any]:
+        """Costs 1 credit.
+        """
+        return await self.call("crypto_checkout", {})
