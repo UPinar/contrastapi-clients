@@ -259,7 +259,7 @@
     "@vscode/vsce": "4.1.0",
     "esbuild": "^0.28.2",
     "tsx": "^4.23.15",
-    "typescript": "^6.0.0"
+    "typescript": "^6.0.3"
   },
   "overrides": {
     "@vscode/vsce": {
