@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "ContrastAPI Desktop Extension bridge",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.32.1"
+    "@modelcontextprotocol/sdk": "^1.32.2"
   },
   "type": "module",
   "private": true
