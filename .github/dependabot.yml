@@ -8,6 +8,13 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
+    # @types/vscode follows engines.vscode by hand. A newer one lets the code
+    # call an API that the oldest supported VS Code does not have.
+    # A TypeScript major goes in by hand: 7.0 failed the VS Code tests.
+    ignore:
+      - dependency-name: "@types/vscode"
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     groups:
       npm:
         patterns: ["*"]
