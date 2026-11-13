@@ -1,0 +1,132 @@
+{
+  "_comment": "Shared by sdk/gen/test_gen_sdk.py and vscode-extension/test/suite/schemaForm.test.ts: [schema, description or null, text].",
+  "cases": [
+    [
+      {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100
+      },
+      null,
+      "Minimum 1. Maximum 100."
+    ],
+    [
+      {
+        "type": "integer",
+        "minimum": 0
+      },
+      null,
+      "Minimum 0."
+    ],
+    [
+      {
+        "type": "number",
+        "maximum": 10
+      },
+      null,
+      "Maximum 10."
+    ],
+    [
+      {
+        "type": "string",
+        "maxLength": 64
+      },
+      null,
+      "At most 64 characters."
+    ],
+    [
+      {
+        "type": "string",
+        "enum": [
+          "a"
+        ],
+        "maxLength": 8
+      },
+      "Pick one",
+      "Pick one"
+    ],
+    [
+      {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "minItems": 1,
+        "maxItems": 50
+      },
+      null,
+      "1 to 50 items."
+    ],
+    [
+      {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "minItems": 2
+      },
+      null,
+      "At least 2 items."
+    ],
+    [
+      {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 9
+      },
+      null,
+      "At most 9 items."
+    ],
+    [
+      {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 50,
+        "default": 20
+      },
+      "Count",
+      "Count. Minimum 1. Maximum 50. Default 20."
+    ],
+    [
+      {
+        "type": "integer",
+        "default": 0
+      },
+      null,
+      "Default 0."
+    ],
+    [
+      {
+        "type": "integer",
+        "minimum": 1
+      },
+      "Count.",
+      "Count. Minimum 1."
+    ],
+    [
+      {
+        "type": "integer",
+        "minimum": 1
+      },
+      "Count!",
+      "Count! Minimum 1."
+    ],
+    [
+      {
+        "type": "integer",
+        "minimum": 1
+      },
+      "Count?",
+      "Count? Minimum 1."
+    ],
+    [
+      {
+        "type": "integer"
+      },
+      "Count",
+      "Count"
+    ]
+  ]
+}

@@ -94,6 +94,34 @@ test("prompt = property description and its limits, else the property name", () 
   assert.strictEqual(stepOf(steps, "severity").prompt, "severity");
 });
 
+test("limit text: the cases shared with the SDK generator give the same text", () => {
+  const shared = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "../../../sdk/gen/limit_text_cases.json"), "utf8"),
+  ) as { cases: [Record<string, unknown>, string | null, string][] };
+  assert.ok(shared.cases.length > 10);
+  for (const [schema, description, text] of shared.cases) {
+    const prop = description === null ? schema : { ...schema, description };
+    const t = { name: "t", inputSchema: { type: "object", properties: { f: prop } } } as unknown as McpTool;
+    const expected = text === "" ? "f" : text;
+    assert.strictEqual(buildFormSteps(t).optional[0].prompt, expected, JSON.stringify(prop));
+  }
+});
+
+test("limit text: a value the SDK generator refuses adds no sentence", () => {
+  const cases: Record<string, unknown>[] = [
+    { type: "integer", minimum: "1" },
+    { type: "integer", maximum: true },
+    { type: "integer", default: "20" },
+    { type: "boolean", default: true },
+    { type: "string", maxLength: "3" },
+    { type: "array", items: { type: "string" }, minItems: false },
+  ];
+  for (const prop of cases) {
+    const t = { name: "t", inputSchema: { type: "object", properties: { f: prop } } } as unknown as McpTool;
+    assert.strictEqual(buildFormSteps(t).optional[0].prompt, "f", JSON.stringify(prop));
+  }
+});
+
 test("limit text: each schema limit becomes one sentence after the description", () => {
   const cases: [Record<string, unknown>, string][] = [
     [{ type: "integer", description: "Count", minimum: 1 }, "Count. Minimum 1."],

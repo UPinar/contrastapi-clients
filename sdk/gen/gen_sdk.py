@@ -46,7 +46,20 @@ OBJECT_PROTOTYPE_MEMBERS = frozenset({
 # then() method with two functions. A generated method refuses them, so the await never settles.
 THENABLE_MEMBER = "then"
 PYTHON_METHOD_LOCALS = frozenset({"self", "args"})
-TYPE_NAMES = frozenset({"OperationArgs"})
+# TYPE_NAMES holds the names an item type or an args type must not take. Each one is a
+# name that the generated files or the hand-written index.d.ts and __init__.py already
+# use, so a schema of that name would shadow it. test_gen_sdk.py checks the list
+# against those files.
+TYPE_NAMES = frozenset({
+    "OperationArgs", "OperationId", "OperationParam", "OperationSpec", "ContrastAPIMethods",
+    "OPERATIONS", "Promise", "Readonly", "Record", "Date", "Error", "K",
+    "ContrastAPI", "ContrastAPIOptions", "ContrastAPIError", "ContrastAPIErrorOptions",
+    "RequestOptions", "RateLimitInfo", "FetchInit", "FetchLike", "FetchResponseLike",
+    "BadRequestError", "AuthenticationError", "NotFoundError", "RateLimitError",
+    "UpstreamError", "APIConnectionError", "APITimeoutError", "AsyncContrastAPI",
+    "Any", "Final", "Literal", "Mapping", "MappingProxyType", "TypedDict",
+    "None", "True", "False",
+})
 HTTP_METHODS = {"get": "GET", "post": "POST"}
 PARAM_PLACES = frozenset({"path", "query"})
 SCHEMA_KEYS = frozenset({
@@ -137,12 +150,24 @@ def param_text(description, schema):
     return f"{description} {limits}"
 
 
+def _item_type_name(schema):
+    """_item_type_name returns the schema name an array's items refer to, or None."""
+    items = schema.get("items") if schema.get("type") == "array" else None
+    if not isinstance(items, dict) or set(items) != {"$ref"}:
+        return None
+    ref = items["$ref"]
+    if not isinstance(ref, str) or not ref.startswith(SCHEMA_REF_PREFIX):
+        return None
+    return ref[len(SCHEMA_REF_PREFIX):]
+
+
 def schema_types(schema, where):
     """schema_types returns the (TypeScript, Python) types of a parameter schema."""
     unknown = set(schema) - SCHEMA_KEYS
     if unknown:
         raise GenError(f"{where}: unknown schema key {sorted(unknown)[0]}")
     kind = schema.get("type")
+    _check_limits(schema, where)
     if "default" in schema:
         _check_default(schema, where)
     if "const" in schema:
@@ -161,14 +186,43 @@ def schema_types(schema, where):
         items = schema.get("items")
         if items == {"type": "string"}:
             return "string[]", "list[str]"
-        ref = items.get("$ref") if isinstance(items, dict) and set(items) == {"$ref"} else None
-        if isinstance(ref, str) and ref.startswith(SCHEMA_REF_PREFIX):
-            name = ref[len(SCHEMA_REF_PREFIX):]
+        name = _item_type_name(schema)
+        if name is not None:
             if not _ITEM_TYPE_NAME.fullmatch(name) or name in TYPE_NAMES or name.endswith("Args"):
                 raise GenError(f"{where}: item type name {name!r} cannot be a client type name")
             return f"{name}[]", f"list[{name}]"
         raise GenError(f"{where}: unknown array items {json.dumps(items)}")
     raise GenError(f"{where}: unknown schema type {kind!r}")
+
+
+# LIMIT_TYPES maps each limit key to the schema types it may sit on.
+LIMIT_TYPES = {
+    "minimum": ("integer", "number"),
+    "maximum": ("integer", "number"),
+    "maxLength": ("string",),
+    "minItems": ("array",),
+    "maxItems": ("array",),
+}
+
+
+def _check_limits(schema, where):
+    """_check_limits refuses a limit that is not a whole number on a type that has it.
+
+    The limit becomes a sentence in the generated text, and the VS Code form writes the
+    same sentence from the same schema. JavaScript prints 1.0 as 1 and a bool as nothing,
+    so only a whole number gives both sides the same text. A length or a count is never
+    negative.
+    """
+    for key, kinds in LIMIT_TYPES.items():
+        if key not in schema:
+            continue
+        value = schema[key]
+        if schema.get("type") not in kinds:
+            raise GenError(f"{where}: {key} on a {schema.get('type')} schema")
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise GenError(f"{where}: {key} is not a whole number")
+        if key != "minimum" and key != "maximum" and value < 0:
+            raise GenError(f"{where}: {key} is negative")
 
 
 def _check_default(schema, where):
@@ -204,6 +258,9 @@ def _check_name(name, where):
 def _param(name, place, required, description, schema, where):
     _check_name(name, where)
     node_type, python_type = schema_types(schema, f"{where}.{name}")
+    # A path or query value is one scalar in both clients, so an array there could never be sent.
+    if place in PARAM_PLACES and schema.get("type") == "array":
+        raise GenError(f"{where}.{name}: an array cannot be a {place} parameter")
     return {
         "name": name,
         "in": place,
@@ -211,7 +268,7 @@ def _param(name, place, required, description, schema, where):
         "text": param_text(description, schema),
         "node_type": node_type,
         "python_type": python_type,
-        "item_type": node_type[:-2] if node_type.endswith("[]") and node_type != "string[]" else None,
+        "item_type": _item_type_name(schema),
     }
 
 

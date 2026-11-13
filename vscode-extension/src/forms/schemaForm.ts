@@ -60,6 +60,7 @@ function kindOf(prop: JsonSchemaProperty): FormStepKind {
  * The server writes a property's range and default in the schema, not in its description.
  * The text is the one the SDKs put in their documentation (sdk/gen/gen_sdk.py, limit_text).
  * An enum has no length sentence, because its values already show the length.
+ * A limit or default that is not a number adds no sentence, because the SDK generator refuses it.
  */
 function limitText(prop: JsonSchemaProperty): string {
   const parts: string[] = [];
@@ -81,7 +82,7 @@ function limitText(prop: JsonSchemaProperty): string {
   } else if (high !== undefined) {
     parts.push(`At most ${high} items.`);
   }
-  if (typeof prop.default === "number" || typeof prop.default === "string" || typeof prop.default === "boolean") {
+  if (typeof prop.default === "number") {
     parts.push(`Default ${String(prop.default)}.`);
   }
   return parts.join(" ");

@@ -3,7 +3,9 @@
 import contextlib
 import copy
 import io
+import ast
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -85,6 +87,14 @@ FIXTURE = _doc(
 
 def _render(doc):
     return gen.render_outputs(copy.deepcopy(doc))
+
+
+def _one_param(schema, description=None):
+    """_one_param returns an op entry with one optional parameter a: a body field for an array."""
+    if schema.get("type") == "array":
+        prop = dict(schema, description=description) if description else schema
+        return ("/x", "post", _op("x", body=({"a": prop}, [])))
+    return ("/x", "get", _op("x", params=[_param("a", schema, description=description)]))
 
 
 def _render_one(*ops, schemas=None):
@@ -373,8 +383,16 @@ class RefusalTest(unittest.TestCase):
                        {"type": "integer", "default": "20"}, {"type": "integer", "default": True},
                        {"type": "integer", "default": 1.5}, {"type": "string", "default": "x"},
                        {"type": "integer", "minimum": 1, "default": 0},
+                       {"type": "integer", "minimum": "1", "default": 5}, {"type": "integer", "minimum": "x"},
+                       {"type": "integer", "maximum": True}, {"type": "integer", "minimum": 1.0},
+                       {"type": "number", "maximum": 0.5}, {"type": "string", "minimum": 1},
+                       {"type": "integer", "maxLength": 3}, {"type": "string", "maxLength": -1},
+                       {"type": "string", "maxLength": "3"}, {"type": "string", "minItems": 1},
+                       {"type": "array", "items": {"type": "string"}, "maxItems": 1.5},
+                       {"type": "array", "items": {"type": "string"}, "minItems": False},
                        {"type": "integer", "maximum": 5, "default": 6}):
-            self.assertRefused(_doc(("/x", "get", _op("x", params=[_param("a", schema)]))))
+            with self.subTest(schema=schema):
+                self.assertRefused(_doc(_one_param(schema), schemas={"PackageItem": PACKAGE_ITEM}))
 
     def test_unknown_request_bodies_are_refused(self):
         op = _op("x", body=({"a": {"type": "string"}}, []))
@@ -422,10 +440,33 @@ class RefusalTest(unittest.TestCase):
         self.assertRefused(_doc(entry, schemas={"PackageItem": bad_name}))
 
     def test_item_type_name_must_be_a_free_type_name(self):
-        for name in ("packageItem", "Package-Item", "OperationArgs", "XArgs", "_P", "P/Q"):
+        for name in ("packageItem", "Package-Item", "OperationArgs", "XArgs", "_P", "P/Q", "Mapping",
+                     "TypedDict", "OPERATIONS", "OperationSpec", "ContrastAPI", "AsyncContrastAPI",
+                     "Promise", "Record", "None"):
             with self.subTest(name=name):
                 entry = ("/x", "post", _op("x", body=({"items": _ref(name)}, ["items"])))
                 self.assertRefused(_doc(entry, schemas={name: PACKAGE_ITEM}))
+
+    def test_array_in_path_or_query_is_refused(self):
+        for place, required in (("query", False), ("path", True)):
+            path = "/x/{a}" if place == "path" else "/x"
+            for schema in ({"type": "array", "items": {"type": "string"}}, _ref("PackageItem")):
+                with self.subTest(place=place, schema=schema):
+                    self.assertRefused(_doc((path, "get", _op("x", params=[_param("a", schema, place, required)])),
+                                            schemas={"PackageItem": PACKAGE_ITEM}))
+
+    def test_item_ref_with_a_sibling_key_is_refused(self):
+        items = {"type": "array", "items": {"$ref": "#/components/schemas/PackageItem", "type": "object"}}
+        entry = ("/x", "post", _op("x", body=({"items": items}, ["items"])))
+        self.assertRefused(_doc(entry, schemas={"PackageItem": PACKAGE_ITEM}))
+
+    def test_item_type_comes_from_the_ref_not_the_type_text(self):
+        js, dts, py = _render_one(("/x", "post", _op("x", body=({"items": _ref("Opt")}, ["items"]))),
+                                  schemas={"Opt": PACKAGE_ITEM})
+        self.assertIn("\nexport interface Opt {\n", dts)
+        js, dts, py = _render_one(("/x", "post", _op("x", body=({"items": {
+            "type": "array", "items": {"type": "string"}}}, ["items"]))))
+        self.assertNotIn("export interface string", dts)
 
     def test_a_bad_operation_after_a_raw_body_one_is_still_refused(self):
         self.assertRefused(_doc(("/i", "post", _op("image_inspect", raw_body=True)),
@@ -586,7 +627,7 @@ class TypeMappingTest(unittest.TestCase):
     def test_each_type(self):
         for schema, node_line, python_param in self.CASES:
             with self.subTest(schema=schema):
-                js, dts, py = _render_one(("/x", "get", _op("x", params=[_param("a", schema)])))
+                js, dts, py = _render_one(_one_param(schema))
                 self.assertIn(f"\n  {node_line}\n", dts)
                 self.assertIn(f"    def x(self, *, {python_param}) -> dict[str, Any]:\n", py)
                 self.assertIn(f"    async def x(self, *, {python_param}) -> dict[str, Any]:\n", py)
@@ -736,7 +777,15 @@ class RequiredTest(unittest.TestCase):
 
 class TextTest(unittest.TestCase):
     def _dts(self, schema, description=None):
-        return _render_one(("/x", "get", _op("x", params=[_param("a", schema, description=description)])))
+        return _render_one(_one_param(schema, description))
+
+    def test_limit_texts_shared_with_vscode(self):
+        cases = json.loads((Path(__file__).with_name("limit_text_cases.json")).read_text("utf-8"))["cases"]
+        self.assertGreater(len(cases), 10)
+        for schema, description, text in cases:
+            with self.subTest(schema=schema, description=description):
+                self.assertEqual(gen.param_text(description, schema), text)
+                gen.schema_types(schema, "case")
 
     def test_limit_texts(self):
         cases = [
@@ -871,6 +920,45 @@ class TextTest(unittest.TestCase):
         self.assertEqual(gen.camel_case("health"), "health")
         self.assertEqual(gen.pascal_case("d3fend_for_attack"), "D3fendForAttack")
         self.assertEqual(gen.pascal_case("ip_lookup"), "IpLookup")
+
+
+
+
+def _ts_names(path):
+    """_ts_names returns the capitalized identifiers of a .d.ts file, outside comments and strings."""
+    text = re.sub(r"/\*.*?\*/|//[^\n]*", "", path.read_text(encoding="utf-8"), flags=re.S)
+    text = re.sub(r'"[^"\n]*"', "", text)
+    return set(re.findall(r"\b[A-Z][A-Za-z0-9]*\b", text))
+
+
+def _python_names(path):
+    """_python_names returns the module-level names a Python file imports, defines or assigns."""
+    names = set()
+    for node in ast.parse(path.read_text(encoding="utf-8")).body:
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            names.update((alias.asname or alias.name).split(".")[0] for alias in node.names)
+        elif isinstance(node, (ast.ClassDef, ast.FunctionDef)):
+            names.add(node.name)
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            names.add(node.target.id)
+        elif isinstance(node, ast.Assign):
+            names.update(t.id for t in node.targets if isinstance(t, ast.Name))
+    return {name for name in names if gen._ITEM_TYPE_NAME.fullmatch(name)}
+
+
+class ReservedNamesTest(unittest.TestCase):
+    """The reserved names must cover every name the client files already use."""
+
+    def test_reserved_names_cover_the_client_files(self):
+        document = json.loads((REPO_ROOT / "sdk/openapi.json").read_text(encoding="utf-8"))
+        item_types = {p["item_type"] for op in gen.load_operations(document) for p in op["params"]
+                      if p["item_type"]}
+        self.assertTrue(item_types)
+        used = (_ts_names(REPO_ROOT / gen.NODE_DTS) | _ts_names(REPO_ROOT / "sdk/node/index.d.ts")
+                | _python_names(REPO_ROOT / gen.PYTHON)
+                | _python_names(REPO_ROOT / "sdk/python/contrastapi/__init__.py"))
+        loose = {n for n in used - item_types - gen.TYPE_NAMES if not n.endswith("Args")}
+        self.assertEqual(loose, set())
 
 
 if __name__ == "__main__":
