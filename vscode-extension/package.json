@@ -1,17 +1,19 @@
 {
   "name": "contrastapi",
-  "displayName": "ContrastAPI — Security Intelligence",
+  "displayName": "ContrastAPI: Security Intelligence",
   "description": "Security intelligence tools in your editor, read from the ContrastAPI server: vulnerabilities, domains, IP addresses, packages and a watchlist. The tools work without an API key. The watchlist needs a Pro key.",
   "version": "1.0.0",
   "private": true,
   "publisher": "ContrastAPI",
   "repository": {
     "type": "git",
-    "url": "https://github.com/UPinar/contrastapi"
+    "url": "https://github.com/UPinar/contrastapi-clients.git",
+    "directory": "vscode-extension"
   },
+  "author": "UPinar",
   "homepage": "https://contrastcyber.com",
   "bugs": {
-    "url": "https://github.com/UPinar/contrastapi/issues"
+    "url": "https://github.com/UPinar/contrastapi-clients/issues"
   },
   "engines": {
     "vscode": "^1.101.0"

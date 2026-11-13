@@ -1,4 +1,4 @@
-# ContrastAPI Security Tools — Claude Desktop Extension
+# ContrastAPI Security Tools: Claude Desktop Extension
 
 ContrastAPI gives Claude security tools. They cover CVE intelligence, package vulnerabilities, domain and IP intelligence, threat defense, and CVE and domain monitoring. Most tools need **no signup and no API key**. This extension is a thin local bridge to the hosted [ContrastAPI](https://api.contrastcyber.com) MCP server (`https://api.contrastcyber.com/mcp/`).
 
@@ -13,64 +13,64 @@ Each tool carries a human-readable title (e.g. `cve_lookup` → "CVE Lookup").
 
 ### Operations
 
-- **Health and Data Freshness** — `health`
-- **Privacy: My Data** — `privacy_my_data`
-- **Vendor key edit** — `vendor_key_edit`
+- **Health and Data Freshness** (`health`)
+- **Privacy: My Data** (`privacy_my_data`)
+- **Vendor key edit** (`vendor_key_edit`)
 
 ### CVE Intelligence
 
-- **CVE Lookup** — `cve_lookup`
-- **Bulk CVE Lookup** — `cve_lookup_bulk`
-- **CVE Affected Products** — `cve_products`
-- **CVE Search** — `cve_search`
-- **Leading CVEs by EPSS** — `cve_leading`
-- **CISA KEV Lookup** — `kev_lookup`
-- **CWE Lookup** — `cwe_lookup`
-- **CVE Risk Score** — `cve_risk_score`
-- **CVE Exploit Intelligence** — `cve_exploit`
-- **CVE Triage** — `cve_triage`
-- **Bulk CVE Triage** — `cve_triage_bulk`
-- **Product Exposure** — `product_exposure`
-- **CPE Search** — `cpe_search`
-- **CVSS Calculator** — `cvss_calculator`
+- **CVE Lookup** (`cve_lookup`)
+- **Bulk CVE Lookup** (`cve_lookup_bulk`)
+- **CVE Affected Products** (`cve_products`)
+- **CVE Search** (`cve_search`)
+- **Leading CVEs by EPSS** (`cve_leading`)
+- **CISA KEV Lookup** (`kev_lookup`)
+- **CWE Lookup** (`cwe_lookup`)
+- **CVE Risk Score** (`cve_risk_score`)
+- **CVE Exploit Intelligence** (`cve_exploit`)
+- **CVE Triage** (`cve_triage`)
+- **Bulk CVE Triage** (`cve_triage_bulk`)
+- **Product Exposure** (`product_exposure`)
+- **CPE Search** (`cpe_search`)
+- **CVSS Calculator** (`cvss_calculator`)
 
 ### Monitoring
 
-- **Watchlist: CVE, Package, Domain and IP Monitoring** — `watchlist_edit`
-- **Monitoring Events** — `watchlist_events`
+- **Watchlist: CVE, Package, Domain and IP Monitoring** (`watchlist_edit`)
+- **Monitoring Events** (`watchlist_events`)
 
 ### Credential Checks
 
-- **Breached Password Check** — `password_check`
+- **Breached Password Check** (`password_check`)
 
 ### Domain Intelligence
 
-- **DNS Lookup** — `dns_lookup`
-- **Subdomain Takeover Check** — `dns_takeover_check`
-- **Email Authentication Check (SPF, DMARC, DKIM)** — `email_auth_check`
-- **Email Address Check** — `email_address_check`
-- **SSL/TLS Certificate Check** — `ssl_check`
-- **Security Headers Check** — `headers_check`
-- **WHOIS / RDAP Lookup** — `whois_lookup`
-- **Wayback Machine Lookup** — `wayback_lookup`
-- **Certificate Transparency Search** — `cert_search`
-- **Subdomain Enumeration** — `subdomain_enum`
+- **DNS Lookup** (`dns_lookup`)
+- **Subdomain Takeover Check** (`dns_takeover_check`)
+- **Email Authentication Check (SPF, DMARC, DKIM)** (`email_auth_check`)
+- **Email Address Check** (`email_address_check`)
+- **SSL/TLS Certificate Check** (`ssl_check`)
+- **Security Headers Check** (`headers_check`)
+- **WHOIS / RDAP Lookup** (`whois_lookup`)
+- **Wayback Machine Lookup** (`wayback_lookup`)
+- **Certificate Transparency Search** (`cert_search`)
+- **Subdomain Enumeration** (`subdomain_enum`)
 
 ### IP Intelligence
 
-- **IP Lookup** — `ip_lookup`
-- **ASN Lookup** — `asn_lookup`
+- **IP Lookup** (`ip_lookup`)
+- **ASN Lookup** (`asn_lookup`)
 
 ### Threat Defense
 
-- **D3FEND Defenses for ATT&CK** — `d3fend_for_attack`
-- **Windows Driver Lookup (LOLDrivers)** — `driver_lookup`
-- **Bulk Windows Driver Lookup** — `driver_lookup_bulk`
+- **D3FEND Defenses for ATT&CK** (`d3fend_for_attack`)
+- **Windows Driver Lookup (LOLDrivers)** (`driver_lookup`)
+- **Bulk Windows Driver Lookup** (`driver_lookup_bulk`)
 
 ### Package Vulnerabilities (SBOM)
 
-- **Package Vulnerability Check** — `package_check`
-- **Bulk Package Check (SBOM)** — `package_check_bulk`
+- **Package Vulnerability Check** (`package_check`)
+- **Bulk Package Check (SBOM)** (`package_check_bulk`)
 
 <!-- tools:end -->
 
@@ -78,7 +78,7 @@ Each tool carries a human-readable title (e.g. `cve_lookup` → "CVE Lookup").
 
 1. Download `contrastapi-<version>.mcpb`.
 2. Double-click it (or in Claude Desktop: **Settings → Extensions → Install Extension…**) and confirm.
-3. Done — ask Claude e.g. *"Check CVE-2025-1234 and whether it's in KEV"* or *"Audit the security headers and TLS of example.com"*.
+3. Done: ask Claude e.g. *"Check CVE-2025-1234 and whether it's in KEV"* or *"Audit the security headers and TLS of example.com"*.
 
 ## Configuration
 
@@ -94,14 +94,14 @@ Full policy: **https://api.contrastcyber.com/privacy**
 
 Summary of how this extension handles data:
 
-- **What is sent:** only your tool queries (e.g. a domain, IP, hash, CVE ID you ask about) and, if configured, your API key — over HTTPS to `api.contrastcyber.com`. Nothing else on your machine is read or transmitted.
-- **What is stored locally:** nothing is written to disk — no cache, no files. The bridge emits diagnostic lines to stderr (which Claude Desktop captures in its extension log); these never include your API key or the contents of your queries.
+- **What is sent:** only your tool queries (e.g. a domain, IP, hash, CVE ID you ask about) and, if configured, your API key, over HTTPS to `api.contrastcyber.com`. Nothing else on your machine is read or transmitted.
+- **What is stored locally:** nothing is written to disk: no cache, no files. The bridge emits diagnostic lines to stderr (which Claude Desktop captures in its extension log); these never include your API key or the contents of your queries.
 - **Service-side handling:** queries are processed to produce the answer; standard operational logs are kept briefly for abuse prevention and are not sold or shared with third parties. Details, retention periods, and contact information are in the policy linked above.
 - **Contact:** contact@contrastcyber.com
 
 ## Support
 
-- Issues: https://github.com/UPinar/contrastapi/issues
+- Issues: https://github.com/UPinar/contrastapi-clients/issues
 - Email: contact@contrastcyber.com
 
 ## License

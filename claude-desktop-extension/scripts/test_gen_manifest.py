@@ -115,8 +115,8 @@ class ManifestTest(unittest.TestCase):
         self.out = json.loads(gen.render_manifest(self.manifest_text, self.tools))
 
     def test_description_is_title_separator_first_sentence(self):
-        self.assertEqual(self.out["tools"][1]["description"], "Alpha: Tool — Checks e.g. CVE-2021-44228.")
-        self.assertEqual(self.out["tools"][2]["description"], "Mid Tool — Decodes CVSS v3.0/v3.1 vectors")
+        self.assertEqual(self.out["tools"][1]["description"], "Alpha: Tool. Checks e.g. CVE-2021-44228.")
+        self.assertEqual(self.out["tools"][2]["description"], "Mid Tool. Decodes CVSS v3.0/v3.1 vectors")
 
     def test_tools_keep_snapshot_order(self):
         self.assertEqual([t["name"] for t in self.out["tools"]], ["zeta_tool", "alpha_tool", "mid_tool"])
@@ -161,8 +161,8 @@ class ManifestTest(unittest.TestCase):
 
     def test_title_and_category_spaces_are_stripped(self):
         tool = _tool("a_tool", " A Tool ", "Does a. More.", " G ")
-        self.assertEqual(gen.manifest_description(tool), "A Tool — Does a.")
-        self.assertEqual(gen.render_tool_section([tool]), "### G\n\n- **A Tool** — `a_tool`")
+        self.assertEqual(gen.manifest_description(tool), "A Tool. Does a.")
+        self.assertEqual(gen.render_tool_section([tool]), "### G\n\n- **A Tool** (`a_tool`)")
 
 
 class VersionTest(unittest.TestCase):
@@ -186,10 +186,10 @@ class ReadmeTest(unittest.TestCase):
             out,
             "# Title\n\nIntro.\n\n<!-- tools:start -->\n\n"
             "### Beta Group\n\n"
-            "- **Zeta Tool** — `zeta_tool`\n"
-            "- **Mid Tool** — `mid_tool`\n\n"
+            "- **Zeta Tool** (`zeta_tool`)\n"
+            "- **Mid Tool** (`mid_tool`)\n\n"
             "### Alpha Group\n\n"
-            "- **Alpha: Tool** — `alpha_tool`\n\n"
+            "- **Alpha: Tool** (`alpha_tool`)\n\n"
             "<!-- tools:end -->\n\n## After\n\nKept.\n",
         )
 

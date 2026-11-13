@@ -1,4 +1,4 @@
-# ContrastAPI — Security Intelligence for VS Code
+# ContrastAPI: Security Intelligence for VS Code
 
 Security lookups in your editor. The extension reads its tools from the ContrastAPI server. A new server tool appears after the next refresh of the tool list, without an extension update.
 
@@ -51,8 +51,8 @@ Run `ContrastAPI: Set API Key` from the Command Palette, or click the status bar
 
 ## Links
 
-- [MCP Setup](https://api.contrastcyber.com/mcp-setup) — Claude Desktop, Cursor and Windsurf
-- [GitHub](https://github.com/UPinar/contrastapi) — source code and issues
+- [MCP Setup](https://api.contrastcyber.com/mcp-setup): Claude Desktop, Cursor and Windsurf
+- [GitHub](https://github.com/UPinar/contrastapi-clients/tree/master/vscode-extension): source code and issues
 - [Website](https://contrastcyber.com)
 
 ## License

@@ -5,11 +5,11 @@ build-backend = "hatchling.build"
 [project]
 name = "contrastapi"
 dynamic = ["version"]
-description = "Official Python SDK for ContrastAPI — security intelligence for developers and AI agents"
+description = "Official Python SDK for ContrastAPI: security intelligence for developers and AI agents"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
-authors = [{ name = "ContrastCyber", email = "contact@contrastcyber.com" }]
+authors = [{ name = "UPinar", email = "contact@contrastcyber.com" }]
 keywords = [
     "security", "cve", "kev", "cwe", "d3fend", "mitre",
     "attack", "vulnerability", "domain", "dns", "whois", "ssl",
@@ -34,8 +34,8 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://contrastcyber.com"
-Documentation = "https://github.com/UPinar/contrastapi/blob/main/docs/API_Documentation.md"
-Repository = "https://github.com/UPinar/contrastapi-clients"
+Documentation = "https://api.contrastcyber.com/quickstart"
+Repository = "https://github.com/UPinar/contrastapi-clients/tree/master/sdk/python"
 Issues = "https://github.com/UPinar/contrastapi-clients/issues"
 
 [project.optional-dependencies]

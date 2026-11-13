@@ -1,7 +1,7 @@
 {
   "name": "contrastapi",
   "version": "2.0.0",
-  "description": "Official Node.js SDK for ContrastAPI — security intelligence for developers and AI agents",
+  "description": "Official Node.js SDK for ContrastAPI: security intelligence for developers and AI agents",
   "type": "module",
   "exports": {
     ".": {
@@ -18,11 +18,15 @@
     "LICENSE"
   ],
   "license": "MIT",
-  "author": "ContrastCyber <contact@contrastcyber.com>",
+  "author": "UPinar <contact@contrastcyber.com>",
   "homepage": "https://contrastcyber.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/UPinar/contrastapi-clients"
+    "url": "git+https://github.com/UPinar/contrastapi-clients.git",
+    "directory": "sdk/node"
+  },
+  "bugs": {
+    "url": "https://github.com/UPinar/contrastapi-clients/issues"
   },
   "keywords": [
     "security",

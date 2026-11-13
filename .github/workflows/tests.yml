@@ -1,0 +1,115 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  node-sdk:
+    name: Node SDK
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ["20", "22"]
+    defaults:
+      run:
+        working-directory: sdk/node
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Tests
+        run: npm test
+      - name: Type check of the published types
+        run: |
+          npx --yes -p typescript@6.0.2 tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/types/consumer.ts
+          npx --yes -p typescript@6.0.2 tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/types/consumer_bad.ts
+
+  python-sdk:
+    name: Python SDK
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.13"]
+    defaults:
+      run:
+        working-directory: sdk/python
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install the package in a venv
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -e '.[test]'
+      - name: Tests
+        run: .venv/bin/python -m pytest
+
+  generators:
+    name: Generators (SDK and desktop manifest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: SDK generator tests
+        run: python -m unittest discover -s sdk/gen
+      - name: SDK generated files are up to date
+        run: python sdk/gen/gen_sdk.py --check
+      - name: Desktop manifest generator tests
+        run: python -m unittest discover -s claude-desktop-extension/scripts
+      - name: Desktop manifest and README are up to date
+        run: python claude-desktop-extension/scripts/gen_manifest.py --check
+
+  vscode-extension:
+    name: VS Code extension
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vscode-extension
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Install
+        run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit -p .
+      - name: Build
+        run: npm run build
+      - name: Tests (headless, no VS Code download)
+        run: npm test
+
+  desktop-extension:
+    name: Claude desktop extension
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: claude-desktop-extension
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Install
+        run: npm ci
+      - name: Syntax check of the bridge
+        run: node --check server/index.js

@@ -22,7 +22,7 @@ import re
 import sys
 from pathlib import Path
 
-DESCRIPTION_SEPARATOR = " — "
+DESCRIPTION_SEPARATOR = ". "
 CATEGORY_KEY = "com.contrastcyber/category"
 README_START = "<!-- tools:start -->"
 README_END = "<!-- tools:end -->"
@@ -99,7 +99,7 @@ def render_tool_section(tools):
     groups = {}
     for tool in tools:
         category = tool["_meta"][CATEGORY_KEY].strip()
-        line = f"- **{tool['title'].strip()}** — `{tool['name']}`"
+        line = f"- **{tool['title'].strip()}** (`{tool['name']}`)"
         groups.setdefault(category, []).append(line)
     return "\n\n".join(
         f"### {category}\n\n" + "\n".join(lines) for category, lines in groups.items()
