@@ -13,6 +13,7 @@ jobs:
     name: Node SDK
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node: ["20", "22"]
     defaults:
@@ -36,6 +37,7 @@ jobs:
     name: Python SDK
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python: ["3.10", "3.13"]
     defaults:
