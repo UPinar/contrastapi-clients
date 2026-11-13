@@ -21,6 +21,9 @@ updates:
 
   - package-ecosystem: pip
     directory: /sdk/python
+    # The SDK is a library: a floor goes up only when the range shuts out the
+    # new version. A higher floor would only narrow what users can install.
+    versioning-strategy: increase-if-necessary
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
