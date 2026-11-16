@@ -51,6 +51,7 @@ export const OPERATIONS = Object.freeze({
       Object.freeze({ name: "has_nuclei_template", in: "query", required: false }),
       Object.freeze({ name: "published_after", in: "query", required: false }),
       Object.freeze({ name: "published_before", in: "query", required: false }),
+      Object.freeze({ name: "kev_added_after", in: "query", required: false }),
       Object.freeze({ name: "include_rejected", in: "query", required: false }),
       Object.freeze({ name: "sort", in: "query", required: false }),
       Object.freeze({ name: "limit", in: "query", required: false }),

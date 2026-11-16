@@ -64,7 +64,7 @@ test("cve_search: every step optional, schema order, const fields not fixed", ()
     [
       "severity", "vendor", "product", "cwe_id", "min_cvss", "min_epss", "in_kev",
       "known_ransomware", "has_nuclei_template", "published_after", "published_before",
-      "include_rejected", "sort", "limit", "offset",
+      "kev_added_after", "include_rejected", "sort", "limit", "offset",
     ],
   );
   assert.ok(form.optional.every((s) => s.required === false));
@@ -81,7 +81,7 @@ test("cve_search: kinds text / integer / number / enum / boolean", () => {
   const severity = stepOf(steps, "severity");
   assert.strictEqual(severity.kind, "enum");
   assert.deepStrictEqual(severity.options, ["CRITICAL", "HIGH", "MEDIUM", "LOW", "NONE"]);
-  assert.deepStrictEqual(stepOf(steps, "sort").options, ["published_time", "epss", "cvss"]);
+  assert.deepStrictEqual(stepOf(steps, "sort").options, ["published_time", "epss", "cvss", "kev_date_added"]);
   assert.strictEqual(stepOf(steps, "vendor").options, undefined);
 });
 

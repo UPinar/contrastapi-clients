@@ -59,6 +59,7 @@ OPERATIONS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType({
             {"name": "has_nuclei_template", "in": "query", "required": False},
             {"name": "published_after", "in": "query", "required": False},
             {"name": "published_before", "in": "query", "required": False},
+            {"name": "kev_added_after", "in": "query", "required": False},
             {"name": "include_rejected", "in": "query", "required": False},
             {"name": "sort", "in": "query", "required": False},
             {"name": "limit", "in": "query", "required": False},
@@ -497,8 +498,9 @@ class _SyncMethods:
         has_nuclei_template: Literal[True] | None = None,
         published_after: str | None = None,
         published_before: str | None = None,
+        kev_added_after: str | None = None,
         include_rejected: bool | None = None,
-        sort: Literal["published_time", "epss", "cvss"] | None = None,
+        sort: Literal["published_time", "epss", "cvss", "kev_date_added"] | None = None,
         limit: int | None = None,
         offset: int | None = None,
     ) -> dict[str, Any]:
@@ -520,7 +522,10 @@ class _SyncMethods:
             has_nuclei_template: Only CVEs with a Nuclei detection template
             published_after: YYYY-MM-DD. At most 31 characters.
             published_before: YYYY-MM-DD. At most 31 characters.
+            kev_added_after: YYYY-MM-DD; only CVEs added to CISA KEV on or after this date
+                and still in it. At most 31 characters.
             include_rejected: Also list the CVEs that NVD marks Rejected
+            sort: kev_date_added needs in_kev=true or kev_added_after
             limit: Minimum 1. Maximum 100. Default 20.
             offset: Minimum 0. Maximum 10000. Default 0.
         """
@@ -547,6 +552,8 @@ class _SyncMethods:
             args["published_after"] = published_after
         if published_before is not None:
             args["published_before"] = published_before
+        if kev_added_after is not None:
+            args["kev_added_after"] = kev_added_after
         if include_rejected is not None:
             args["include_rejected"] = include_rejected
         if sort is not None:
@@ -637,8 +644,8 @@ class _SyncMethods:
         """CVE Risk Score
 
         Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS,
-        CISA KEV, Metasploit, CVSS, NVD exploit references and ExploitDB. has_public_poc
-        is null when no source names an exploit.
+        CISA KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB.
+        has_public_poc is null when no source names an exploit.
 
         Costs 1 credit.
 
@@ -650,9 +657,9 @@ class _SyncMethods:
     def cve_exploit(self, *, cve_id: str) -> dict[str, Any]:
         """CVE Exploit Intelligence
 
-        Public exploit intelligence (GitHub PoCs, Metasploit, NVD exploit references,
-        ExploitDB). GitHub PoC repositories are listed but not counted as proof of a
-        public exploit.
+        Public exploit intelligence (GitHub PoCs, Metasploit, NVD and CNA exploit
+        references, ExploitDB). GitHub PoC repositories are listed but not counted as
+        proof of a public exploit.
 
         Costs 1 credit.
 
@@ -1109,7 +1116,8 @@ class _SyncMethods:
         """Wayback Machine Lookup
 
         List when the Wayback Machine captured a host's home page: the first and last
-        capture, the years between them and the latest 10 captures with links.
+        capture, the years between them (archive span, not domain age) and the latest 10
+        captures with links.
 
         Costs 1 credit.
 
@@ -1400,8 +1408,9 @@ class _AsyncMethods:
         has_nuclei_template: Literal[True] | None = None,
         published_after: str | None = None,
         published_before: str | None = None,
+        kev_added_after: str | None = None,
         include_rejected: bool | None = None,
-        sort: Literal["published_time", "epss", "cvss"] | None = None,
+        sort: Literal["published_time", "epss", "cvss", "kev_date_added"] | None = None,
         limit: int | None = None,
         offset: int | None = None,
     ) -> dict[str, Any]:
@@ -1423,7 +1432,10 @@ class _AsyncMethods:
             has_nuclei_template: Only CVEs with a Nuclei detection template
             published_after: YYYY-MM-DD. At most 31 characters.
             published_before: YYYY-MM-DD. At most 31 characters.
+            kev_added_after: YYYY-MM-DD; only CVEs added to CISA KEV on or after this date
+                and still in it. At most 31 characters.
             include_rejected: Also list the CVEs that NVD marks Rejected
+            sort: kev_date_added needs in_kev=true or kev_added_after
             limit: Minimum 1. Maximum 100. Default 20.
             offset: Minimum 0. Maximum 10000. Default 0.
         """
@@ -1450,6 +1462,8 @@ class _AsyncMethods:
             args["published_after"] = published_after
         if published_before is not None:
             args["published_before"] = published_before
+        if kev_added_after is not None:
+            args["kev_added_after"] = kev_added_after
         if include_rejected is not None:
             args["include_rejected"] = include_rejected
         if sort is not None:
@@ -1540,8 +1554,8 @@ class _AsyncMethods:
         """CVE Risk Score
 
         Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS,
-        CISA KEV, Metasploit, CVSS, NVD exploit references and ExploitDB. has_public_poc
-        is null when no source names an exploit.
+        CISA KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB.
+        has_public_poc is null when no source names an exploit.
 
         Costs 1 credit.
 
@@ -1553,9 +1567,9 @@ class _AsyncMethods:
     async def cve_exploit(self, *, cve_id: str) -> dict[str, Any]:
         """CVE Exploit Intelligence
 
-        Public exploit intelligence (GitHub PoCs, Metasploit, NVD exploit references,
-        ExploitDB). GitHub PoC repositories are listed but not counted as proof of a
-        public exploit.
+        Public exploit intelligence (GitHub PoCs, Metasploit, NVD and CNA exploit
+        references, ExploitDB). GitHub PoC repositories are listed but not counted as
+        proof of a public exploit.
 
         Costs 1 credit.
 
@@ -2012,7 +2026,8 @@ class _AsyncMethods:
         """Wayback Machine Lookup
 
         List when the Wayback Machine captured a host's home page: the first and last
-        capture, the years between them and the latest 10 captures with links.
+        capture, the years between them (archive span, not domain age) and the latest 10
+        captures with links.
 
         Costs 1 credit.
 

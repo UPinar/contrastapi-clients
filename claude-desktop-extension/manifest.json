@@ -80,7 +80,7 @@
     },
     {
       "name": "cve_exploit",
-      "description": "CVE Exploit Intelligence. Public exploit intelligence (GitHub PoCs, Metasploit, NVD exploit references, ExploitDB)."
+      "description": "CVE Exploit Intelligence. Public exploit intelligence (GitHub PoCs, Metasploit, NVD and CNA exploit references, ExploitDB)."
     },
     {
       "name": "cve_triage",
@@ -152,7 +152,7 @@
     },
     {
       "name": "wayback_lookup",
-      "description": "Wayback Machine Lookup. List when the Wayback Machine captured a host's home page: the first and last capture, the years between them and the latest 10 captures with links."
+      "description": "Wayback Machine Lookup. List when the Wayback Machine captured a host's home page: the first and last capture, the years between them (archive span, not domain age) and the latest 10 captures with links."
     },
     {
       "name": "cert_search",

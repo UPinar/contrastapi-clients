@@ -78,9 +78,15 @@ export interface CveSearchArgs {
   published_after?: string;
   /** YYYY-MM-DD. At most 31 characters. */
   published_before?: string;
+  /**
+   * YYYY-MM-DD; only CVEs added to CISA KEV on or after this date and still in it.
+   * At most 31 characters.
+   */
+  kev_added_after?: string;
   /** Also list the CVEs that NVD marks Rejected */
   include_rejected?: boolean;
-  sort?: "published_time" | "epss" | "cvss";
+  /** kev_date_added needs in_kev=true or kev_added_after */
+  sort?: "published_time" | "epss" | "cvss" | "kev_date_added";
   /** Minimum 1. Maximum 100. Default 20. */
   limit?: number;
   /** Minimum 0. Maximum 10000. Default 0. */
@@ -592,8 +598,8 @@ export interface ContrastAPIMethods {
    * CVE Risk Score
    *
    * Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS,
-   * CISA KEV, Metasploit, CVSS, NVD exploit references and ExploitDB. has_public_poc
-   * is null when no source names an exploit.
+   * CISA KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB.
+   * has_public_poc is null when no source names an exploit.
    *
    * Costs 1 credit.
    */
@@ -601,9 +607,9 @@ export interface ContrastAPIMethods {
   /**
    * CVE Exploit Intelligence
    *
-   * Public exploit intelligence (GitHub PoCs, Metasploit, NVD exploit references,
-   * ExploitDB). GitHub PoC repositories are listed but not counted as proof of a
-   * public exploit.
+   * Public exploit intelligence (GitHub PoCs, Metasploit, NVD and CNA exploit
+   * references, ExploitDB). GitHub PoC repositories are listed but not counted as
+   * proof of a public exploit.
    *
    * Costs 1 credit.
    */
@@ -779,7 +785,8 @@ export interface ContrastAPIMethods {
    * Wayback Machine Lookup
    *
    * List when the Wayback Machine captured a host's home page: the first and last
-   * capture, the years between them and the latest 10 captures with links.
+   * capture, the years between them (archive span, not domain age) and the latest 10
+   * captures with links.
    *
    * Costs 1 credit.
    */

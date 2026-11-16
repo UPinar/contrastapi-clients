@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "ContrastAPI",
-    "version": "1.0.0",
+    "version": "2.0.5",
     "description": "Security intelligence REST API for CVE, package, credential, domain, IP and threat defense lookups, priced in credits."
   },
   "servers": [
@@ -416,6 +416,16 @@
             }
           },
           {
+            "name": "kev_added_after",
+            "in": "query",
+            "required": false,
+            "description": "YYYY-MM-DD; only CVEs added to CISA KEV on or after this date and still in it",
+            "schema": {
+              "type": "string",
+              "maxLength": 31
+            }
+          },
+          {
             "name": "include_rejected",
             "in": "query",
             "required": false,
@@ -428,12 +438,14 @@
             "name": "sort",
             "in": "query",
             "required": false,
+            "description": "kev_date_added needs in_kev=true or kev_added_after",
             "schema": {
               "type": "string",
               "enum": [
                 "published_time",
                 "epss",
-                "cvss"
+                "cvss",
+                "kev_date_added"
               ],
               "maxLength": 15
             }
@@ -718,7 +730,7 @@
       "get": {
         "operationId": "cve_risk_score",
         "summary": "CVE Risk Score",
-        "description": "Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS, CISA KEV, Metasploit, CVSS, NVD exploit references and ExploitDB. has_public_poc is null when no source names an exploit.",
+        "description": "Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS, CISA KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB. has_public_poc is null when no source names an exploit.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -770,7 +782,7 @@
       "get": {
         "operationId": "cve_exploit",
         "summary": "CVE Exploit Intelligence",
-        "description": "Public exploit intelligence (GitHub PoCs, Metasploit, NVD exploit references, ExploitDB). GitHub PoC repositories are listed but not counted as proof of a public exploit.",
+        "description": "Public exploit intelligence (GitHub PoCs, Metasploit, NVD and CNA exploit references, ExploitDB). GitHub PoC repositories are listed but not counted as proof of a public exploit.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -2012,7 +2024,7 @@
       "get": {
         "operationId": "wayback_lookup",
         "summary": "Wayback Machine Lookup",
-        "description": "List when the Wayback Machine captured a host's home page: the first and last capture, the years between them and the latest 10 captures with links.",
+        "description": "List when the Wayback Machine captured a host's home page: the first and last capture, the years between them (archive span, not domain age) and the latest 10 captures with links.",
         "tags": [
           "Domain Intelligence"
         ],
