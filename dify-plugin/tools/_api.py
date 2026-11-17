@@ -151,6 +151,9 @@ def _password_parameters(tool_parameters) -> dict:
     """Return the arguments of password_check with the password replaced by its SHA-1.
 
     The password never leaves this function. Only the upper-case hex SHA-1 goes on.
+    SHA-1 is the hash of Have I Been Pwned's Pwned Passwords list, which the server
+    checks. The hash is compared with that list and never stored, so it is not used
+    for security (usedforsecurity=False).
     """
     password = tool_parameters.get(_PASSWORD_PARAM)
     if not isinstance(password, str) or password == "":
@@ -159,7 +162,7 @@ def _password_parameters(tool_parameters) -> dict:
         encoded = password.encode("utf-8")
     except UnicodeEncodeError:
         raise ContrastAPIError("The password holds a character that is not valid Unicode text.") from None
-    return {_HASH_PARAM: hashlib.sha1(encoded).hexdigest().upper()}
+    return {_HASH_PARAM: hashlib.sha1(encoded, usedforsecurity=False).hexdigest().upper()}
 
 
 def build_request(operation_id, tool_parameters, api_key) -> tuple[str, str, dict, dict | None, dict]:

@@ -2,6 +2,26 @@
 
 This plugin gives Dify agents and workflows the security tools of [ContrastAPI](https://api.contrastcyber.com). They look up CVEs, CISA KEV entries, EPSS scores and public exploits, check packages against advisories, and check domains, DNS, TLS, e-mail and IP addresses. Each call goes to `https://api.contrastcyber.com`. The API key is optional. Without a key, calls use the free hourly credits of the IP address your Dify server calls from. Other users of a shared Dify host use the same credits. A Pro key gives more credits and the watchlist tools. Pro keys are sold at https://api.contrastcyber.com/pricing.
 
+Source: https://github.com/UPinar/contrastapi-clients (directory `dify-plugin`).
+
+## Setup
+
+1. Install the plugin from the Dify Marketplace.
+2. Open the plugin and choose **API Key Authorization Configuration**. Give the authorization a name. Leave the API key empty to use the free credits, or paste a Pro key that starts with `contrastapi_`. The plugin checks a pasted key with the `/health` endpoint, which costs no credits.
+3. Add a ContrastAPI tool to a workflow or an agent, for example **CVE Lookup** with `CVE-2021-44228`.
+
+## Connection
+
+The Dify server must reach `https://api.contrastcyber.com` over HTTPS. The plugin calls no other host, follows no redirect and waits at most 30 seconds for an answer.
+
+## Changes in 0.9.0
+
+Version 0.9.0 calls the current ContrastAPI. The `/v1` paths that 0.8.0 called no longer exist, so 0.8.0 fails on every call. A workflow that used one of the tools below must pick it again.
+
+- Renamed: `scan_headers` is now `headers_check`, `exploit_lookup` is `cve_exploit`, `kev_detail` is `kev_lookup`, `calculate_risk_score` is `cve_risk_score`, `get_cvss_details` is `cvss_calculator`, `bulk_cve_lookup` is `cve_lookup_bulk`, `email_security_posture` is `email_auth_check`, `d3fend_defense_for_attack` is `d3fend_for_attack` and `check_dependencies` is `package_check_bulk`. `email_mx`, `email_disposable` and `email_verify` are one tool, `email_address_check`.
+- Removed, because ContrastAPI no longer has them: the MITRE ATLAS and Sigma tools, the IOC, hash, threat, phishing, phone and username lookups, `check_headers`, `check_secrets`, `check_injection`, `domain_report`, `audit_domain`, `contrast_scan`, `tech_fingerprint`, `threat_report`, `robots_txt`, `redirect_chain`, `brand_assets`, `seo_audit` and the other D3FEND tools.
+- New: the credential is an optional API key. Tools for CVE triage, product exposure, CPE search, packages, drivers, certificates and a watchlist (with a Pro key) were added.
+
 ## Password check
 
 The password_check tool takes the password itself. The plugin sends only its SHA-1 to ContrastAPI. The text you type still passes through the AI model and Dify's logs, so check a candidate password, not one in use.
