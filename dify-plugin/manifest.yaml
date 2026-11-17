@@ -1,6 +1,7 @@
 version: 0.9.0
 type: plugin
 author: contrastcyber
+contact: contact@contrastcyber.com
 name: contrastapi
 label:
   en_US: ContrastAPI
