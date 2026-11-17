@@ -1,0 +1,22 @@
+identity:
+  name: "driver_lookup_bulk"
+  author: "contrastcyber"
+  label:
+    en_US: "Bulk Windows Driver Lookup"
+description:
+  human:
+    en_US: "Look up many driver file hashes in the LOLDrivers catalog at once, each with the fields of driver_lookup."
+  llm: "Look up many driver file hashes in the LOLDrivers catalog at once, each with the fields of driver_lookup. Hashes beyond the remaining credits come back in not_processed. Costs 1 credit per item, at least 1 credit."
+parameters:
+  - name: "hashes"
+    type: string
+    required: true
+    label:
+      en_US: "Hashes"
+    human_description:
+      en_US: "MD5, SHA1 or SHA256 of driver files or of their Authentihash. 1 to 20 items. Give a JSON array, or a comma-separated list of strings."
+    llm_description: "MD5, SHA1 or SHA256 of driver files or of their Authentihash. 1 to 20 items. Give a JSON array, or a comma-separated list of strings."
+    form: llm
+extra:
+  python:
+    source: "tools/driver_lookup_bulk.py"

@@ -1,0 +1,22 @@
+identity:
+  name: "cve_risk_score"
+  author: "contrastcyber"
+  label:
+    en_US: "CVE Risk Score"
+description:
+  human:
+    en_US: "Composite risk score of a CVE, from 0 to 100, for patch priority."
+  llm: "Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS, CISA KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB. has_public_poc is null when no source names an exploit. Costs 1 credit."
+parameters:
+  - name: "cve_id"
+    type: string
+    required: true
+    label:
+      en_US: "CVE ID"
+    human_description:
+      en_US: "CVE ID. At most 24 characters."
+    llm_description: "CVE ID. At most 24 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/cve_risk_score.py"

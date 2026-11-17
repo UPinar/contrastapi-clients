@@ -1,0 +1,22 @@
+identity:
+  name: "kev_lookup"
+  author: "contrastcyber"
+  label:
+    en_US: "CISA KEV Lookup"
+description:
+  human:
+    en_US: "CISA KEV catalog entry for a CVE: the required action, the patch deadline and known ransomware use."
+  llm: "CISA KEV catalog entry for a CVE: the required action, the patch deadline and known ransomware use. A CVE that CISA removed answers in_kev false, and one never listed answers \"KEV entry not found\". Costs 1 credit."
+parameters:
+  - name: "cve_id"
+    type: string
+    required: true
+    label:
+      en_US: "CVE ID"
+    human_description:
+      en_US: "CVE ID. At most 24 characters."
+    llm_description: "CVE ID. At most 24 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/kev_lookup.py"

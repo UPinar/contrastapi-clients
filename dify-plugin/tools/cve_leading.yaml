@@ -1,0 +1,86 @@
+identity:
+  name: "cve_leading"
+  author: "contrastcyber"
+  label:
+    en_US: "Leading CVEs by EPSS"
+description:
+  human:
+    en_US: "List the CVEs most likely to be exploited, by EPSS score (the probability of exploitation in the next 30 days), with a verdict on the top score."
+  llm: "List the CVEs most likely to be exploited, by EPSS score (the probability of exploitation in the next 30 days), with a verdict on the top score. To rank by composite risk score, call the cve_triage tool. Costs 1 credit."
+parameters:
+  - name: "vendor"
+    type: string
+    required: false
+    label:
+      en_US: "Vendor"
+    human_description:
+      en_US: "CPE vendor name in lower case, e.g. microsoft. The cpe_search tool finds it. At most 128 characters."
+    llm_description: "CPE vendor name in lower case, e.g. microsoft. The cpe_search tool finds it. At most 128 characters."
+    form: llm
+  - name: "product"
+    type: string
+    required: false
+    label:
+      en_US: "Product"
+    human_description:
+      en_US: "CPE product name in lower case with underscores, e.g. windows_10. The cpe_search tool finds it. At most 128 characters."
+    llm_description: "CPE product name in lower case with underscores, e.g. windows_10. The cpe_search tool finds it. At most 128 characters."
+    form: llm
+  - name: "min_epss"
+    type: number
+    required: false
+    label:
+      en_US: "Min EPSS"
+    human_description:
+      en_US: "Lowest EPSS score. Minimum 0. Maximum 1."
+    llm_description: "Lowest EPSS score. Minimum 0. Maximum 1."
+    form: llm
+  - name: "in_kev"
+    type: boolean
+    required: false
+    label:
+      en_US: "In KEV"
+    human_description:
+      en_US: "true: only CVEs in the CISA KEV catalog. false: only CVEs not in it."
+    llm_description: "true: only CVEs in the CISA KEV catalog. false: only CVEs not in it."
+    form: llm
+  - name: "known_ransomware"
+    type: boolean
+    required: false
+    label:
+      en_US: "Known Ransomware"
+    human_description:
+      en_US: "Only CVEs whose CISA KEV entry notes known ransomware use"
+    llm_description: "Only CVEs whose CISA KEV entry notes known ransomware use"
+    form: llm
+  - name: "has_nuclei_template"
+    type: boolean
+    required: false
+    label:
+      en_US: "Has Nuclei Template"
+    human_description:
+      en_US: "Only CVEs with a Nuclei detection template"
+    llm_description: "Only CVEs with a Nuclei detection template"
+    form: llm
+  - name: "include_rejected"
+    type: boolean
+    required: false
+    label:
+      en_US: "Include Rejected"
+    human_description:
+      en_US: "Also list the CVEs that NVD marks Rejected"
+    llm_description: "Also list the CVEs that NVD marks Rejected"
+    form: llm
+  - name: "limit"
+    type: number
+    required: false
+    label:
+      en_US: "Limit"
+    human_description:
+      en_US: "Number of results on one page. Minimum 1. Maximum 50. Default 20."
+    llm_description: "Number of results on one page. Minimum 1. Maximum 50. Default 20."
+    form: llm
+    default: 20
+extra:
+  python:
+    source: "tools/cve_leading.py"

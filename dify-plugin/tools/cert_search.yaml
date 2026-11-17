@@ -1,0 +1,22 @@
+identity:
+  name: "cert_search"
+  author: "contrastcyber"
+  label:
+    en_US: "Certificate Transparency Search"
+description:
+  human:
+    en_US: "List the unexpired certificates that Certificate Transparency logs hold for a host name, wildcards included, from SSLMate's Cert Spotter: the 10 newest, with issuer, validity and DNS names."
+  llm: "List the unexpired certificates that Certificate Transparency logs hold for a host name, wildcards included, from SSLMate's Cert Spotter: the 10 newest, with issuer, validity and DNS names. Costs 2 credits."
+parameters:
+  - name: "domain"
+    type: string
+    required: true
+    label:
+      en_US: "Domain"
+    human_description:
+      en_US: "Host name, such as example.com or www.example.com. At most 253 characters."
+    llm_description: "Host name, such as example.com or www.example.com. At most 253 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/cert_search.py"

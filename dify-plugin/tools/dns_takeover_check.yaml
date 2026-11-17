@@ -1,0 +1,22 @@
+identity:
+  name: "dns_takeover_check"
+  author: "contrastcyber"
+  label:
+    en_US: "Subdomain Takeover Check"
+description:
+  human:
+    en_US: "Check a host name for subdomain takeover through a dangling CNAME."
+  llm: "Check a host name for subdomain takeover through a dangling CNAME. takeover_possible is null when the CNAME points to a service whose DNS does not show whether the name can be claimed. Costs 1 credit."
+parameters:
+  - name: "domain"
+    type: string
+    required: true
+    label:
+      en_US: "Domain"
+    human_description:
+      en_US: "Host name, such as shop.example.com. At most 253 characters."
+    llm_description: "Host name, such as shop.example.com. At most 253 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/dns_takeover_check.py"

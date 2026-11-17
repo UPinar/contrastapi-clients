@@ -1,0 +1,41 @@
+identity:
+  name: "watchlist_events"
+  author: "contrastcyber"
+  label:
+    en_US: "Monitoring Events"
+description:
+  human:
+    en_US: "Report what changed on the items this API key watches, such as a new advisory for a package or a certificate about to expire, oldest first."
+  llm: "Report what changed on the items this API key watches, such as a new advisory for a package or a certificate about to expire, oldest first. A plain call continues where the last one stopped. Requires a Pro API key. Costs 1 credit."
+parameters:
+  - name: "limit"
+    type: number
+    required: false
+    label:
+      en_US: "Limit"
+    human_description:
+      en_US: "Events per call; repeat=true answers the whole last batch. Minimum 1. Maximum 100. Default 20."
+    llm_description: "Events per call; repeat=true answers the whole last batch. Minimum 1. Maximum 100. Default 20."
+    form: llm
+    default: 20
+  - name: "cursor"
+    type: string
+    required: false
+    label:
+      en_US: "Cursor"
+    human_description:
+      en_US: "next_cursor of an earlier answer; reads after it and keeps the position. At most 18 characters."
+    llm_description: "next_cursor of an earlier answer; reads after it and keeps the position. At most 18 characters."
+    form: llm
+  - name: "repeat"
+    type: boolean
+    required: false
+    label:
+      en_US: "Repeat"
+    human_description:
+      en_US: "Answers the last batch again; cannot be combined with cursor"
+    llm_description: "Answers the last batch again; cannot be combined with cursor"
+    form: llm
+extra:
+  python:
+    source: "tools/watchlist_events.py"

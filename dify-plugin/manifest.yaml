@@ -1,0 +1,38 @@
+version: 0.9.0
+type: plugin
+author: contrastcyber
+name: contrastapi
+label:
+  en_US: ContrastAPI
+  zh_Hans: ContrastAPI
+description:
+  en_US: "Security data from ContrastAPI: CVE, CISA KEV, EPSS and exploit lookups, package advisories, domain, DNS, TLS, e-mail and IP checks, and CVE monitoring with a Pro key."
+  zh_Hans: "Security data from ContrastAPI: CVE, CISA KEV, EPSS and exploit lookups, package advisories, domain, DNS, TLS, e-mail and IP checks, and CVE monitoring with a Pro key."
+icon: logo.png
+tags:
+  - search
+  - agent
+  - utilities
+resource:
+  memory: 1048576
+  permission:
+    tool:
+      enabled: true
+    model:
+      enabled: false
+      llm: false
+plugins:
+  tools:
+    - provider/contrastapi.yaml
+meta:
+  version: 0.0.1
+  arch:
+    - amd64
+    - arm64
+  runner:
+    language: python
+    version: "3.12"
+    entrypoint: main
+created_at: 2026-11-17T00:00:00Z
+privacy: PRIVACY.md
+repo: https://github.com/UPinar/contrastapi-clients

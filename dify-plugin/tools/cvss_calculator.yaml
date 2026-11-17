@@ -1,0 +1,22 @@
+identity:
+  name: "cvss_calculator"
+  author: "contrastcyber"
+  label:
+    en_US: "CVSS Calculator"
+description:
+  human:
+    en_US: "Decode a CVSS v3.0/v3.1 vector into its base metrics and recompute its base, temporal and environmental scores."
+  llm: "Decode a CVSS v3.0/v3.1 vector into its base metrics and recompute its base, temporal and environmental scores. Costs 1 credit."
+parameters:
+  - name: "vector"
+    type: string
+    required: true
+    label:
+      en_US: "Vector"
+    human_description:
+      en_US: "CVSS v3.0/v3.1 vector, e.g. CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H. At most 127 characters."
+    llm_description: "CVSS v3.0/v3.1 vector, e.g. CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H. At most 127 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/cvss_calculator.py"

@@ -1,0 +1,22 @@
+identity:
+  name: "ip_lookup"
+  author: "contrastcyber"
+  label:
+    en_US: "IP Lookup"
+description:
+  human:
+    en_US: "Look up a public IP address: AS, country, cloud provider, CDN, datacenter or Tor exit, DROP listing and PTR name."
+  llm: "Look up a public IP address: AS, country, cloud provider, CDN, datacenter or Tor exit, DROP listing and PTR name. A Pro key with its own Shodan or AbuseIPDB key adds exposure and reputation. Costs 1 credit."
+parameters:
+  - name: "ip_address"
+    type: string
+    required: true
+    label:
+      en_US: "IP Address"
+    human_description:
+      en_US: "Public IPv4 or IPv6 address, such as 8.8.8.8 or 2001:4860:4860::8888. At most 45 characters."
+    llm_description: "Public IPv4 or IPv6 address, such as 8.8.8.8 or 2001:4860:4860::8888. At most 45 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/ip_lookup.py"

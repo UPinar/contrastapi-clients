@@ -1,0 +1,22 @@
+identity:
+  name: "cve_triage_bulk"
+  author: "contrastcyber"
+  label:
+    en_US: "Bulk CVE Triage"
+description:
+  human:
+    en_US: "Triage many CVEs at once, ranked by composite risk score."
+  llm: "Triage many CVEs at once, ranked by composite risk score. Ids beyond the remaining credits come back in not_processed. Costs 1 credit per item, at least 1 credit."
+parameters:
+  - name: "cve_ids"
+    type: string
+    required: true
+    label:
+      en_US: "CVE IDs"
+    human_description:
+      en_US: "CVE IDs. 1 to 50 items. Give a JSON array, or a comma-separated list of strings."
+    llm_description: "CVE IDs. 1 to 50 items. Give a JSON array, or a comma-separated list of strings."
+    form: llm
+extra:
+  python:
+    source: "tools/cve_triage_bulk.py"

@@ -10,6 +10,7 @@ The server itself lives in a separate repository.
 | Python SDK | [`sdk/python`](sdk/python) | `pip install contrastapi` |
 | VS Code extension | [`vscode-extension`](vscode-extension) | `code --install-extension ContrastAPI.contrastapi`, or search "ContrastAPI" in the VS Code Marketplace |
 | Claude Desktop extension | [`claude-desktop-extension`](claude-desktop-extension) | Download the `.mcpb` file from the [Releases](https://github.com/UPinar/contrastapi-clients/releases) page and open it in Claude Desktop |
+| Dify plugin | [`dify-plugin`](dify-plugin) | Install "ContrastAPI" from the Dify Marketplace |
 
 `sdk/gen` holds the generator that writes the operation files of both SDKs from `sdk/openapi.json`.
 
@@ -42,6 +43,11 @@ python3 sdk/gen/gen_sdk.py --check
 # Claude Desktop extension: manifest generator tests and a check of the generated files
 python3 -m unittest discover -s claude-desktop-extension/scripts
 python3 claude-desktop-extension/scripts/gen_manifest.py --check
+
+# Dify plugin: generator tests, a check of the generated files, then the plugin tests
+python3 -m unittest discover -s dify-plugin/scripts
+python3 dify-plugin/scripts/gen_plugin.py --check
+python3 -m unittest discover -s dify-plugin/tests -t dify-plugin
 ```
 
 ## Security

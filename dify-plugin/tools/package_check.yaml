@@ -1,0 +1,60 @@
+identity:
+  name: "package_check"
+  author: "contrastcyber"
+  label:
+    en_US: "Package Vulnerability Check"
+description:
+  human:
+    en_US: "Check a package against the OSV.dev advisories (GitHub, Go, PyPA, RustSec) and the OpenSSF malicious package list, with the fixed version and endoflife.date dates."
+  llm: "Check a package against the OSV.dev advisories (GitHub, Go, PyPA, RustSec) and the OpenSSF malicious package list, with the fixed version and endoflife.date dates. For severity, pass the CVE aliases to the cve_triage_bulk tool. Costs 1 credit."
+parameters:
+  - name: "ecosystem"
+    type: string
+    required: true
+    label:
+      en_US: "Ecosystem"
+    human_description:
+      en_US: "npm, PyPI, Maven, Go, NuGet, RubyGems, crates.io, Packagist or SwiftURL. Case does not matter. At most 16 characters."
+    llm_description: "npm, PyPI, Maven, Go, NuGet, RubyGems, crates.io, Packagist or SwiftURL. Case does not matter. At most 16 characters."
+    form: llm
+  - name: "name"
+    type: string
+    required: true
+    label:
+      en_US: "Name"
+    human_description:
+      en_US: "Package name as the dependency file writes it, e.g. lodash, @babel/core, org.apache.logging.log4j:log4j-core, golang.org/x/net. At most 256 characters."
+    llm_description: "Package name as the dependency file writes it, e.g. lodash, @babel/core, org.apache.logging.log4j:log4j-core, golang.org/x/net. At most 256 characters."
+    form: llm
+  - name: "version"
+    type: string
+    required: false
+    label:
+      en_US: "Version"
+    human_description:
+      en_US: "Exact version, e.g. 4.17.20; without it every result is listed. At most 128 characters."
+    llm_description: "Exact version, e.g. 4.17.20; without it every result is listed. At most 128 characters."
+    form: llm
+  - name: "limit"
+    type: number
+    required: false
+    label:
+      en_US: "Limit"
+    human_description:
+      en_US: "Number of results on one page. Minimum 1. Maximum 50. Default 20."
+    llm_description: "Number of results on one page. Minimum 1. Maximum 50. Default 20."
+    form: llm
+    default: 20
+  - name: "offset"
+    type: number
+    required: false
+    label:
+      en_US: "Offset"
+    human_description:
+      en_US: "Number of results to skip, for the next page. Minimum 0. Default 0."
+    llm_description: "Number of results to skip, for the next page. Minimum 0. Default 0."
+    form: llm
+    default: 0
+extra:
+  python:
+    source: "tools/package_check.py"

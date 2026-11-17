@@ -1,0 +1,42 @@
+identity:
+  name: "cpe_search"
+  author: "contrastcyber"
+  label:
+    en_US: "CPE Search"
+description:
+  human:
+    en_US: "Find the CPE vendor and product names that hold a text, ranked by vulnerable CVE count."
+  llm: "Find the CPE vendor and product names that hold a text, ranked by vulnerable CVE count. Pass a name that holds no % as it is to the vendor and product arguments of the cve_search, cve_triage, cve_leading and product_exposure tools. Costs 1 credit."
+parameters:
+  - name: "search"
+    type: string
+    required: true
+    label:
+      en_US: "Search"
+    human_description:
+      en_US: "Text in vendor or product names, at least 3 bytes; case does not matter, and _ matches a space. At most 128 characters."
+    llm_description: "Text in vendor or product names, at least 3 bytes; case does not matter, and _ matches a space. At most 128 characters."
+    form: llm
+  - name: "limit"
+    type: number
+    required: false
+    label:
+      en_US: "Limit"
+    human_description:
+      en_US: "Number of results on one page. Minimum 1. Maximum 50. Default 20."
+    llm_description: "Number of results on one page. Minimum 1. Maximum 50. Default 20."
+    form: llm
+    default: 20
+  - name: "offset"
+    type: number
+    required: false
+    label:
+      en_US: "Offset"
+    human_description:
+      en_US: "Number of results to skip, for the next page. Minimum 0. Maximum 10000. Default 0."
+    llm_description: "Number of results to skip, for the next page. Minimum 0. Maximum 10000. Default 0."
+    form: llm
+    default: 0
+extra:
+  python:
+    source: "tools/cpe_search.py"

@@ -1,0 +1,22 @@
+identity:
+  name: "cwe_lookup"
+  author: "contrastcyber"
+  label:
+    en_US: "CWE Lookup"
+description:
+  human:
+    en_US: "CWE weakness details (description, mitigations, examples), with how many CVEs and CISA KEV entries name it."
+  llm: "CWE weakness details (description, mitigations, examples), with how many CVEs and CISA KEV entries name it. To list them, call the cve_search tool with its cwe_id argument. Costs 1 credit."
+parameters:
+  - name: "cwe_id"
+    type: string
+    required: true
+    label:
+      en_US: "CWE ID"
+    human_description:
+      en_US: "CWE ID, e.g. CWE-79. At most 16 characters."
+    llm_description: "CWE ID, e.g. CWE-79. At most 16 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/cwe_lookup.py"

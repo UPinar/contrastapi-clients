@@ -1,0 +1,31 @@
+identity:
+  name: "headers_check"
+  author: "contrastcyber"
+  label:
+    en_US: "Security Headers Check"
+description:
+  human:
+    en_US: "Rate nine security headers of a web site, such as CSP, HSTS and Set-Cookie, from one GET to https://<domain>/ that follows up to 5 redirects on the same host or its www pair."
+  llm: "Rate nine security headers of a web site, such as CSP, HSTS and Set-Cookie, from one GET to https://<domain>/ that follows up to 5 redirects on the same host or its www pair. Each finding that does not pass has a remediation. Costs 1 credit."
+parameters:
+  - name: "domain"
+    type: string
+    required: true
+    label:
+      en_US: "Domain"
+    human_description:
+      en_US: "Host name of the site, such as www.example.com. At most 253 characters."
+    llm_description: "Host name of the site, such as www.example.com. At most 253 characters."
+    form: llm
+  - name: "include_full_header_values"
+    type: boolean
+    required: false
+    label:
+      en_US: "Include Full Header Values"
+    human_description:
+      en_US: "true sends each header value and URL whole, instead of cutting it after 500 code points"
+    llm_description: "true sends each header value and URL whole, instead of cutting it after 500 code points"
+    form: llm
+extra:
+  python:
+    source: "tools/headers_check.py"

@@ -1,0 +1,22 @@
+identity:
+  name: "wayback_lookup"
+  author: "contrastcyber"
+  label:
+    en_US: "Wayback Machine Lookup"
+description:
+  human:
+    en_US: "List when the Wayback Machine captured a host's home page: the first and last capture, the years between them (archive span, not domain age) and the latest 10 captures with links."
+  llm: "List when the Wayback Machine captured a host's home page: the first and last capture, the years between them (archive span, not domain age) and the latest 10 captures with links. Costs 1 credit."
+parameters:
+  - name: "domain"
+    type: string
+    required: true
+    label:
+      en_US: "Domain"
+    human_description:
+      en_US: "Host name, such as example.com. At most 253 characters."
+    llm_description: "Host name, such as example.com. At most 253 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/wayback_lookup.py"

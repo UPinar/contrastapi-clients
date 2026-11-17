@@ -1,0 +1,13 @@
+identity:
+  name: "health"
+  author: "contrastcyber"
+  label:
+    en_US: "Health and Data Freshness"
+description:
+  human:
+    en_US: "Database freshness: CVE/KEV/CWE counts and latest entries, and the sync state of each upstream feed."
+  llm: "Database freshness: CVE/KEV/CWE counts and latest entries, and the sync state of each upstream feed. Costs no credits."
+parameters: []
+extra:
+  python:
+    source: "tools/health.py"

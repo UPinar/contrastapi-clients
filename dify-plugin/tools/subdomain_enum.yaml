@@ -1,0 +1,22 @@
+identity:
+  name: "subdomain_enum"
+  author: "contrastcyber"
+  label:
+    en_US: "Subdomain Enumeration"
+description:
+  human:
+    en_US: "List up to 50 subdomains of a registrable domain from Certificate Transparency, DNS queries for 94 common names and the domain's MX, NS and SPF records."
+  llm: "List up to 50 subdomains of a registrable domain from Certificate Transparency, DNS queries for 94 common names and the domain's MX, NS and SPF records. Costs 2 credits."
+parameters:
+  - name: "domain"
+    type: string
+    required: true
+    label:
+      en_US: "Domain"
+    human_description:
+      en_US: "Domain name, such as example.com; www.example.com asks about example.com. At most 253 characters."
+    llm_description: "Domain name, such as example.com; www.example.com asks about example.com. At most 253 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/subdomain_enum.py"

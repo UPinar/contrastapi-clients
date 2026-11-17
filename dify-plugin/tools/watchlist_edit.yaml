@@ -1,0 +1,244 @@
+identity:
+  name: "watchlist_edit"
+  author: "contrastcyber"
+  label:
+    en_US: "Watchlist: CVE, Package, Domain and IP Monitoring"
+description:
+  human:
+    en_US: "Add, remove, list or clear the items this API key watches: CVEs, products, CVE searches, packages, domains and IP addresses."
+  llm: "Add, remove, list or clear the items this API key watches: CVEs, products, CVE searches, packages, domains and IP addresses. Read their changes with the watchlist_events tool. Requires a Pro API key. Costs 1 credit."
+parameters:
+  - name: "action"
+    type: select
+    required: false
+    label:
+      en_US: "Action"
+    human_description:
+      en_US: "add or remove; leave out to list the items"
+    llm_description: "add or remove; leave out to list the items"
+    form: llm
+    options:
+      - value: "add"
+        label:
+          en_US: "add"
+      - value: "remove"
+        label:
+          en_US: "remove"
+  - name: "endpoint"
+    type: select
+    required: false
+    label:
+      en_US: "Endpoint"
+    human_description:
+      en_US: "The tool the item watches"
+    llm_description: "The tool the item watches"
+    form: llm
+    options:
+      - value: "cve_lookup"
+        label:
+          en_US: "cve_lookup"
+      - value: "kev_lookup"
+        label:
+          en_US: "kev_lookup"
+      - value: "cve_exploit"
+        label:
+          en_US: "cve_exploit"
+      - value: "product_exposure"
+        label:
+          en_US: "product_exposure"
+      - value: "cve_search"
+        label:
+          en_US: "cve_search"
+      - value: "dns_lookup"
+        label:
+          en_US: "dns_lookup"
+      - value: "ssl_check"
+        label:
+          en_US: "ssl_check"
+      - value: "whois_lookup"
+        label:
+          en_US: "whois_lookup"
+      - value: "headers_check"
+        label:
+          en_US: "headers_check"
+      - value: "cert_search"
+        label:
+          en_US: "cert_search"
+      - value: "package_check"
+        label:
+          en_US: "package_check"
+      - value: "ip_lookup"
+        label:
+          en_US: "ip_lookup"
+  - name: "cve_id"
+    type: string
+    required: false
+    label:
+      en_US: "CVE ID"
+    human_description:
+      en_US: "For a cve_lookup, kev_lookup or cve_exploit item, e.g. CVE-2021-44228. At most 24 characters."
+    llm_description: "For a cve_lookup, kev_lookup or cve_exploit item, e.g. CVE-2021-44228. At most 24 characters."
+    form: llm
+  - name: "vendor"
+    type: string
+    required: false
+    label:
+      en_US: "Vendor"
+    human_description:
+      en_US: "Vendor, for a product_exposure or cve_search item. At most 128 characters."
+    llm_description: "Vendor, for a product_exposure or cve_search item. At most 128 characters."
+    form: llm
+  - name: "product"
+    type: string
+    required: false
+    label:
+      en_US: "Product"
+    human_description:
+      en_US: "Product, for a product_exposure or cve_search item. At most 128 characters."
+    llm_description: "Product, for a product_exposure or cve_search item. At most 128 characters."
+    form: llm
+  - name: "severity"
+    type: select
+    required: false
+    label:
+      en_US: "Severity"
+    human_description:
+      en_US: "cve_search items only"
+    llm_description: "cve_search items only"
+    form: llm
+    options:
+      - value: "CRITICAL"
+        label:
+          en_US: "CRITICAL"
+      - value: "HIGH"
+        label:
+          en_US: "HIGH"
+      - value: "MEDIUM"
+        label:
+          en_US: "MEDIUM"
+      - value: "LOW"
+        label:
+          en_US: "LOW"
+      - value: "NONE"
+        label:
+          en_US: "NONE"
+  - name: "cwe_id"
+    type: string
+    required: false
+    label:
+      en_US: "CWE ID"
+    human_description:
+      en_US: "cve_search items only, e.g. CWE-79. At most 16 characters."
+    llm_description: "cve_search items only, e.g. CWE-79. At most 16 characters."
+    form: llm
+  - name: "min_cvss"
+    type: number
+    required: false
+    label:
+      en_US: "Min CVSS"
+    human_description:
+      en_US: "CVSS v3, or v4 when a CVE has no v3; cve_search items only. Minimum 0. Maximum 10."
+    llm_description: "CVSS v3, or v4 when a CVE has no v3; cve_search items only. Minimum 0. Maximum 10."
+    form: llm
+  - name: "min_epss"
+    type: number
+    required: false
+    label:
+      en_US: "Min EPSS"
+    human_description:
+      en_US: "At most three decimals; cve_search items only. Minimum 0. Maximum 1."
+    llm_description: "At most three decimals; cve_search items only. Minimum 0. Maximum 1."
+    form: llm
+  - name: "in_kev"
+    type: boolean
+    required: false
+    label:
+      en_US: "In KEV"
+    human_description:
+      en_US: "cve_search items only"
+    llm_description: "cve_search items only"
+    form: llm
+  - name: "known_ransomware"
+    type: boolean
+    required: false
+    label:
+      en_US: "Known Ransomware"
+    human_description:
+      en_US: "cve_search items only"
+    llm_description: "cve_search items only"
+    form: llm
+  - name: "has_nuclei_template"
+    type: boolean
+    required: false
+    label:
+      en_US: "Has Nuclei Template"
+    human_description:
+      en_US: "cve_search items only"
+    llm_description: "cve_search items only"
+    form: llm
+  - name: "domain"
+    type: string
+    required: false
+    label:
+      en_US: "Domain"
+    human_description:
+      en_US: "For a dns_lookup, ssl_check, whois_lookup, headers_check or cert_search item, such as example.com. At most 253 characters."
+    llm_description: "For a dns_lookup, ssl_check, whois_lookup, headers_check or cert_search item, such as example.com. At most 253 characters."
+    form: llm
+  - name: "ecosystem"
+    type: string
+    required: false
+    label:
+      en_US: "Ecosystem"
+    human_description:
+      en_US: "For a package_check item: npm, PyPI, Maven, Go, NuGet, RubyGems, crates.io, Packagist or SwiftURL. At most 16 characters."
+    llm_description: "For a package_check item: npm, PyPI, Maven, Go, NuGet, RubyGems, crates.io, Packagist or SwiftURL. At most 16 characters."
+    form: llm
+  - name: "name"
+    type: string
+    required: false
+    label:
+      en_US: "Name"
+    human_description:
+      en_US: "Package name of a package_check item, e.g. lodash. At most 256 characters."
+    llm_description: "Package name of a package_check item, e.g. lodash. At most 256 characters."
+    form: llm
+  - name: "version"
+    type: string
+    required: false
+    label:
+      en_US: "Version"
+    human_description:
+      en_US: "Exact version of a product_exposure or package_check item; leave out to watch every version. At most 128 characters."
+    llm_description: "Exact version of a product_exposure or package_check item; leave out to watch every version. At most 128 characters."
+    form: llm
+  - name: "ip_address"
+    type: string
+    required: false
+    label:
+      en_US: "IP Address"
+    human_description:
+      en_US: "Public IPv4 or IPv6 address of an ip_lookup item, such as 8.8.8.8, no prefix. At most 45 characters."
+    llm_description: "Public IPv4 or IPv6 address of an ip_lookup item, such as 8.8.8.8, no prefix. At most 45 characters."
+    form: llm
+  - name: "clear"
+    type: boolean
+    required: false
+    label:
+      en_US: "Clear"
+    human_description:
+      en_US: "Deletes every item and the event cursor; takes no other argument"
+    llm_description: "Deletes every item and the event cursor; takes no other argument"
+    form: llm
+  - name: "packages"
+    type: string
+    required: false
+    label:
+      en_US: "Packages"
+    human_description:
+      en_US: "package_check items, each with an ecosystem, a name and an optional version. 1 to 500 items. Give a JSON array of objects."
+    llm_description: "package_check items, each with an ecosystem, a name and an optional version. 1 to 500 items. Give a JSON array of objects."
+    form: llm
+extra:
+  python:
+    source: "tools/watchlist_edit.py"

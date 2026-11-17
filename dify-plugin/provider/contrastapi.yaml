@@ -1,0 +1,65 @@
+identity:
+  author: "contrastcyber"
+  name: "contrastapi"
+  label:
+    en_US: "ContrastAPI"
+    zh_Hans: "ContrastAPI"
+  description:
+    en_US: "Security data from ContrastAPI: CVE, CISA KEV, EPSS and exploit lookups, package advisories, domain, DNS, TLS, e-mail and IP checks, and CVE monitoring with a Pro key."
+    zh_Hans: "Security data from ContrastAPI: CVE, CISA KEV, EPSS and exploit lookups, package advisories, domain, DNS, TLS, e-mail and IP checks, and CVE monitoring with a Pro key."
+  icon: "logo.png"
+  tags:
+    - "utilities"
+    - "search"
+    - "business"
+credentials_for_provider:
+  api_key:
+    type: secret-input
+    required: false
+    label:
+      en_US: "API key (optional)"
+    placeholder:
+      en_US: "contrastapi_..."
+    help:
+      en_US: "Without a key, calls use the free hourly credits of the IP address your Dify server calls from. Other users of a shared Dify host use the same credits. A Pro key gives more credits and the watchlist tools."
+    url: "https://api.contrastcyber.com/pricing"
+tools:
+  - "tools/asn_lookup.yaml"
+  - "tools/cert_search.yaml"
+  - "tools/cpe_search.yaml"
+  - "tools/cve_exploit.yaml"
+  - "tools/cve_leading.yaml"
+  - "tools/cve_lookup.yaml"
+  - "tools/cve_lookup_bulk.yaml"
+  - "tools/cve_products.yaml"
+  - "tools/cve_risk_score.yaml"
+  - "tools/cve_search.yaml"
+  - "tools/cve_triage.yaml"
+  - "tools/cve_triage_bulk.yaml"
+  - "tools/cvss_calculator.yaml"
+  - "tools/cwe_lookup.yaml"
+  - "tools/d3fend_for_attack.yaml"
+  - "tools/dns_lookup.yaml"
+  - "tools/dns_takeover_check.yaml"
+  - "tools/driver_lookup.yaml"
+  - "tools/driver_lookup_bulk.yaml"
+  - "tools/email_address_check.yaml"
+  - "tools/email_auth_check.yaml"
+  - "tools/headers_check.yaml"
+  - "tools/health.yaml"
+  - "tools/ip_lookup.yaml"
+  - "tools/kev_lookup.yaml"
+  - "tools/package_check.yaml"
+  - "tools/package_check_bulk.yaml"
+  - "tools/password_check.yaml"
+  - "tools/privacy_my_data.yaml"
+  - "tools/product_exposure.yaml"
+  - "tools/ssl_check.yaml"
+  - "tools/subdomain_enum.yaml"
+  - "tools/watchlist_edit.yaml"
+  - "tools/watchlist_events.yaml"
+  - "tools/wayback_lookup.yaml"
+  - "tools/whois_lookup.yaml"
+extra:
+  python:
+    source: "provider/contrastapi.py"

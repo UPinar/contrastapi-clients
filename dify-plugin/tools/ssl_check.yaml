@@ -1,0 +1,22 @@
+identity:
+  name: "ssl_check"
+  author: "contrastcyber"
+  label:
+    en_US: "SSL/TLS Certificate Check"
+description:
+  human:
+    en_US: "Check the TLS certificate and settings of a host name on port 443: version, cipher, trust, OCSP revocation, expiry, DNS names, the chain and an abuse.ch SSL Blacklist listing."
+  llm: "Check the TLS certificate and settings of a host name on port 443: version, cipher, trust, OCSP revocation, expiry, DNS names, the chain and an abuse.ch SSL Blacklist listing. Costs 1 credit."
+parameters:
+  - name: "domain"
+    type: string
+    required: true
+    label:
+      en_US: "Domain"
+    human_description:
+      en_US: "Host name, such as www.example.com. At most 253 characters."
+    llm_description: "Host name, such as www.example.com. At most 253 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/ssl_check.py"

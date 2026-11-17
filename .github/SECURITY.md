@@ -17,6 +17,7 @@ This policy covers the clients in this repository:
 - the SDK generator (`sdk/gen`)
 - the VS Code extension (`vscode-extension`)
 - the Claude Desktop extension (`claude-desktop-extension`)
+- the Dify plugin (`dify-plugin`)
 
 A problem in the ContrastAPI server (https://api.contrastcyber.com) is out of scope here.
 Report it the same way, through the Security tab of the server repository, [UPinar/contrastapi](https://github.com/UPinar/contrastapi).

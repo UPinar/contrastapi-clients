@@ -1,0 +1,49 @@
+identity:
+  name: "product_exposure"
+  author: "contrastcyber"
+  label:
+    en_US: "Product Exposure"
+description:
+  human:
+    en_US: "CVE exposure of one vendor and product: severity, KEV and PoC counts, CVSS, EPSS, the worst risk score, the top CVEs and the endoflife.date support dates."
+  llm: "CVE exposure of one vendor and product: severity, KEV and PoC counts, CVSS, EPSS, the worst risk score, the top CVEs and the endoflife.date support dates. To find the names, call the cpe_search tool. Costs 1 credit."
+parameters:
+  - name: "vendor"
+    type: string
+    required: true
+    label:
+      en_US: "Vendor"
+    human_description:
+      en_US: "CPE vendor name in lower case, e.g. microsoft. The cpe_search tool finds it. At most 128 characters."
+    llm_description: "CPE vendor name in lower case, e.g. microsoft. The cpe_search tool finds it. At most 128 characters."
+    form: llm
+  - name: "product"
+    type: string
+    required: true
+    label:
+      en_US: "Product"
+    human_description:
+      en_US: "CPE product name in lower case with underscores, e.g. windows_10. The cpe_search tool finds it. At most 128 characters."
+    llm_description: "CPE product name in lower case with underscores, e.g. windows_10. The cpe_search tool finds it. At most 128 characters."
+    form: llm
+  - name: "version"
+    type: string
+    required: false
+    label:
+      en_US: "Version"
+    human_description:
+      en_US: "Product version, e.g. 22.21.1 or 11-24h2; picks the release cycle of eol. At most 128 characters."
+    llm_description: "Product version, e.g. 22.21.1 or 11-24h2; picks the release cycle of eol. At most 128 characters."
+    form: llm
+  - name: "include_rejected"
+    type: boolean
+    required: false
+    label:
+      en_US: "Include Rejected"
+    human_description:
+      en_US: "Also count and list the CVEs that NVD marks Rejected"
+    llm_description: "Also count and list the CVEs that NVD marks Rejected"
+    form: llm
+extra:
+  python:
+    source: "tools/product_exposure.py"

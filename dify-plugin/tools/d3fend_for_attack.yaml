@@ -1,0 +1,22 @@
+identity:
+  name: "d3fend_for_attack"
+  author: "contrastcyber"
+  label:
+    en_US: "D3FEND Defenses for ATT&CK"
+description:
+  human:
+    en_US: "MITRE D3FEND defenses that counter a MITRE ATT&CK technique."
+  llm: "MITRE D3FEND defenses that counter a MITRE ATT&CK technique. A technique id such as T1055 also matches its sub-techniques. Source: MITRE D3FEND (MIT license). Costs 1 credit."
+parameters:
+  - name: "attack_technique_id"
+    type: string
+    required: true
+    label:
+      en_US: "Attack Technique ID"
+    human_description:
+      en_US: "MITRE ATT&CK technique id in upper case, e.g. T1055 or T1055.012. At most 9 characters."
+    llm_description: "MITRE ATT&CK technique id in upper case, e.g. T1055 or T1055.012. At most 9 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/d3fend_for_attack.py"

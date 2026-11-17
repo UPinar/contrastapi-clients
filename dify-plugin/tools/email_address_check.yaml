@@ -1,0 +1,22 @@
+identity:
+  name: "email_address_check"
+  author: "contrastcyber"
+  label:
+    en_US: "Email Address Check"
+description:
+  human:
+    en_US: "Check an e-mail address without sending mail: whether its domain exists and takes mail, and whether a disposable domain list names it."
+  llm: "Check an e-mail address without sending mail: whether its domain exists and takes mail, and whether a disposable domain list names it. It cannot tell whether the mailbox exists. Costs 1 credit."
+parameters:
+  - name: "email"
+    type: string
+    required: true
+    label:
+      en_US: "Email"
+    human_description:
+      en_US: "E-mail address, such as name@example.com. At most 254 characters."
+    llm_description: "E-mail address, such as name@example.com. At most 254 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/email_address_check.py"

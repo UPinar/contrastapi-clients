@@ -1,0 +1,13 @@
+identity:
+  name: "privacy_my_data"
+  author: "contrastcyber"
+  label:
+    en_US: "Privacy: My Data"
+description:
+  human:
+    en_US: "What this server keeps about the caller: the hash its credits are counted under, the rate limit left in this hour and the privacy policy."
+  llm: "What this server keeps about the caller: the hash its credits are counted under, the rate limit left in this hour and the privacy policy. For a Pro key, which vendor keys are stored and a 15-minute link to change them. Costs 1 credit."
+parameters: []
+extra:
+  python:
+    source: "tools/privacy_my_data.py"

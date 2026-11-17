@@ -1,0 +1,22 @@
+identity:
+  name: "cve_lookup_bulk"
+  author: "contrastcyber"
+  label:
+    en_US: "Bulk CVE Lookup"
+description:
+  human:
+    en_US: "Look up many CVEs at once, each with the fields of cve_lookup."
+  llm: "Look up many CVEs at once, each with the fields of cve_lookup. Ids beyond the remaining credits come back in not_processed. Costs 1 credit per item, at least 1 credit."
+parameters:
+  - name: "cve_ids"
+    type: string
+    required: true
+    label:
+      en_US: "CVE IDs"
+    human_description:
+      en_US: "CVE IDs. 1 to 50 items. Give a JSON array, or a comma-separated list of strings."
+    llm_description: "CVE IDs. 1 to 50 items. Give a JSON array, or a comma-separated list of strings."
+    form: llm
+extra:
+  python:
+    source: "tools/cve_lookup_bulk.py"

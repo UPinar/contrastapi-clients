@@ -1,0 +1,188 @@
+identity:
+  name: "cve_search"
+  author: "contrastcyber"
+  label:
+    en_US: "CVE Search"
+description:
+  human:
+    en_US: "Search CVEs by severity, CWE, CVSS, EPSS, CISA KEV, ransomware use, Nuclei template, vendor, product and publish date, one page at a time."
+  llm: "Search CVEs by severity, CWE, CVSS, EPSS, CISA KEV, ransomware use, Nuclei template, vendor, product and publish date, one page at a time. Call the cve_lookup tool for a full record, and the cpe_search tool to find the names. Costs 1 credit."
+parameters:
+  - name: "severity"
+    type: select
+    required: false
+    label:
+      en_US: "Severity"
+    human_description:
+      en_US: "Severity band of the CVE's CVSS score."
+    llm_description: "Severity band of the CVE's CVSS score."
+    form: llm
+    options:
+      - value: "CRITICAL"
+        label:
+          en_US: "CRITICAL"
+      - value: "HIGH"
+        label:
+          en_US: "HIGH"
+      - value: "MEDIUM"
+        label:
+          en_US: "MEDIUM"
+      - value: "LOW"
+        label:
+          en_US: "LOW"
+      - value: "NONE"
+        label:
+          en_US: "NONE"
+  - name: "vendor"
+    type: string
+    required: false
+    label:
+      en_US: "Vendor"
+    human_description:
+      en_US: "CPE vendor name in lower case, e.g. microsoft. The cpe_search tool finds it. At most 128 characters."
+    llm_description: "CPE vendor name in lower case, e.g. microsoft. The cpe_search tool finds it. At most 128 characters."
+    form: llm
+  - name: "product"
+    type: string
+    required: false
+    label:
+      en_US: "Product"
+    human_description:
+      en_US: "CPE product name in lower case with underscores, e.g. windows_10. The cpe_search tool finds it. At most 128 characters."
+    llm_description: "CPE product name in lower case with underscores, e.g. windows_10. The cpe_search tool finds it. At most 128 characters."
+    form: llm
+  - name: "cwe_id"
+    type: string
+    required: false
+    label:
+      en_US: "CWE ID"
+    human_description:
+      en_US: "e.g. CWE-79. At most 16 characters."
+    llm_description: "e.g. CWE-79. At most 16 characters."
+    form: llm
+  - name: "min_cvss"
+    type: number
+    required: false
+    label:
+      en_US: "Min CVSS"
+    human_description:
+      en_US: "CVSS v3, or v4 when a CVE has no v3. Minimum 0. Maximum 10."
+    llm_description: "CVSS v3, or v4 when a CVE has no v3. Minimum 0. Maximum 10."
+    form: llm
+  - name: "min_epss"
+    type: number
+    required: false
+    label:
+      en_US: "Min EPSS"
+    human_description:
+      en_US: "Lowest EPSS score. Minimum 0. Maximum 1."
+    llm_description: "Lowest EPSS score. Minimum 0. Maximum 1."
+    form: llm
+  - name: "in_kev"
+    type: boolean
+    required: false
+    label:
+      en_US: "In KEV"
+    human_description:
+      en_US: "true: only CVEs in the CISA KEV catalog. false: only CVEs not in it."
+    llm_description: "true: only CVEs in the CISA KEV catalog. false: only CVEs not in it."
+    form: llm
+  - name: "known_ransomware"
+    type: boolean
+    required: false
+    label:
+      en_US: "Known Ransomware"
+    human_description:
+      en_US: "Only CVEs whose CISA KEV entry notes known ransomware use"
+    llm_description: "Only CVEs whose CISA KEV entry notes known ransomware use"
+    form: llm
+  - name: "has_nuclei_template"
+    type: boolean
+    required: false
+    label:
+      en_US: "Has Nuclei Template"
+    human_description:
+      en_US: "Only CVEs with a Nuclei detection template"
+    llm_description: "Only CVEs with a Nuclei detection template"
+    form: llm
+  - name: "published_after"
+    type: string
+    required: false
+    label:
+      en_US: "Published After"
+    human_description:
+      en_US: "YYYY-MM-DD. At most 31 characters."
+    llm_description: "YYYY-MM-DD. At most 31 characters."
+    form: llm
+  - name: "published_before"
+    type: string
+    required: false
+    label:
+      en_US: "Published Before"
+    human_description:
+      en_US: "YYYY-MM-DD. At most 31 characters."
+    llm_description: "YYYY-MM-DD. At most 31 characters."
+    form: llm
+  - name: "kev_added_after"
+    type: string
+    required: false
+    label:
+      en_US: "KEV Added After"
+    human_description:
+      en_US: "YYYY-MM-DD; only CVEs added to CISA KEV on or after this date and still in it. At most 31 characters."
+    llm_description: "YYYY-MM-DD; only CVEs added to CISA KEV on or after this date and still in it. At most 31 characters."
+    form: llm
+  - name: "include_rejected"
+    type: boolean
+    required: false
+    label:
+      en_US: "Include Rejected"
+    human_description:
+      en_US: "Also list the CVEs that NVD marks Rejected"
+    llm_description: "Also list the CVEs that NVD marks Rejected"
+    form: llm
+  - name: "sort"
+    type: select
+    required: false
+    label:
+      en_US: "Sort"
+    human_description:
+      en_US: "kev_date_added needs in_kev=true or kev_added_after"
+    llm_description: "kev_date_added needs in_kev=true or kev_added_after"
+    form: llm
+    options:
+      - value: "published_time"
+        label:
+          en_US: "published_time"
+      - value: "epss"
+        label:
+          en_US: "epss"
+      - value: "cvss"
+        label:
+          en_US: "cvss"
+      - value: "kev_date_added"
+        label:
+          en_US: "kev_date_added"
+  - name: "limit"
+    type: number
+    required: false
+    label:
+      en_US: "Limit"
+    human_description:
+      en_US: "Number of results on one page. Minimum 1. Maximum 100. Default 20."
+    llm_description: "Number of results on one page. Minimum 1. Maximum 100. Default 20."
+    form: llm
+    default: 20
+  - name: "offset"
+    type: number
+    required: false
+    label:
+      en_US: "Offset"
+    human_description:
+      en_US: "Number of results to skip, for the next page. Minimum 0. Maximum 10000. Default 0."
+    llm_description: "Number of results to skip, for the next page. Minimum 0. Maximum 10000. Default 0."
+    form: llm
+    default: 0
+extra:
+  python:
+    source: "tools/cve_search.py"

@@ -1,0 +1,31 @@
+identity:
+  name: "driver_lookup"
+  author: "contrastcyber"
+  label:
+    en_US: "Windows Driver Lookup (LOLDrivers)"
+description:
+  human:
+    en_US: "Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and malicious drivers."
+  llm: "Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and malicious drivers. Block on the file and Authenticode hashes, not on the detection rules. Source: LOLDrivers (Apache-2.0). Costs 1 credit."
+parameters:
+  - name: "file_hash"
+    type: string
+    required: true
+    label:
+      en_US: "File Hash"
+    human_description:
+      en_US: "MD5, SHA1 or SHA256 of the driver file, or its Authentihash: 32, 40 or 64 hex digits, either case. At most 64 characters."
+    llm_description: "MD5, SHA1 or SHA256 of the driver file, or its Authentihash: 32, 40 or 64 hex digits, either case. At most 64 characters."
+    form: llm
+  - name: "include_commands"
+    type: boolean
+    required: false
+    label:
+      en_US: "Include Commands"
+    human_description:
+      en_US: "true adds the catalog's command text to each match"
+    llm_description: "true adds the catalog's command text to each match"
+    form: llm
+extra:
+  python:
+    source: "tools/driver_lookup.py"

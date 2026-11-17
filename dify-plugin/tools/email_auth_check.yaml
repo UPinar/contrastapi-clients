@@ -1,0 +1,31 @@
+identity:
+  name: "email_auth_check"
+  author: "contrastcyber"
+  label:
+    en_US: "Email Authentication Check (SPF, DMARC, DKIM)"
+description:
+  human:
+    en_US: "Check a domain's mail authentication: SPF, DMARC (from a parent domain when the domain has no record of its own), DKIM, MX and MTA-STS, each check with pass, warn or fail and a severity."
+  llm: "Check a domain's mail authentication: SPF, DMARC (from a parent domain when the domain has no record of its own), DKIM, MX and MTA-STS, each check with pass, warn or fail and a severity. Costs 1 credit."
+parameters:
+  - name: "domain"
+    type: string
+    required: true
+    label:
+      en_US: "Domain"
+    human_description:
+      en_US: "Domain name, such as example.com. At most 253 characters."
+    llm_description: "Domain name, such as example.com. At most 253 characters."
+    form: llm
+  - name: "dkim_selector"
+    type: string
+    required: false
+    label:
+      en_US: "DKIM Selector"
+    human_description:
+      en_US: "DKIM selector, such as google; without it the check tries the selectors of the domain's mail providers. At most 238 characters."
+    llm_description: "DKIM selector, such as google; without it the check tries the selectors of the domain's mail providers. At most 238 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/email_auth_check.py"

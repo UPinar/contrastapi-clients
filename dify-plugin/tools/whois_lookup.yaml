@@ -1,0 +1,22 @@
+identity:
+  name: "whois_lookup"
+  author: "contrastcyber"
+  label:
+    en_US: "WHOIS / RDAP Lookup"
+description:
+  human:
+    en_US: "Look up a domain's registration over RDAP, or WHOIS where allowed: registrar, dates, status, name servers and DNSSEC."
+  llm: "Look up a domain's registration over RDAP, or WHOIS where allowed: registrar, dates, status, name servers and DNSSEC. A name under a registered domain asks about that domain. No registrant data. Costs 1 credit."
+parameters:
+  - name: "domain"
+    type: string
+    required: true
+    label:
+      en_US: "Domain"
+    human_description:
+      en_US: "Domain name, such as example.com; www.example.com asks about example.com. At most 253 characters."
+    llm_description: "Domain name, such as example.com; www.example.com asks about example.com. At most 253 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/whois_lookup.py"

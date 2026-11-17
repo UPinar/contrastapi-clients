@@ -76,6 +76,25 @@ jobs:
       - name: Desktop manifest and README are up to date
         run: python claude-desktop-extension/scripts/gen_manifest.py --check
 
+  dify-plugin:
+    name: Dify plugin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install the test dependencies
+        run: pip install requests==2.31.0 PyYAML==6.0.3
+      - name: Plugin generator tests
+        run: python -m unittest discover -s dify-plugin/scripts
+      - name: Plugin generated files are up to date
+        run: python dify-plugin/scripts/gen_plugin.py --check
+      - name: Plugin request and key tests
+        run: python -m unittest discover -s dify-plugin/tests -t dify-plugin
+
   vscode-extension:
     name: VS Code extension
     runs-on: ubuntu-latest

@@ -1,0 +1,22 @@
+identity:
+  name: "package_check_bulk"
+  author: "contrastcyber"
+  label:
+    en_US: "Bulk Package Check (SBOM)"
+description:
+  human:
+    en_US: "Check many packages at once, each an ecosystem, a name and an exact version, against the advisories package_check reads."
+  llm: "Check many packages at once, each an ecosystem, a name and an exact version, against the advisories package_check reads. For the summary and ranges of an advisory, call the package_check tool. Costs 1 credit per item, at least 1 credit."
+parameters:
+  - name: "items"
+    type: string
+    required: true
+    label:
+      en_US: "Items"
+    human_description:
+      en_US: "Packages, each with its ecosystem, name and exact version. 1 to 500 items. Give a JSON array of objects."
+    llm_description: "Packages, each with its ecosystem, name and exact version. 1 to 500 items. Give a JSON array of objects."
+    form: llm
+extra:
+  python:
+    source: "tools/package_check_bulk.py"
