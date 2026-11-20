@@ -6,7 +6,7 @@ identity:
 description:
   human:
     en_US: "Decode a CVSS v3.0/v3.1 vector into its base metrics and recompute its base, temporal and environmental scores."
-  llm: "Decode a CVSS v3.0/v3.1 vector into its base metrics and recompute its base, temporal and environmental scores. Costs 1 credit."
+  llm: "Decode a CVSS v3.0/v3.1 vector into its base metrics and recompute its base, temporal and environmental scores. Use it on a vector you hold; cve_lookup already gives the scores of a CVE. v2 and v4 are refused. Costs 1 credit."
 parameters:
   - name: "vector"
     type: string
@@ -14,8 +14,8 @@ parameters:
     label:
       en_US: "Vector"
     human_description:
-      en_US: "CVSS v3.0/v3.1 vector, e.g. CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H. At most 127 characters."
-    llm_description: "CVSS v3.0/v3.1 vector, e.g. CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H. At most 127 characters."
+      en_US: "CVSS:3.0/ or CVSS:3.1/ vector with all eight base metrics; temporal and environmental metrics are optional, e.g. CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H. At most 127 characters."
+    llm_description: "CVSS:3.0/ or CVSS:3.1/ vector with all eight base metrics; temporal and environmental metrics are optional, e.g. CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H. At most 127 characters."
     form: llm
 extra:
   python:

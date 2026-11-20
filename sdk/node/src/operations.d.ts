@@ -51,24 +51,29 @@ export interface CveProductsArgs {
   vendor?: string;
   /** Exact product name, as affected_products writes it. At most 128 characters. */
   product?: string;
-  /** Minimum 1. Maximum 50. Default 20. */
+  /** Products per page. Minimum 1. Maximum 50. Default 20. */
   limit?: number;
-  /** Minimum 0. Default 0. */
+  /** Products to skip; pass next_offset of the previous page. Minimum 0. Default 0. */
   offset?: number;
 }
 
 export interface CveSearchArgs {
+  /**
+   * CVSS severity: CRITICAL, HIGH, MEDIUM, LOW or NONE, from the v3 rating when the
+   * CVE has one
+   */
   severity?: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "NONE";
-  /** At most 128 characters. */
+  /** Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters. */
   vendor?: string;
-  /** At most 128 characters. */
+  /** Exact product name as cpe_search lists it, e.g. log4j. At most 128 characters. */
   product?: string;
   /** e.g. CWE-79. At most 16 characters. */
   cwe_id?: string;
   /** CVSS v3, or v4 when a CVE has no v3. Minimum 0. Maximum 10. */
   min_cvss?: number;
-  /** Minimum 0. Maximum 1. */
+  /** Lowest EPSS score, a probability from 0 to 1, e.g. 0.1. Minimum 0. Maximum 1. */
   min_epss?: number;
+  /** true lists only CVEs in CISA KEV, false only CVEs not in it */
   in_kev?: boolean;
   /** Only CVEs whose CISA KEV entry notes known ransomware use */
   known_ransomware?: true;
@@ -87,19 +92,23 @@ export interface CveSearchArgs {
   include_rejected?: boolean;
   /** kev_date_added needs in_kev=true or kev_added_after */
   sort?: "published_time" | "epss" | "cvss" | "kev_date_added";
-  /** Minimum 1. Maximum 100. Default 20. */
+  /** CVEs per page. Minimum 1. Maximum 100. Default 20. */
   limit?: number;
-  /** Minimum 0. Maximum 10000. Default 0. */
+  /**
+   * CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum 10000.
+   * Default 0.
+   */
   offset?: number;
 }
 
 export interface CveLeadingArgs {
-  /** At most 128 characters. */
+  /** Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters. */
   vendor?: string;
-  /** At most 128 characters. */
+  /** Exact product name as cpe_search lists it, e.g. log4j. At most 128 characters. */
   product?: string;
-  /** Minimum 0. Maximum 1. */
+  /** Lowest EPSS score, a probability from 0 to 1, e.g. 0.1. Minimum 0. Maximum 1. */
   min_epss?: number;
+  /** true lists only CVEs in CISA KEV, false only CVEs not in it */
   in_kev?: boolean;
   /** Only CVEs whose CISA KEV entry notes known ransomware use */
   known_ransomware?: true;
@@ -107,7 +116,7 @@ export interface CveLeadingArgs {
   has_nuclei_template?: true;
   /** Also list the CVEs that NVD marks Rejected */
   include_rejected?: boolean;
-  /** Minimum 1. Maximum 50. Default 20. */
+  /** How many CVEs to list, highest EPSS first. Minimum 1. Maximum 50. Default 20. */
   limit?: number;
 }
 
@@ -132,17 +141,40 @@ export interface CveExploitArgs {
 }
 
 export interface CveTriageArgs {
-  /** At most 128 characters. */
+  /** Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters. */
   vendor?: string;
-  /** At most 128 characters. */
+  /** Exact product name as cpe_search lists it, e.g. log4j. At most 128 characters. */
   product?: string;
   /** Composite risk-score threshold. Minimum 0. Maximum 100. */
   min_risk_score?: number;
   /** Also list the CVEs that NVD marks Rejected */
   include_rejected?: boolean;
-  /** Minimum 1. Maximum 100. Default 20. */
+  /** CVEs per page. Minimum 1. Maximum 100. Default 20. */
   limit?: number;
-  /** Minimum 0. Maximum 10000. Default 0. */
+  /**
+   * CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum 10000.
+   * Default 0.
+   */
+  offset?: number;
+}
+
+export interface EpssRisersArgs {
+  /** Days to look back: 7 or 30. Default 7. Minimum 7. Maximum 30. Default 7. */
+  window_days?: number;
+  /** Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters. */
+  vendor?: string;
+  /** Exact product name as cpe_search lists it, e.g. log4j. At most 128 characters. */
+  product?: string;
+  /** true lists only CVEs in CISA KEV, false only CVEs not in it */
+  in_kev?: boolean;
+  /** Lowest current EPSS score to list, 0.0 to 1.0. Minimum 0. Maximum 1. */
+  min_epss?: number;
+  /** CVEs per page. Minimum 1. Maximum 100. Default 20. */
+  limit?: number;
+  /**
+   * CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum 10000.
+   * Default 0.
+   */
   offset?: number;
 }
 
@@ -152,9 +184,9 @@ export interface CveTriageBulkArgs {
 }
 
 export interface ProductExposureArgs {
-  /** At most 128 characters. */
+  /** Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters. */
   vendor: string;
-  /** At most 128 characters. */
+  /** Exact product name as cpe_search lists it, e.g. log4j. At most 128 characters. */
   product: string;
   /**
    * Product version, e.g. 22.21.1 or 11-24h2; picks the release cycle of eol. At
@@ -171,16 +203,20 @@ export interface CpeSearchArgs {
    * matches a space. At most 128 characters.
    */
   search: string;
-  /** Minimum 1. Maximum 50. Default 20. */
+  /** Vendor and product pairs per page. Minimum 1. Maximum 50. Default 20. */
   limit?: number;
-  /** Minimum 0. Maximum 10000. Default 0. */
+  /**
+   * Pairs to skip; pass next_offset of the previous page. Minimum 0. Maximum 10000.
+   * Default 0.
+   */
   offset?: number;
 }
 
 export interface CvssCalculatorArgs {
   /**
-   * CVSS v3.0/v3.1 vector, e.g. CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H. At
-   * most 127 characters.
+   * CVSS:3.0/ or CVSS:3.1/ vector with all eight base metrics; temporal and
+   * environmental metrics are optional, e.g.
+   * CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H. At most 127 characters.
    */
   vector: string;
 }
@@ -329,6 +365,11 @@ export interface HeadersCheckArgs {
   include_full_header_values?: boolean;
 }
 
+export interface WellKnownArgs {
+  /** Host name of the site, such as www.example.com. At most 253 characters. */
+  domain: string;
+}
+
 export interface WhoisLookupArgs {
   /**
    * Domain name, such as example.com; www.example.com asks about example.com. At
@@ -369,9 +410,12 @@ export interface AsnLookupArgs {
    * 8.8.8.8. At most 45 characters.
    */
   target: string;
-  /** Minimum 1. Maximum 50. Default 50. */
+  /** Prefixes per page, in each address family. Minimum 1. Maximum 50. Default 50. */
   limit?: number;
-  /** Minimum 0. Default 0. */
+  /**
+   * Prefixes to skip in each family; pass next_offset of the previous page. Minimum
+   * 0. Default 0.
+   */
   offset?: number;
 }
 
@@ -414,9 +458,9 @@ export interface PackageCheckArgs {
    * characters.
    */
   version?: string;
-  /** Minimum 1. Maximum 50. Default 20. */
+  /** Results per page. Minimum 1. Maximum 50. Default 20. */
   limit?: number;
-  /** Minimum 0. Default 0. */
+  /** Results to skip; pass next_offset of the previous page. Minimum 0. Default 0. */
   offset?: number;
 }
 
@@ -446,6 +490,7 @@ export type OperationId =
   | "cve_risk_score"
   | "cve_exploit"
   | "cve_triage"
+  | "epss_risers"
   | "cve_triage_bulk"
   | "product_exposure"
   | "cpe_search"
@@ -461,6 +506,7 @@ export type OperationId =
   | "email_address_check"
   | "ssl_check"
   | "headers_check"
+  | "well_known"
   | "whois_lookup"
   | "wayback_lookup"
   | "cert_search"
@@ -487,6 +533,7 @@ export interface OperationArgs {
   cve_risk_score: CveRiskScoreArgs;
   cve_exploit: CveExploitArgs;
   cve_triage: CveTriageArgs;
+  epss_risers: EpssRisersArgs;
   cve_triage_bulk: CveTriageBulkArgs;
   product_exposure: ProductExposureArgs;
   cpe_search: CpeSearchArgs;
@@ -502,6 +549,7 @@ export interface OperationArgs {
   email_address_check: EmailAddressCheckArgs;
   ssl_check: SslCheckArgs;
   headers_check: HeadersCheckArgs;
+  well_known: WellKnownArgs;
   whois_lookup: WhoisLookupArgs;
   wayback_lookup: WaybackLookupArgs;
   cert_search: CertSearchArgs;
@@ -549,7 +597,7 @@ export interface ContrastAPIMethods {
    *
    * The products a CVE affects, one page at a time, with the vulnerable products
    * first. The vendor and product arguments keep only the products with that exact
-   * name.
+   * name. For the CVEs of one product, call cve_search.
    *
    * Costs 1 credit.
    */
@@ -587,9 +635,9 @@ export interface ContrastAPIMethods {
   /**
    * CWE Lookup
    *
-   * CWE weakness details (description, mitigations, examples), with how many CVEs
-   * and CISA KEV entries name it. To list them, call the cve_search tool with its
-   * cwe_id argument.
+   * CWE weakness details (description, mitigations, examples, OWASP Top 10 category
+   * in 2021 and 2025), with how many CVEs and CISA KEV entries name it. To list
+   * them, call the cve_search tool with its cwe_id argument.
    *
    * Costs 1 credit.
    */
@@ -597,9 +645,10 @@ export interface ContrastAPIMethods {
   /**
    * CVE Risk Score
    *
-   * Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS,
-   * CISA KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB.
-   * has_public_poc is null when no source names an exploit.
+   * Composite risk score of a CVE, 0-100, for patch priority. It reads EPSS, CISA
+   * KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB.
+   * has_public_poc is null when no source names an exploit. For many CVEs, call
+   * cve_triage_bulk.
    *
    * Costs 1 credit.
    */
@@ -609,7 +658,8 @@ export interface ContrastAPIMethods {
    *
    * Public exploit intelligence (GitHub PoCs, Metasploit, NVD and CNA exploit
    * references, ExploitDB). GitHub PoC repositories are listed but not counted as
-   * proof of a public exploit.
+   * proof of a public exploit. For a single patch-priority score, call
+   * cve_risk_score.
    *
    * Costs 1 credit.
    */
@@ -624,6 +674,16 @@ export interface ContrastAPIMethods {
    * Costs 1 credit.
    */
   cveTriage(args?: CveTriageArgs): Promise<unknown>;
+  /**
+   * EPSS Risers
+   *
+   * List the CVEs whose EPSS score rose most over the last 7 or 30 days, with the
+   * old and the new score. Filter by vendor, product, KEV state or a minimum score.
+   * Call the cve_lookup tool for the details of a CVE.
+   *
+   * Costs 1 credit.
+   */
+  epssRisers(args?: EpssRisersArgs): Promise<unknown>;
   /**
    * Bulk CVE Triage
    *
@@ -647,8 +707,8 @@ export interface ContrastAPIMethods {
    * CPE Search
    *
    * Find the CPE vendor and product names that hold a text, ranked by vulnerable CVE
-   * count. Pass a name that holds no % as it is to the vendor and product arguments
-   * of the cve_search, cve_triage, cve_leading and product_exposure tools.
+   * count. Pass a name with no % as it is to the vendor and product arguments of the
+   * cve_search, cve_triage, cve_leading, product_exposure and epss_risers tools.
    *
    * Costs 1 credit.
    */
@@ -657,7 +717,8 @@ export interface ContrastAPIMethods {
    * CVSS Calculator
    *
    * Decode a CVSS v3.0/v3.1 vector into its base metrics and recompute its base,
-   * temporal and environmental scores.
+   * temporal and environmental scores. Use it on a vector you hold; cve_lookup
+   * already gives the scores of a CVE. v2 and v4 are refused.
    *
    * Costs 1 credit.
    */
@@ -772,6 +833,17 @@ export interface ContrastAPIMethods {
    */
   headersCheck(args: HeadersCheckArgs): Promise<unknown>;
   /**
+   * Robots.txt and security.txt Check
+   *
+   * Read robots.txt of https://<domain> and, if it allows us,
+   * /.well-known/security.txt, with up to 5 redirects on the host or its www pair.
+   * Gives the rules that bind us, sitemaps, fields such as Contact and Expires, and
+   * RFC 9309/9116 issues.
+   *
+   * Costs 1 credit.
+   */
+  wellKnown(args: WellKnownArgs): Promise<unknown>;
+  /**
    * WHOIS / RDAP Lookup
    *
    * Look up a domain's registration over RDAP, or WHOIS where allowed: registrar,
@@ -812,7 +884,7 @@ export interface ContrastAPIMethods {
    *
    * Look up a public IP address: AS, country, cloud provider, CDN, datacenter or Tor
    * exit, DROP listing and PTR name. A Pro key with its own Shodan or AbuseIPDB key
-   * adds exposure and reputation.
+   * adds exposure and reputation. For every prefix of the AS, call asn_lookup.
    *
    * Costs 1 credit.
    */
@@ -839,9 +911,10 @@ export interface ContrastAPIMethods {
   /**
    * Windows Driver Lookup (LOLDrivers)
    *
-   * Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and
+   * Look up a Windows driver hash in the LOLDrivers catalog of vulnerable and
    * malicious drivers. Block on the file and Authenticode hashes, not on the
-   * detection rules. Source: LOLDrivers (Apache-2.0).
+   * detection rules. For many hashes, call driver_lookup_bulk. Source: LOLDrivers
+   * (Apache-2.0).
    *
    * Costs 1 credit.
    */

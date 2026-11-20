@@ -67,7 +67,7 @@ class LoadToolsTest(unittest.TestCase):
     def test_tools_are_tagged_operations_without_excluded(self):
         tools = gen.load_tools(_real_document())
         ids = [tool["id"] for tool in tools]
-        self.assertEqual(len(ids), 36)
+        self.assertEqual(len(ids), 38)
         self.assertEqual(ids, sorted(ids))
         for absent in ("vendor_key_edit", "image_inspect", "api_key_claim", "crypto_checkout"):
             self.assertNotIn(absent, ids)
@@ -92,15 +92,23 @@ class LoadToolsTest(unittest.TestCase):
                          "Now it has a text")
 
     def test_fallback_text_used(self):
+        bare = {"name": "vendor", "in": "query", "schema": {"type": "string"}}
+        document = _fixture_document(
+            _fixture_op("vendor_key_edit", method="post"),
+            _fixture_op("alpha_tool", [bare]),
+        )
+        self.assertEqual(_param(_tool(gen.load_tools(document), "alpha_tool"), "vendor")["text"],
+                         gen.PARAM_TEXT_FALLBACK["vendor"])
+        bare["description"] = "The server's own text"
+        self.assertEqual(_param(_tool(gen.load_tools(document), "alpha_tool"), "vendor")["text"],
+                         "The server's own text")
+
+    def test_server_text_wins_over_the_fallback(self):
         tools = gen.load_tools(_real_document())
         search = _tool(tools, "cve_search")
-        self.assertTrue(_param(search, "vendor")["text"].startswith(gen.PARAM_TEXT_FALLBACK["vendor"]))
-        self.assertTrue(_param(search, "limit")["text"].startswith(gen.PARAM_TEXT_FALLBACK["limit"]))
+        self.assertFalse(_param(search, "vendor")["text"].startswith(gen.PARAM_TEXT_FALLBACK["vendor"]))
+        self.assertFalse(_param(search, "limit")["text"].startswith(gen.PARAM_TEXT_FALLBACK["limit"]))
         self.assertTrue(_param(search, "limit")["text"].endswith("Maximum 100. Default 20."))
-        products_vendor = _param(_tool(tools, "cve_products"), "vendor")["text"]
-        self.assertFalse(products_vendor.startswith(gen.PARAM_TEXT_FALLBACK["vendor"]))
-        events_limit = _param(_tool(tools, "watchlist_events"), "limit")["text"]
-        self.assertFalse(events_limit.startswith(gen.PARAM_TEXT_FALLBACK["limit"]))
 
 
 class HelperTest(unittest.TestCase):
@@ -154,7 +162,7 @@ class RenderTest(unittest.TestCase):
 
     def test_tool_yaml_parses(self):
         names = sorted(key for key in self.outputs if key.startswith("tools/") and key.endswith(".yaml"))
-        self.assertEqual(len(names), 36)
+        self.assertEqual(len(names), 38)
         for relative in names:
             stem = Path(relative).stem
             loaded = self._yaml(relative)
@@ -178,7 +186,7 @@ class RenderTest(unittest.TestCase):
         api_key = loaded["credentials_for_provider"]["api_key"]
         self.assertIs(api_key["required"], False)
         self.assertEqual(api_key["type"], "secret-input")
-        self.assertEqual(len(loaded["tools"]), 36)
+        self.assertEqual(len(loaded["tools"]), 38)
         self.assertEqual(loaded["tools"], sorted(loaded["tools"]))
         self.assertIn("tools/password_check.yaml", loaded["tools"])
         self.assertNotIn("tools/vendor_key_edit.yaml", loaded["tools"])

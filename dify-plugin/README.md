@@ -42,12 +42,13 @@ A Pro key can add Shodan and AbuseIPDB answers to ip_lookup. Those keys are save
 - **CVE Lookup** (`cve_lookup`): Full CVE record by ID (CVSS, EPSS, KEV, CWE, references, CISA SSVC, Nuclei templates), with the optional GitHub Security Advisory.
 - **Bulk CVE Lookup** (`cve_lookup_bulk`): Look up many CVEs at once, each with the fields of cve_lookup.
 - **CVE Affected Products** (`cve_products`): The products a CVE affects, one page at a time, with the vulnerable products first.
-- **CVE Risk Score** (`cve_risk_score`): Composite risk score of a CVE, from 0 to 100, for patch priority.
+- **CVE Risk Score** (`cve_risk_score`): Composite risk score of a CVE, 0-100, for patch priority.
 - **CVE Search** (`cve_search`): Search CVEs by severity, CWE, CVSS, EPSS, CISA KEV, ransomware use, Nuclei template, vendor, product and publish date, one page at a time.
 - **CVE Triage** (`cve_triage`): Rank the CVEs of a vendor or product by composite risk score, at or above the optional min_risk_score argument, as lean rows (cve_id, risk_score, label).
 - **Bulk CVE Triage** (`cve_triage_bulk`): Triage many CVEs at once, ranked by composite risk score.
 - **CVSS Calculator** (`cvss_calculator`): Decode a CVSS v3.0/v3.1 vector into its base metrics and recompute its base, temporal and environmental scores.
-- **CWE Lookup** (`cwe_lookup`): CWE weakness details (description, mitigations, examples), with how many CVEs and CISA KEV entries name it.
+- **CWE Lookup** (`cwe_lookup`): CWE weakness details (description, mitigations, examples, OWASP Top 10 category in 2021 and 2025), with how many CVEs and CISA KEV entries name it.
+- **EPSS Risers** (`epss_risers`): List the CVEs whose EPSS score rose most over the last 7 or 30 days, with the old and the new score.
 - **CISA KEV Lookup** (`kev_lookup`): CISA KEV catalog entry for a CVE: the required action, the patch deadline and known ransomware use.
 - **Product Exposure** (`product_exposure`): CVE exposure of one vendor and product: severity, KEV and PoC counts, CVSS, EPSS, the worst risk score, the top CVEs and the endoflife.date support dates.
 
@@ -66,6 +67,7 @@ A Pro key can add Shodan and AbuseIPDB answers to ip_lookup. Those keys are save
 - **SSL/TLS Certificate Check** (`ssl_check`): Check the TLS certificate and settings of a host name on port 443: version, cipher, trust, OCSP revocation, expiry, DNS names, the chain and an abuse.ch SSL Blacklist listing.
 - **Subdomain Enumeration** (`subdomain_enum`): List up to 50 subdomains of a registrable domain from Certificate Transparency, DNS queries for 94 common names and the domain's MX, NS and SPF records.
 - **Wayback Machine Lookup** (`wayback_lookup`): List when the Wayback Machine captured a host's home page: the first and last capture, the years between them (archive span, not domain age) and the latest 10 captures with links.
+- **Robots.txt and security.txt Check** (`well_known`): Read robots.txt of https://<domain> and, if it allows us, /.well-known/security.txt, with up to 5 redirects on the host or its www pair.
 - **WHOIS / RDAP Lookup** (`whois_lookup`): Look up a domain's registration over RDAP, or WHOIS where allowed: registrar, dates, status, name servers and DNSSEC.
 
 ### IP Intelligence
@@ -91,7 +93,7 @@ A Pro key can add Shodan and AbuseIPDB answers to ip_lookup. Those keys are save
 ### Threat Defense
 
 - **D3FEND Defenses for ATT&CK** (`d3fend_for_attack`): MITRE D3FEND defenses that counter a MITRE ATT&CK technique.
-- **Windows Driver Lookup (LOLDrivers)** (`driver_lookup`): Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and malicious drivers.
+- **Windows Driver Lookup (LOLDrivers)** (`driver_lookup`): Look up a Windows driver hash in the LOLDrivers catalog of vulnerable and malicious drivers.
 - **Bulk Windows Driver Lookup** (`driver_lookup_bulk`): Look up many driver file hashes in the LOLDrivers catalog at once, each with the fields of driver_lookup.
 
 <!-- tools:end -->

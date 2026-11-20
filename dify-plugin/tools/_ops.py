@@ -186,6 +186,19 @@ OPERATIONS = {
         ],
         "path": "/email_auth_check/{domain}",
     },
+    "epss_risers": {
+        "method": "GET",
+        "params": [
+            {"kind": "integer", "name": "window_days", "place": "query"},
+            {"kind": "string", "name": "vendor", "place": "query"},
+            {"kind": "string", "name": "product", "place": "query"},
+            {"kind": "boolean", "name": "in_kev", "place": "query"},
+            {"kind": "number", "name": "min_epss", "place": "query"},
+            {"kind": "integer", "name": "limit", "place": "query"},
+            {"kind": "integer", "name": "offset", "place": "query"},
+        ],
+        "path": "/epss_risers",
+    },
     "headers_check": {
         "method": "GET",
         "params": [
@@ -309,6 +322,13 @@ OPERATIONS = {
             {"kind": "string", "name": "domain", "place": "path"},
         ],
         "path": "/wayback_lookup/{domain}",
+    },
+    "well_known": {
+        "method": "GET",
+        "params": [
+            {"kind": "string", "name": "domain", "place": "path"},
+        ],
+        "path": "/well_known/{domain}",
     },
     "whois_lookup": {
         "method": "GET",

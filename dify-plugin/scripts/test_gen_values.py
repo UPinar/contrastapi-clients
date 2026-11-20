@@ -61,7 +61,7 @@ class RenderedValuesTest(unittest.TestCase):
         self.assertIn("### CVE Intelligence", self.out["README.md"])
         self.assertIn("### IP Intelligence", self.out["README.md"])
         kev = next(p for p in self.loaded("tools/cve_search.yaml")["parameters"] if p["name"] == "in_kev")
-        self.assertTrue(kev["llm_description"].startswith("true: only CVEs in the CISA KEV catalog."))
+        self.assertTrue(kev["llm_description"].startswith("true lists only CVEs in CISA KEV"))
 
     def test_yaml_line_breaks_are_escaped(self):
         for char in ("\u0085", "\u2028", "\u2029"):

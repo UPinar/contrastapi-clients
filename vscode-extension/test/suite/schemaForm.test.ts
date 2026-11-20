@@ -87,11 +87,17 @@ test("cve_search: kinds text / integer / number / enum / boolean", () => {
 
 test("prompt = property description and its limits, else the property name", () => {
   const steps = buildFormSteps(tool("cve_search")).optional;
-  assert.strictEqual(stepOf(steps, "limit").prompt, "Minimum 1. Maximum 100. Default 20.");
-  assert.strictEqual(stepOf(steps, "min_epss").prompt, "Minimum 0. Maximum 1.");
-  assert.strictEqual(stepOf(steps, "vendor").prompt, "At most 128 characters.");
+  assert.strictEqual(stepOf(steps, "limit").prompt, "CVEs per page. Minimum 1. Maximum 100. Default 20.");
+  assert.strictEqual(stepOf(steps, "min_epss").prompt, "Lowest EPSS score, a probability from 0 to 1, e.g. 0.1. Minimum 0. Maximum 1.");
+  assert.strictEqual(stepOf(steps, "vendor").prompt, "Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters.");
   assert.strictEqual(stepOf(steps, "include_rejected").prompt, "Also list the CVEs that NVD marks Rejected");
-  assert.strictEqual(stepOf(steps, "severity").prompt, "severity");
+  const bare: McpTool = {
+    name: "bare_probe",
+    inputSchema: { type: "object", properties: { severity: { type: "string" }, depth: { type: "integer", maximum: 9 } } },
+  };
+  const bareSteps = buildFormSteps(bare).optional;
+  assert.strictEqual(stepOf(bareSteps, "severity").prompt, "severity");
+  assert.strictEqual(stepOf(bareSteps, "depth").prompt, "Maximum 9.");
 });
 
 test("limit text: the cases shared with the SDK generator give the same text", () => {

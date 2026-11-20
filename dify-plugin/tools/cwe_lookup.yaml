@@ -5,8 +5,8 @@ identity:
     en_US: "CWE Lookup"
 description:
   human:
-    en_US: "CWE weakness details (description, mitigations, examples), with how many CVEs and CISA KEV entries name it."
-  llm: "CWE weakness details (description, mitigations, examples), with how many CVEs and CISA KEV entries name it. To list them, call the cve_search tool with its cwe_id argument. Costs 1 credit."
+    en_US: "CWE weakness details (description, mitigations, examples, OWASP Top 10 category in 2021 and 2025), with how many CVEs and CISA KEV entries name it."
+  llm: "CWE weakness details (description, mitigations, examples, OWASP Top 10 category in 2021 and 2025), with how many CVEs and CISA KEV entries name it. To list them, call the cve_search tool with its cwe_id argument. Costs 1 credit."
 parameters:
   - name: "cwe_id"
     type: string

@@ -5,8 +5,8 @@ identity:
     en_US: "CVE Risk Score"
 description:
   human:
-    en_US: "Composite risk score of a CVE, from 0 to 100, for patch priority."
-  llm: "Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS, CISA KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB. has_public_poc is null when no source names an exploit. Costs 1 credit."
+    en_US: "Composite risk score of a CVE, 0-100, for patch priority."
+  llm: "Composite risk score of a CVE, 0-100, for patch priority. It reads EPSS, CISA KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB. has_public_poc is null when no source names an exploit. For many CVEs, call cve_triage_bulk. Costs 1 credit."
 parameters:
   - name: "cve_id"
     type: string

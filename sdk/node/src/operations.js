@@ -118,6 +118,20 @@ export const OPERATIONS = Object.freeze({
       Object.freeze({ name: "offset", in: "query", required: false }),
     ]),
   }),
+  epss_risers: Object.freeze({
+    methodName: "epssRisers",
+    method: "GET",
+    path: "/epss_risers",
+    params: Object.freeze([
+      Object.freeze({ name: "window_days", in: "query", required: false }),
+      Object.freeze({ name: "vendor", in: "query", required: false }),
+      Object.freeze({ name: "product", in: "query", required: false }),
+      Object.freeze({ name: "in_kev", in: "query", required: false }),
+      Object.freeze({ name: "min_epss", in: "query", required: false }),
+      Object.freeze({ name: "limit", in: "query", required: false }),
+      Object.freeze({ name: "offset", in: "query", required: false }),
+    ]),
+  }),
   cve_triage_bulk: Object.freeze({
     methodName: "cveTriageBulk",
     method: "POST",
@@ -266,6 +280,14 @@ export const OPERATIONS = Object.freeze({
     params: Object.freeze([
       Object.freeze({ name: "domain", in: "path", required: true }),
       Object.freeze({ name: "include_full_header_values", in: "query", required: false }),
+    ]),
+  }),
+  well_known: Object.freeze({
+    methodName: "wellKnown",
+    method: "GET",
+    path: "/well_known/{domain}",
+    params: Object.freeze([
+      Object.freeze({ name: "domain", in: "path", required: true }),
     ]),
   }),
   whois_lookup: Object.freeze({

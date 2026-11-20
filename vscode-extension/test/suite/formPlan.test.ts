@@ -96,9 +96,9 @@ test("optionalMenuItems keeps a set step in the menu and shows its value", () =>
   assert.strictEqual(menu.get("limit")?.description, "= 37 ✓");
   assert.strictEqual(menu.get("in_kev")?.description, "= false ✓");
   assert.strictEqual(menu.get("offset")?.description, "= 0 ✓");
-  assert.strictEqual(menu.get("severity")?.detail, "severity");
+  assert.strictEqual(menu.get("severity")?.detail, "CVSS severity: CRITICAL, HIGH, MEDIUM, LOW or NONE, from the v3 rating when the CVE has one");
   assert.strictEqual(menu.get("product")?.description, undefined);
-  assert.strictEqual(menu.get("min_epss")?.detail, "Minimum 0. Maximum 1.");
+  assert.strictEqual(menu.get("min_epss")?.detail, "Lowest EPSS score, a probability from 0 to 1, e.g. 0.1. Minimum 0. Maximum 1.");
 });
 
 test("optionalMenuItems ignores inherited object keys", () => {

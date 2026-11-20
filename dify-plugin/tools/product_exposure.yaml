@@ -14,8 +14,8 @@ parameters:
     label:
       en_US: "Vendor"
     human_description:
-      en_US: "CPE vendor name in lower case, e.g. microsoft. The cpe_search tool finds it. At most 128 characters."
-    llm_description: "CPE vendor name in lower case, e.g. microsoft. The cpe_search tool finds it. At most 128 characters."
+      en_US: "Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters."
+    llm_description: "Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters."
     form: llm
   - name: "product"
     type: string
@@ -23,8 +23,8 @@ parameters:
     label:
       en_US: "Product"
     human_description:
-      en_US: "CPE product name in lower case with underscores, e.g. windows_10. The cpe_search tool finds it. At most 128 characters."
-    llm_description: "CPE product name in lower case with underscores, e.g. windows_10. The cpe_search tool finds it. At most 128 characters."
+      en_US: "Exact product name as cpe_search lists it, e.g. log4j. At most 128 characters."
+    llm_description: "Exact product name as cpe_search lists it, e.g. log4j. At most 128 characters."
     form: llm
   - name: "version"
     type: string

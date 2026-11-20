@@ -5,8 +5,8 @@ identity:
     en_US: "Windows Driver Lookup (LOLDrivers)"
 description:
   human:
-    en_US: "Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and malicious drivers."
-  llm: "Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and malicious drivers. Block on the file and Authenticode hashes, not on the detection rules. Source: LOLDrivers (Apache-2.0). Costs 1 credit."
+    en_US: "Look up a Windows driver hash in the LOLDrivers catalog of vulnerable and malicious drivers."
+  llm: "Look up a Windows driver hash in the LOLDrivers catalog of vulnerable and malicious drivers. Block on the file and Authenticode hashes, not on the detection rules. For many hashes, call driver_lookup_bulk. Source: LOLDrivers (Apache-2.0). Costs 1 credit."
 parameters:
   - name: "file_hash"
     type: string

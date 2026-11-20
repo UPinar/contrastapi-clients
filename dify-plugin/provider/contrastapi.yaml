@@ -45,6 +45,7 @@ tools:
   - "tools/driver_lookup_bulk.yaml"
   - "tools/email_address_check.yaml"
   - "tools/email_auth_check.yaml"
+  - "tools/epss_risers.yaml"
   - "tools/headers_check.yaml"
   - "tools/health.yaml"
   - "tools/ip_lookup.yaml"
@@ -59,6 +60,7 @@ tools:
   - "tools/watchlist_edit.yaml"
   - "tools/watchlist_events.yaml"
   - "tools/wayback_lookup.yaml"
+  - "tools/well_known.yaml"
   - "tools/whois_lookup.yaml"
 extra:
   python:

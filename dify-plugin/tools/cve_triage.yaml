@@ -14,8 +14,8 @@ parameters:
     label:
       en_US: "Vendor"
     human_description:
-      en_US: "CPE vendor name in lower case, e.g. microsoft. The cpe_search tool finds it. At most 128 characters."
-    llm_description: "CPE vendor name in lower case, e.g. microsoft. The cpe_search tool finds it. At most 128 characters."
+      en_US: "Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters."
+    llm_description: "Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters."
     form: llm
   - name: "product"
     type: string
@@ -23,8 +23,8 @@ parameters:
     label:
       en_US: "Product"
     human_description:
-      en_US: "CPE product name in lower case with underscores, e.g. windows_10. The cpe_search tool finds it. At most 128 characters."
-    llm_description: "CPE product name in lower case with underscores, e.g. windows_10. The cpe_search tool finds it. At most 128 characters."
+      en_US: "Exact product name as cpe_search lists it, e.g. log4j. At most 128 characters."
+    llm_description: "Exact product name as cpe_search lists it, e.g. log4j. At most 128 characters."
     form: llm
   - name: "min_risk_score"
     type: number
@@ -50,8 +50,8 @@ parameters:
     label:
       en_US: "Limit"
     human_description:
-      en_US: "Number of results on one page. Minimum 1. Maximum 100. Default 20."
-    llm_description: "Number of results on one page. Minimum 1. Maximum 100. Default 20."
+      en_US: "CVEs per page. Minimum 1. Maximum 100. Default 20."
+    llm_description: "CVEs per page. Minimum 1. Maximum 100. Default 20."
     form: llm
     default: 20
   - name: "offset"
@@ -60,8 +60,8 @@ parameters:
     label:
       en_US: "Offset"
     human_description:
-      en_US: "Number of results to skip, for the next page. Minimum 0. Maximum 10000. Default 0."
-    llm_description: "Number of results to skip, for the next page. Minimum 0. Maximum 10000. Default 0."
+      en_US: "CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum 10000. Default 0."
+    llm_description: "CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum 10000. Default 0."
     form: llm
     default: 0
 extra:

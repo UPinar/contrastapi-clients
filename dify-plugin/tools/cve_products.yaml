@@ -6,7 +6,7 @@ identity:
 description:
   human:
     en_US: "The products a CVE affects, one page at a time, with the vulnerable products first."
-  llm: "The products a CVE affects, one page at a time, with the vulnerable products first. The vendor and product arguments keep only the products with that exact name. Costs 1 credit."
+  llm: "The products a CVE affects, one page at a time, with the vulnerable products first. The vendor and product arguments keep only the products with that exact name. For the CVEs of one product, call cve_search. Costs 1 credit."
 parameters:
   - name: "cve_id"
     type: string
@@ -41,8 +41,8 @@ parameters:
     label:
       en_US: "Limit"
     human_description:
-      en_US: "Number of results on one page. Minimum 1. Maximum 50. Default 20."
-    llm_description: "Number of results on one page. Minimum 1. Maximum 50. Default 20."
+      en_US: "Products per page. Minimum 1. Maximum 50. Default 20."
+    llm_description: "Products per page. Minimum 1. Maximum 50. Default 20."
     form: llm
     default: 20
   - name: "offset"
@@ -51,8 +51,8 @@ parameters:
     label:
       en_US: "Offset"
     human_description:
-      en_US: "Number of results to skip, for the next page. Minimum 0. Default 0."
-    llm_description: "Number of results to skip, for the next page. Minimum 0. Default 0."
+      en_US: "Products to skip; pass next_offset of the previous page. Minimum 0. Default 0."
+    llm_description: "Products to skip; pass next_offset of the previous page. Minimum 0. Default 0."
     form: llm
     default: 0
 extra:

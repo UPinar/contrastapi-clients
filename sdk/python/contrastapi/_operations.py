@@ -126,6 +126,20 @@ OPERATIONS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType({
             {"name": "offset", "in": "query", "required": False},
         ),
     },
+    "epss_risers": {
+        "method_name": "epss_risers",
+        "method": "GET",
+        "path": "/epss_risers",
+        "params": (
+            {"name": "window_days", "in": "query", "required": False},
+            {"name": "vendor", "in": "query", "required": False},
+            {"name": "product", "in": "query", "required": False},
+            {"name": "in_kev", "in": "query", "required": False},
+            {"name": "min_epss", "in": "query", "required": False},
+            {"name": "limit", "in": "query", "required": False},
+            {"name": "offset", "in": "query", "required": False},
+        ),
+    },
     "cve_triage_bulk": {
         "method_name": "cve_triage_bulk",
         "method": "POST",
@@ -274,6 +288,14 @@ OPERATIONS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType({
         "params": (
             {"name": "domain", "in": "path", "required": True},
             {"name": "include_full_header_values", "in": "query", "required": False},
+        ),
+    },
+    "well_known": {
+        "method_name": "well_known",
+        "method": "GET",
+        "path": "/well_known/{domain}",
+        "params": (
+            {"name": "domain", "in": "path", "required": True},
         ),
     },
     "whois_lookup": {
@@ -460,7 +482,7 @@ class _SyncMethods:
 
         The products a CVE affects, one page at a time, with the vulnerable products
         first. The vendor and product arguments keep only the products with that exact
-        name.
+        name. For the CVEs of one product, call cve_search.
 
         Costs 1 credit.
 
@@ -470,8 +492,9 @@ class _SyncMethods:
                 characters.
             product: Exact product name, as affected_products writes it. At most 128
                 characters.
-            limit: Minimum 1. Maximum 50. Default 20.
-            offset: Minimum 0. Default 0.
+            limit: Products per page. Minimum 1. Maximum 50. Default 20.
+            offset: Products to skip; pass next_offset of the previous page. Minimum 0.
+                Default 0.
         """
         args: dict[str, Any] = {"cve_id": cve_id}
         if vendor is not None:
@@ -513,11 +536,17 @@ class _SyncMethods:
         Costs 1 credit.
 
         Args:
-            vendor: At most 128 characters.
-            product: At most 128 characters.
+            severity: CVSS severity: CRITICAL, HIGH, MEDIUM, LOW or NONE, from the v3 rating
+                when the CVE has one
+            vendor: Exact vendor name as cpe_search lists it, e.g. apache. At most 128
+                characters.
+            product: Exact product name as cpe_search lists it, e.g. log4j. At most 128
+                characters.
             cwe_id: e.g. CWE-79. At most 16 characters.
             min_cvss: CVSS v3, or v4 when a CVE has no v3. Minimum 0. Maximum 10.
-            min_epss: Minimum 0. Maximum 1.
+            min_epss: Lowest EPSS score, a probability from 0 to 1, e.g. 0.1. Minimum 0.
+                Maximum 1.
+            in_kev: true lists only CVEs in CISA KEV, false only CVEs not in it
             known_ransomware: Only CVEs whose CISA KEV entry notes known ransomware use
             has_nuclei_template: Only CVEs with a Nuclei detection template
             published_after: YYYY-MM-DD. At most 31 characters.
@@ -526,8 +555,9 @@ class _SyncMethods:
                 and still in it. At most 31 characters.
             include_rejected: Also list the CVEs that NVD marks Rejected
             sort: kev_date_added needs in_kev=true or kev_added_after
-            limit: Minimum 1. Maximum 100. Default 20.
-            offset: Minimum 0. Maximum 10000. Default 0.
+            limit: CVEs per page. Minimum 1. Maximum 100. Default 20.
+            offset: CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum
+                10000. Default 0.
         """
         args: dict[str, Any] = {}
         if severity is not None:
@@ -585,13 +615,18 @@ class _SyncMethods:
         Costs 1 credit.
 
         Args:
-            vendor: At most 128 characters.
-            product: At most 128 characters.
-            min_epss: Minimum 0. Maximum 1.
+            vendor: Exact vendor name as cpe_search lists it, e.g. apache. At most 128
+                characters.
+            product: Exact product name as cpe_search lists it, e.g. log4j. At most 128
+                characters.
+            min_epss: Lowest EPSS score, a probability from 0 to 1, e.g. 0.1. Minimum 0.
+                Maximum 1.
+            in_kev: true lists only CVEs in CISA KEV, false only CVEs not in it
             known_ransomware: Only CVEs whose CISA KEV entry notes known ransomware use
             has_nuclei_template: Only CVEs with a Nuclei detection template
             include_rejected: Also list the CVEs that NVD marks Rejected
-            limit: Minimum 1. Maximum 50. Default 20.
+            limit: How many CVEs to list, highest EPSS first. Minimum 1. Maximum 50. Default
+                20.
         """
         args: dict[str, Any] = {}
         if vendor is not None:
@@ -629,9 +664,9 @@ class _SyncMethods:
     def cwe_lookup(self, *, cwe_id: str) -> dict[str, Any]:
         """CWE Lookup
 
-        CWE weakness details (description, mitigations, examples), with how many CVEs
-        and CISA KEV entries name it. To list them, call the cve_search tool with its
-        cwe_id argument.
+        CWE weakness details (description, mitigations, examples, OWASP Top 10 category
+        in 2021 and 2025), with how many CVEs and CISA KEV entries name it. To list
+        them, call the cve_search tool with its cwe_id argument.
 
         Costs 1 credit.
 
@@ -643,9 +678,10 @@ class _SyncMethods:
     def cve_risk_score(self, *, cve_id: str) -> dict[str, Any]:
         """CVE Risk Score
 
-        Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS,
-        CISA KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB.
-        has_public_poc is null when no source names an exploit.
+        Composite risk score of a CVE, 0-100, for patch priority. It reads EPSS, CISA
+        KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB.
+        has_public_poc is null when no source names an exploit. For many CVEs, call
+        cve_triage_bulk.
 
         Costs 1 credit.
 
@@ -659,7 +695,8 @@ class _SyncMethods:
 
         Public exploit intelligence (GitHub PoCs, Metasploit, NVD and CNA exploit
         references, ExploitDB). GitHub PoC repositories are listed but not counted as
-        proof of a public exploit.
+        proof of a public exploit. For a single patch-priority score, call
+        cve_risk_score.
 
         Costs 1 credit.
 
@@ -687,12 +724,15 @@ class _SyncMethods:
         Costs 1 credit.
 
         Args:
-            vendor: At most 128 characters.
-            product: At most 128 characters.
+            vendor: Exact vendor name as cpe_search lists it, e.g. apache. At most 128
+                characters.
+            product: Exact product name as cpe_search lists it, e.g. log4j. At most 128
+                characters.
             min_risk_score: Composite risk-score threshold. Minimum 0. Maximum 100.
             include_rejected: Also list the CVEs that NVD marks Rejected
-            limit: Minimum 1. Maximum 100. Default 20.
-            offset: Minimum 0. Maximum 10000. Default 0.
+            limit: CVEs per page. Minimum 1. Maximum 100. Default 20.
+            offset: CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum
+                10000. Default 0.
         """
         args: dict[str, Any] = {}
         if vendor is not None:
@@ -708,6 +748,55 @@ class _SyncMethods:
         if offset is not None:
             args["offset"] = offset
         return self.call("cve_triage", args)
+
+    def epss_risers(
+        self,
+        *,
+        window_days: int | None = None,
+        vendor: str | None = None,
+        product: str | None = None,
+        in_kev: bool | None = None,
+        min_epss: float | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> dict[str, Any]:
+        """EPSS Risers
+
+        List the CVEs whose EPSS score rose most over the last 7 or 30 days, with the
+        old and the new score. Filter by vendor, product, KEV state or a minimum score.
+        Call the cve_lookup tool for the details of a CVE.
+
+        Costs 1 credit.
+
+        Args:
+            window_days: Days to look back: 7 or 30. Default 7. Minimum 7. Maximum 30.
+                Default 7.
+            vendor: Exact vendor name as cpe_search lists it, e.g. apache. At most 128
+                characters.
+            product: Exact product name as cpe_search lists it, e.g. log4j. At most 128
+                characters.
+            in_kev: true lists only CVEs in CISA KEV, false only CVEs not in it
+            min_epss: Lowest current EPSS score to list, 0.0 to 1.0. Minimum 0. Maximum 1.
+            limit: CVEs per page. Minimum 1. Maximum 100. Default 20.
+            offset: CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum
+                10000. Default 0.
+        """
+        args: dict[str, Any] = {}
+        if window_days is not None:
+            args["window_days"] = window_days
+        if vendor is not None:
+            args["vendor"] = vendor
+        if product is not None:
+            args["product"] = product
+        if in_kev is not None:
+            args["in_kev"] = in_kev
+        if min_epss is not None:
+            args["min_epss"] = min_epss
+        if limit is not None:
+            args["limit"] = limit
+        if offset is not None:
+            args["offset"] = offset
+        return self.call("epss_risers", args)
 
     def cve_triage_bulk(self, *, cve_ids: list[str]) -> dict[str, Any]:
         """Bulk CVE Triage
@@ -739,8 +828,10 @@ class _SyncMethods:
         Costs 1 credit.
 
         Args:
-            vendor: At most 128 characters.
-            product: At most 128 characters.
+            vendor: Exact vendor name as cpe_search lists it, e.g. apache. At most 128
+                characters.
+            product: Exact product name as cpe_search lists it, e.g. log4j. At most 128
+                characters.
             version: Product version, e.g. 22.21.1 or 11-24h2; picks the release cycle of
                 eol. At most 128 characters.
             include_rejected: Also count and list the CVEs that NVD marks Rejected
@@ -762,16 +853,17 @@ class _SyncMethods:
         """CPE Search
 
         Find the CPE vendor and product names that hold a text, ranked by vulnerable CVE
-        count. Pass a name that holds no % as it is to the vendor and product arguments
-        of the cve_search, cve_triage, cve_leading and product_exposure tools.
+        count. Pass a name with no % as it is to the vendor and product arguments of the
+        cve_search, cve_triage, cve_leading, product_exposure and epss_risers tools.
 
         Costs 1 credit.
 
         Args:
             search: Text in vendor or product names, at least 3 bytes; case does not matter,
                 and _ matches a space. At most 128 characters.
-            limit: Minimum 1. Maximum 50. Default 20.
-            offset: Minimum 0. Maximum 10000. Default 0.
+            limit: Vendor and product pairs per page. Minimum 1. Maximum 50. Default 20.
+            offset: Pairs to skip; pass next_offset of the previous page. Minimum 0. Maximum
+                10000. Default 0.
         """
         args: dict[str, Any] = {"search": search}
         if limit is not None:
@@ -784,12 +876,14 @@ class _SyncMethods:
         """CVSS Calculator
 
         Decode a CVSS v3.0/v3.1 vector into its base metrics and recompute its base,
-        temporal and environmental scores.
+        temporal and environmental scores. Use it on a vector you hold; cve_lookup
+        already gives the scores of a CVE. v2 and v4 are refused.
 
         Costs 1 credit.
 
         Args:
-            vector: CVSS v3.0/v3.1 vector, e.g.
+            vector: CVSS:3.0/ or CVSS:3.1/ vector with all eight base metrics; temporal and
+                environmental metrics are optional, e.g.
                 CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H. At most 127 characters.
         """
         return self.call("cvss_calculator", {"vector": vector})
@@ -1097,6 +1191,21 @@ class _SyncMethods:
             args["include_full_header_values"] = include_full_header_values
         return self.call("headers_check", args)
 
+    def well_known(self, *, domain: str) -> dict[str, Any]:
+        """Robots.txt and security.txt Check
+
+        Read robots.txt of https://<domain> and, if it allows us,
+        /.well-known/security.txt, with up to 5 redirects on the host or its www pair.
+        Gives the rules that bind us, sitemaps, fields such as Contact and Expires, and
+        RFC 9309/9116 issues.
+
+        Costs 1 credit.
+
+        Args:
+            domain: Host name of the site, such as www.example.com. At most 253 characters.
+        """
+        return self.call("well_known", {"domain": domain})
+
     def whois_lookup(self, *, domain: str) -> dict[str, Any]:
         """WHOIS / RDAP Lookup
 
@@ -1157,7 +1266,7 @@ class _SyncMethods:
 
         Look up a public IP address: AS, country, cloud provider, CDN, datacenter or Tor
         exit, DROP listing and PTR name. A Pro key with its own Shodan or AbuseIPDB key
-        adds exposure and reputation.
+        adds exposure and reputation. For every prefix of the AS, call asn_lookup.
 
         Costs 1 credit.
 
@@ -1185,8 +1294,10 @@ class _SyncMethods:
         Args:
             target: AS number, such as AS15169 or 15169, or a public IPv4 or IPv6 address,
                 such as 8.8.8.8. At most 45 characters.
-            limit: Minimum 1. Maximum 50. Default 50.
-            offset: Minimum 0. Default 0.
+            limit: Prefixes per page, in each address family. Minimum 1. Maximum 50. Default
+                50.
+            offset: Prefixes to skip in each family; pass next_offset of the previous page.
+                Minimum 0. Default 0.
         """
         args: dict[str, Any] = {"target": target}
         if limit is not None:
@@ -1217,9 +1328,10 @@ class _SyncMethods:
     ) -> dict[str, Any]:
         """Windows Driver Lookup (LOLDrivers)
 
-        Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and
+        Look up a Windows driver hash in the LOLDrivers catalog of vulnerable and
         malicious drivers. Block on the file and Authenticode hashes, not on the
-        detection rules. Source: LOLDrivers (Apache-2.0).
+        detection rules. For many hashes, call driver_lookup_bulk. Source: LOLDrivers
+        (Apache-2.0).
 
         Costs 1 credit.
 
@@ -1272,8 +1384,9 @@ class _SyncMethods:
                 org.apache.logging.log4j:log4j-core, golang.org/x/net. At most 256 characters.
             version: Exact version, e.g. 4.17.20; without it every result is listed. At most
                 128 characters.
-            limit: Minimum 1. Maximum 50. Default 20.
-            offset: Minimum 0. Default 0.
+            limit: Results per page. Minimum 1. Maximum 50. Default 20.
+            offset: Results to skip; pass next_offset of the previous page. Minimum 0.
+                Default 0.
         """
         args: dict[str, Any] = {"ecosystem": ecosystem, "name": name}
         if version is not None:
@@ -1370,7 +1483,7 @@ class _AsyncMethods:
 
         The products a CVE affects, one page at a time, with the vulnerable products
         first. The vendor and product arguments keep only the products with that exact
-        name.
+        name. For the CVEs of one product, call cve_search.
 
         Costs 1 credit.
 
@@ -1380,8 +1493,9 @@ class _AsyncMethods:
                 characters.
             product: Exact product name, as affected_products writes it. At most 128
                 characters.
-            limit: Minimum 1. Maximum 50. Default 20.
-            offset: Minimum 0. Default 0.
+            limit: Products per page. Minimum 1. Maximum 50. Default 20.
+            offset: Products to skip; pass next_offset of the previous page. Minimum 0.
+                Default 0.
         """
         args: dict[str, Any] = {"cve_id": cve_id}
         if vendor is not None:
@@ -1423,11 +1537,17 @@ class _AsyncMethods:
         Costs 1 credit.
 
         Args:
-            vendor: At most 128 characters.
-            product: At most 128 characters.
+            severity: CVSS severity: CRITICAL, HIGH, MEDIUM, LOW or NONE, from the v3 rating
+                when the CVE has one
+            vendor: Exact vendor name as cpe_search lists it, e.g. apache. At most 128
+                characters.
+            product: Exact product name as cpe_search lists it, e.g. log4j. At most 128
+                characters.
             cwe_id: e.g. CWE-79. At most 16 characters.
             min_cvss: CVSS v3, or v4 when a CVE has no v3. Minimum 0. Maximum 10.
-            min_epss: Minimum 0. Maximum 1.
+            min_epss: Lowest EPSS score, a probability from 0 to 1, e.g. 0.1. Minimum 0.
+                Maximum 1.
+            in_kev: true lists only CVEs in CISA KEV, false only CVEs not in it
             known_ransomware: Only CVEs whose CISA KEV entry notes known ransomware use
             has_nuclei_template: Only CVEs with a Nuclei detection template
             published_after: YYYY-MM-DD. At most 31 characters.
@@ -1436,8 +1556,9 @@ class _AsyncMethods:
                 and still in it. At most 31 characters.
             include_rejected: Also list the CVEs that NVD marks Rejected
             sort: kev_date_added needs in_kev=true or kev_added_after
-            limit: Minimum 1. Maximum 100. Default 20.
-            offset: Minimum 0. Maximum 10000. Default 0.
+            limit: CVEs per page. Minimum 1. Maximum 100. Default 20.
+            offset: CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum
+                10000. Default 0.
         """
         args: dict[str, Any] = {}
         if severity is not None:
@@ -1495,13 +1616,18 @@ class _AsyncMethods:
         Costs 1 credit.
 
         Args:
-            vendor: At most 128 characters.
-            product: At most 128 characters.
-            min_epss: Minimum 0. Maximum 1.
+            vendor: Exact vendor name as cpe_search lists it, e.g. apache. At most 128
+                characters.
+            product: Exact product name as cpe_search lists it, e.g. log4j. At most 128
+                characters.
+            min_epss: Lowest EPSS score, a probability from 0 to 1, e.g. 0.1. Minimum 0.
+                Maximum 1.
+            in_kev: true lists only CVEs in CISA KEV, false only CVEs not in it
             known_ransomware: Only CVEs whose CISA KEV entry notes known ransomware use
             has_nuclei_template: Only CVEs with a Nuclei detection template
             include_rejected: Also list the CVEs that NVD marks Rejected
-            limit: Minimum 1. Maximum 50. Default 20.
+            limit: How many CVEs to list, highest EPSS first. Minimum 1. Maximum 50. Default
+                20.
         """
         args: dict[str, Any] = {}
         if vendor is not None:
@@ -1539,9 +1665,9 @@ class _AsyncMethods:
     async def cwe_lookup(self, *, cwe_id: str) -> dict[str, Any]:
         """CWE Lookup
 
-        CWE weakness details (description, mitigations, examples), with how many CVEs
-        and CISA KEV entries name it. To list them, call the cve_search tool with its
-        cwe_id argument.
+        CWE weakness details (description, mitigations, examples, OWASP Top 10 category
+        in 2021 and 2025), with how many CVEs and CISA KEV entries name it. To list
+        them, call the cve_search tool with its cwe_id argument.
 
         Costs 1 credit.
 
@@ -1553,9 +1679,10 @@ class _AsyncMethods:
     async def cve_risk_score(self, *, cve_id: str) -> dict[str, Any]:
         """CVE Risk Score
 
-        Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS,
-        CISA KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB.
-        has_public_poc is null when no source names an exploit.
+        Composite risk score of a CVE, 0-100, for patch priority. It reads EPSS, CISA
+        KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB.
+        has_public_poc is null when no source names an exploit. For many CVEs, call
+        cve_triage_bulk.
 
         Costs 1 credit.
 
@@ -1569,7 +1696,8 @@ class _AsyncMethods:
 
         Public exploit intelligence (GitHub PoCs, Metasploit, NVD and CNA exploit
         references, ExploitDB). GitHub PoC repositories are listed but not counted as
-        proof of a public exploit.
+        proof of a public exploit. For a single patch-priority score, call
+        cve_risk_score.
 
         Costs 1 credit.
 
@@ -1597,12 +1725,15 @@ class _AsyncMethods:
         Costs 1 credit.
 
         Args:
-            vendor: At most 128 characters.
-            product: At most 128 characters.
+            vendor: Exact vendor name as cpe_search lists it, e.g. apache. At most 128
+                characters.
+            product: Exact product name as cpe_search lists it, e.g. log4j. At most 128
+                characters.
             min_risk_score: Composite risk-score threshold. Minimum 0. Maximum 100.
             include_rejected: Also list the CVEs that NVD marks Rejected
-            limit: Minimum 1. Maximum 100. Default 20.
-            offset: Minimum 0. Maximum 10000. Default 0.
+            limit: CVEs per page. Minimum 1. Maximum 100. Default 20.
+            offset: CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum
+                10000. Default 0.
         """
         args: dict[str, Any] = {}
         if vendor is not None:
@@ -1618,6 +1749,55 @@ class _AsyncMethods:
         if offset is not None:
             args["offset"] = offset
         return await self.call("cve_triage", args)
+
+    async def epss_risers(
+        self,
+        *,
+        window_days: int | None = None,
+        vendor: str | None = None,
+        product: str | None = None,
+        in_kev: bool | None = None,
+        min_epss: float | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> dict[str, Any]:
+        """EPSS Risers
+
+        List the CVEs whose EPSS score rose most over the last 7 or 30 days, with the
+        old and the new score. Filter by vendor, product, KEV state or a minimum score.
+        Call the cve_lookup tool for the details of a CVE.
+
+        Costs 1 credit.
+
+        Args:
+            window_days: Days to look back: 7 or 30. Default 7. Minimum 7. Maximum 30.
+                Default 7.
+            vendor: Exact vendor name as cpe_search lists it, e.g. apache. At most 128
+                characters.
+            product: Exact product name as cpe_search lists it, e.g. log4j. At most 128
+                characters.
+            in_kev: true lists only CVEs in CISA KEV, false only CVEs not in it
+            min_epss: Lowest current EPSS score to list, 0.0 to 1.0. Minimum 0. Maximum 1.
+            limit: CVEs per page. Minimum 1. Maximum 100. Default 20.
+            offset: CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum
+                10000. Default 0.
+        """
+        args: dict[str, Any] = {}
+        if window_days is not None:
+            args["window_days"] = window_days
+        if vendor is not None:
+            args["vendor"] = vendor
+        if product is not None:
+            args["product"] = product
+        if in_kev is not None:
+            args["in_kev"] = in_kev
+        if min_epss is not None:
+            args["min_epss"] = min_epss
+        if limit is not None:
+            args["limit"] = limit
+        if offset is not None:
+            args["offset"] = offset
+        return await self.call("epss_risers", args)
 
     async def cve_triage_bulk(self, *, cve_ids: list[str]) -> dict[str, Any]:
         """Bulk CVE Triage
@@ -1649,8 +1829,10 @@ class _AsyncMethods:
         Costs 1 credit.
 
         Args:
-            vendor: At most 128 characters.
-            product: At most 128 characters.
+            vendor: Exact vendor name as cpe_search lists it, e.g. apache. At most 128
+                characters.
+            product: Exact product name as cpe_search lists it, e.g. log4j. At most 128
+                characters.
             version: Product version, e.g. 22.21.1 or 11-24h2; picks the release cycle of
                 eol. At most 128 characters.
             include_rejected: Also count and list the CVEs that NVD marks Rejected
@@ -1672,16 +1854,17 @@ class _AsyncMethods:
         """CPE Search
 
         Find the CPE vendor and product names that hold a text, ranked by vulnerable CVE
-        count. Pass a name that holds no % as it is to the vendor and product arguments
-        of the cve_search, cve_triage, cve_leading and product_exposure tools.
+        count. Pass a name with no % as it is to the vendor and product arguments of the
+        cve_search, cve_triage, cve_leading, product_exposure and epss_risers tools.
 
         Costs 1 credit.
 
         Args:
             search: Text in vendor or product names, at least 3 bytes; case does not matter,
                 and _ matches a space. At most 128 characters.
-            limit: Minimum 1. Maximum 50. Default 20.
-            offset: Minimum 0. Maximum 10000. Default 0.
+            limit: Vendor and product pairs per page. Minimum 1. Maximum 50. Default 20.
+            offset: Pairs to skip; pass next_offset of the previous page. Minimum 0. Maximum
+                10000. Default 0.
         """
         args: dict[str, Any] = {"search": search}
         if limit is not None:
@@ -1694,12 +1877,14 @@ class _AsyncMethods:
         """CVSS Calculator
 
         Decode a CVSS v3.0/v3.1 vector into its base metrics and recompute its base,
-        temporal and environmental scores.
+        temporal and environmental scores. Use it on a vector you hold; cve_lookup
+        already gives the scores of a CVE. v2 and v4 are refused.
 
         Costs 1 credit.
 
         Args:
-            vector: CVSS v3.0/v3.1 vector, e.g.
+            vector: CVSS:3.0/ or CVSS:3.1/ vector with all eight base metrics; temporal and
+                environmental metrics are optional, e.g.
                 CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H. At most 127 characters.
         """
         return await self.call("cvss_calculator", {"vector": vector})
@@ -2007,6 +2192,21 @@ class _AsyncMethods:
             args["include_full_header_values"] = include_full_header_values
         return await self.call("headers_check", args)
 
+    async def well_known(self, *, domain: str) -> dict[str, Any]:
+        """Robots.txt and security.txt Check
+
+        Read robots.txt of https://<domain> and, if it allows us,
+        /.well-known/security.txt, with up to 5 redirects on the host or its www pair.
+        Gives the rules that bind us, sitemaps, fields such as Contact and Expires, and
+        RFC 9309/9116 issues.
+
+        Costs 1 credit.
+
+        Args:
+            domain: Host name of the site, such as www.example.com. At most 253 characters.
+        """
+        return await self.call("well_known", {"domain": domain})
+
     async def whois_lookup(self, *, domain: str) -> dict[str, Any]:
         """WHOIS / RDAP Lookup
 
@@ -2067,7 +2267,7 @@ class _AsyncMethods:
 
         Look up a public IP address: AS, country, cloud provider, CDN, datacenter or Tor
         exit, DROP listing and PTR name. A Pro key with its own Shodan or AbuseIPDB key
-        adds exposure and reputation.
+        adds exposure and reputation. For every prefix of the AS, call asn_lookup.
 
         Costs 1 credit.
 
@@ -2095,8 +2295,10 @@ class _AsyncMethods:
         Args:
             target: AS number, such as AS15169 or 15169, or a public IPv4 or IPv6 address,
                 such as 8.8.8.8. At most 45 characters.
-            limit: Minimum 1. Maximum 50. Default 50.
-            offset: Minimum 0. Default 0.
+            limit: Prefixes per page, in each address family. Minimum 1. Maximum 50. Default
+                50.
+            offset: Prefixes to skip in each family; pass next_offset of the previous page.
+                Minimum 0. Default 0.
         """
         args: dict[str, Any] = {"target": target}
         if limit is not None:
@@ -2127,9 +2329,10 @@ class _AsyncMethods:
     ) -> dict[str, Any]:
         """Windows Driver Lookup (LOLDrivers)
 
-        Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and
+        Look up a Windows driver hash in the LOLDrivers catalog of vulnerable and
         malicious drivers. Block on the file and Authenticode hashes, not on the
-        detection rules. Source: LOLDrivers (Apache-2.0).
+        detection rules. For many hashes, call driver_lookup_bulk. Source: LOLDrivers
+        (Apache-2.0).
 
         Costs 1 credit.
 
@@ -2182,8 +2385,9 @@ class _AsyncMethods:
                 org.apache.logging.log4j:log4j-core, golang.org/x/net. At most 256 characters.
             version: Exact version, e.g. 4.17.20; without it every result is listed. At most
                 128 characters.
-            limit: Minimum 1. Maximum 50. Default 20.
-            offset: Minimum 0. Default 0.
+            limit: Results per page. Minimum 1. Maximum 50. Default 20.
+            offset: Results to skip; pass next_offset of the previous page. Minimum 0.
+                Default 0.
         """
         args: dict[str, Any] = {"ecosystem": ecosystem, "name": name}
         if version is not None:

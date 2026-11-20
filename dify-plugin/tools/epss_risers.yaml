@@ -1,0 +1,79 @@
+identity:
+  name: "epss_risers"
+  author: "contrastcyber"
+  label:
+    en_US: "EPSS Risers"
+description:
+  human:
+    en_US: "List the CVEs whose EPSS score rose most over the last 7 or 30 days, with the old and the new score."
+  llm: "List the CVEs whose EPSS score rose most over the last 7 or 30 days, with the old and the new score. Filter by vendor, product, KEV state or a minimum score. Call the cve_lookup tool for the details of a CVE. Costs 1 credit."
+parameters:
+  - name: "window_days"
+    type: number
+    required: false
+    label:
+      en_US: "Window Days"
+    human_description:
+      en_US: "Days to look back: 7 or 30. Default 7. Minimum 7. Maximum 30. Default 7."
+    llm_description: "Days to look back: 7 or 30. Default 7. Minimum 7. Maximum 30. Default 7."
+    form: llm
+    default: 7
+  - name: "vendor"
+    type: string
+    required: false
+    label:
+      en_US: "Vendor"
+    human_description:
+      en_US: "Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters."
+    llm_description: "Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters."
+    form: llm
+  - name: "product"
+    type: string
+    required: false
+    label:
+      en_US: "Product"
+    human_description:
+      en_US: "Exact product name as cpe_search lists it, e.g. log4j. At most 128 characters."
+    llm_description: "Exact product name as cpe_search lists it, e.g. log4j. At most 128 characters."
+    form: llm
+  - name: "in_kev"
+    type: boolean
+    required: false
+    label:
+      en_US: "In KEV"
+    human_description:
+      en_US: "true lists only CVEs in CISA KEV, false only CVEs not in it"
+    llm_description: "true lists only CVEs in CISA KEV, false only CVEs not in it"
+    form: llm
+  - name: "min_epss"
+    type: number
+    required: false
+    label:
+      en_US: "Min EPSS"
+    human_description:
+      en_US: "Lowest current EPSS score to list, 0.0 to 1.0. Minimum 0. Maximum 1."
+    llm_description: "Lowest current EPSS score to list, 0.0 to 1.0. Minimum 0. Maximum 1."
+    form: llm
+  - name: "limit"
+    type: number
+    required: false
+    label:
+      en_US: "Limit"
+    human_description:
+      en_US: "CVEs per page. Minimum 1. Maximum 100. Default 20."
+    llm_description: "CVEs per page. Minimum 1. Maximum 100. Default 20."
+    form: llm
+    default: 20
+  - name: "offset"
+    type: number
+    required: false
+    label:
+      en_US: "Offset"
+    human_description:
+      en_US: "CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum 10000. Default 0."
+    llm_description: "CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum 10000. Default 0."
+    form: llm
+    default: 0
+extra:
+  python:
+    source: "tools/epss_risers.py"

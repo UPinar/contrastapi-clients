@@ -72,11 +72,11 @@
     },
     {
       "name": "cwe_lookup",
-      "description": "CWE Lookup. CWE weakness details (description, mitigations, examples), with how many CVEs and CISA KEV entries name it."
+      "description": "CWE Lookup. CWE weakness details (description, mitigations, examples, OWASP Top 10 category in 2021 and 2025), with how many CVEs and CISA KEV entries name it."
     },
     {
       "name": "cve_risk_score",
-      "description": "CVE Risk Score. Composite risk score of a CVE, from 0 to 100, for patch priority."
+      "description": "CVE Risk Score. Composite risk score of a CVE, 0-100, for patch priority."
     },
     {
       "name": "cve_exploit",
@@ -85,6 +85,10 @@
     {
       "name": "cve_triage",
       "description": "CVE Triage. Rank the CVEs of a vendor or product by composite risk score, at or above the optional min_risk_score argument, as lean rows (cve_id, risk_score, label)."
+    },
+    {
+      "name": "epss_risers",
+      "description": "EPSS Risers. List the CVEs whose EPSS score rose most over the last 7 or 30 days, with the old and the new score."
     },
     {
       "name": "cve_triage_bulk",
@@ -147,6 +151,10 @@
       "description": "Security Headers Check. Rate nine security headers of a web site, such as CSP, HSTS and Set-Cookie, from one GET to https://<domain>/ that follows up to 5 redirects on the same host or its www pair."
     },
     {
+      "name": "well_known",
+      "description": "Robots.txt and security.txt Check. Read robots.txt of https://<domain> and, if it allows us, /.well-known/security.txt, with up to 5 redirects on the host or its www pair."
+    },
+    {
       "name": "whois_lookup",
       "description": "WHOIS / RDAP Lookup. Look up a domain's registration over RDAP, or WHOIS where allowed: registrar, dates, status, name servers and DNSSEC."
     },
@@ -176,7 +184,7 @@
     },
     {
       "name": "driver_lookup",
-      "description": "Windows Driver Lookup (LOLDrivers). Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and malicious drivers."
+      "description": "Windows Driver Lookup (LOLDrivers). Look up a Windows driver hash in the LOLDrivers catalog of vulnerable and malicious drivers."
     },
     {
       "name": "driver_lookup_bulk",

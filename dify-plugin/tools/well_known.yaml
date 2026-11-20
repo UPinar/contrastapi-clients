@@ -1,0 +1,22 @@
+identity:
+  name: "well_known"
+  author: "contrastcyber"
+  label:
+    en_US: "Robots.txt and security.txt Check"
+description:
+  human:
+    en_US: "Read robots.txt of https://<domain> and, if it allows us, /.well-known/security.txt, with up to 5 redirects on the host or its www pair."
+  llm: "Read robots.txt of https://<domain> and, if it allows us, /.well-known/security.txt, with up to 5 redirects on the host or its www pair. Gives the rules that bind us, sitemaps, fields such as Contact and Expires, and RFC 9309/9116 issues. Costs 1 credit."
+parameters:
+  - name: "domain"
+    type: string
+    required: true
+    label:
+      en_US: "Domain"
+    human_description:
+      en_US: "Host name of the site, such as www.example.com. At most 253 characters."
+    llm_description: "Host name of the site, such as www.example.com. At most 253 characters."
+    form: llm
+extra:
+  python:
+    source: "tools/well_known.py"

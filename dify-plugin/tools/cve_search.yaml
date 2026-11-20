@@ -14,8 +14,8 @@ parameters:
     label:
       en_US: "Severity"
     human_description:
-      en_US: "Severity band of the CVE's CVSS score."
-    llm_description: "Severity band of the CVE's CVSS score."
+      en_US: "CVSS severity: CRITICAL, HIGH, MEDIUM, LOW or NONE, from the v3 rating when the CVE has one"
+    llm_description: "CVSS severity: CRITICAL, HIGH, MEDIUM, LOW or NONE, from the v3 rating when the CVE has one"
     form: llm
     options:
       - value: "CRITICAL"
@@ -39,8 +39,8 @@ parameters:
     label:
       en_US: "Vendor"
     human_description:
-      en_US: "CPE vendor name in lower case, e.g. microsoft. The cpe_search tool finds it. At most 128 characters."
-    llm_description: "CPE vendor name in lower case, e.g. microsoft. The cpe_search tool finds it. At most 128 characters."
+      en_US: "Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters."
+    llm_description: "Exact vendor name as cpe_search lists it, e.g. apache. At most 128 characters."
     form: llm
   - name: "product"
     type: string
@@ -48,8 +48,8 @@ parameters:
     label:
       en_US: "Product"
     human_description:
-      en_US: "CPE product name in lower case with underscores, e.g. windows_10. The cpe_search tool finds it. At most 128 characters."
-    llm_description: "CPE product name in lower case with underscores, e.g. windows_10. The cpe_search tool finds it. At most 128 characters."
+      en_US: "Exact product name as cpe_search lists it, e.g. log4j. At most 128 characters."
+    llm_description: "Exact product name as cpe_search lists it, e.g. log4j. At most 128 characters."
     form: llm
   - name: "cwe_id"
     type: string
@@ -75,8 +75,8 @@ parameters:
     label:
       en_US: "Min EPSS"
     human_description:
-      en_US: "Lowest EPSS score. Minimum 0. Maximum 1."
-    llm_description: "Lowest EPSS score. Minimum 0. Maximum 1."
+      en_US: "Lowest EPSS score, a probability from 0 to 1, e.g. 0.1. Minimum 0. Maximum 1."
+    llm_description: "Lowest EPSS score, a probability from 0 to 1, e.g. 0.1. Minimum 0. Maximum 1."
     form: llm
   - name: "in_kev"
     type: boolean
@@ -84,8 +84,8 @@ parameters:
     label:
       en_US: "In KEV"
     human_description:
-      en_US: "true: only CVEs in the CISA KEV catalog. false: only CVEs not in it."
-    llm_description: "true: only CVEs in the CISA KEV catalog. false: only CVEs not in it."
+      en_US: "true lists only CVEs in CISA KEV, false only CVEs not in it"
+    llm_description: "true lists only CVEs in CISA KEV, false only CVEs not in it"
     form: llm
   - name: "known_ransomware"
     type: boolean
@@ -169,8 +169,8 @@ parameters:
     label:
       en_US: "Limit"
     human_description:
-      en_US: "Number of results on one page. Minimum 1. Maximum 100. Default 20."
-    llm_description: "Number of results on one page. Minimum 1. Maximum 100. Default 20."
+      en_US: "CVEs per page. Minimum 1. Maximum 100. Default 20."
+    llm_description: "CVEs per page. Minimum 1. Maximum 100. Default 20."
     form: llm
     default: 20
   - name: "offset"
@@ -179,8 +179,8 @@ parameters:
     label:
       en_US: "Offset"
     human_description:
-      en_US: "Number of results to skip, for the next page. Minimum 0. Maximum 10000. Default 0."
-    llm_description: "Number of results to skip, for the next page. Minimum 0. Maximum 10000. Default 0."
+      en_US: "CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum 10000. Default 0."
+    llm_description: "CVEs to skip; pass next_offset of the previous page. Minimum 0. Maximum 10000. Default 0."
     form: llm
     default: 0
 extra:

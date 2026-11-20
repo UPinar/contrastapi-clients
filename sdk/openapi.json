@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "ContrastAPI",
-    "version": "2.0.5",
+    "version": "2.2.0",
     "description": "Security intelligence REST API for CVE, package, credential, domain, IP and threat defense lookups, priced in credits."
   },
   "servers": [
@@ -203,7 +203,7 @@
       "get": {
         "operationId": "cve_products",
         "summary": "CVE Affected Products",
-        "description": "The products a CVE affects, one page at a time, with the vulnerable products first. The vendor and product arguments keep only the products with that exact name.",
+        "description": "The products a CVE affects, one page at a time, with the vulnerable products first. The vendor and product arguments keep only the products with that exact name. For the CVEs of one product, call cve_search.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -243,6 +243,7 @@
             "name": "limit",
             "in": "query",
             "required": false,
+            "description": "Products per page",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -254,6 +255,7 @@
             "name": "offset",
             "in": "query",
             "required": false,
+            "description": "Products to skip; pass next_offset of the previous page",
             "schema": {
               "type": "integer",
               "minimum": 0,
@@ -306,6 +308,7 @@
             "name": "severity",
             "in": "query",
             "required": false,
+            "description": "CVSS severity: CRITICAL, HIGH, MEDIUM, LOW or NONE, from the v3 rating when the CVE has one",
             "schema": {
               "type": "string",
               "enum": [
@@ -322,6 +325,7 @@
             "name": "vendor",
             "in": "query",
             "required": false,
+            "description": "Exact vendor name as cpe_search lists it, e.g. apache",
             "schema": {
               "type": "string",
               "maxLength": 128
@@ -331,6 +335,7 @@
             "name": "product",
             "in": "query",
             "required": false,
+            "description": "Exact product name as cpe_search lists it, e.g. log4j",
             "schema": {
               "type": "string",
               "maxLength": 128
@@ -361,6 +366,7 @@
             "name": "min_epss",
             "in": "query",
             "required": false,
+            "description": "Lowest EPSS score, a probability from 0 to 1, e.g. 0.1",
             "schema": {
               "type": "number",
               "minimum": 0,
@@ -371,6 +377,7 @@
             "name": "in_kev",
             "in": "query",
             "required": false,
+            "description": "true lists only CVEs in CISA KEV, false only CVEs not in it",
             "schema": {
               "type": "boolean"
             }
@@ -454,6 +461,7 @@
             "name": "limit",
             "in": "query",
             "required": false,
+            "description": "CVEs per page",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -465,6 +473,7 @@
             "name": "offset",
             "in": "query",
             "required": false,
+            "description": "CVEs to skip; pass next_offset of the previous page",
             "schema": {
               "type": "integer",
               "minimum": 0,
@@ -518,6 +527,7 @@
             "name": "vendor",
             "in": "query",
             "required": false,
+            "description": "Exact vendor name as cpe_search lists it, e.g. apache",
             "schema": {
               "type": "string",
               "maxLength": 128
@@ -527,6 +537,7 @@
             "name": "product",
             "in": "query",
             "required": false,
+            "description": "Exact product name as cpe_search lists it, e.g. log4j",
             "schema": {
               "type": "string",
               "maxLength": 128
@@ -536,6 +547,7 @@
             "name": "min_epss",
             "in": "query",
             "required": false,
+            "description": "Lowest EPSS score, a probability from 0 to 1, e.g. 0.1",
             "schema": {
               "type": "number",
               "minimum": 0,
@@ -546,6 +558,7 @@
             "name": "in_kev",
             "in": "query",
             "required": false,
+            "description": "true lists only CVEs in CISA KEV, false only CVEs not in it",
             "schema": {
               "type": "boolean"
             }
@@ -583,6 +596,7 @@
             "name": "limit",
             "in": "query",
             "required": false,
+            "description": "How many CVEs to list, highest EPSS first",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -678,7 +692,7 @@
       "get": {
         "operationId": "cwe_lookup",
         "summary": "CWE Lookup",
-        "description": "CWE weakness details (description, mitigations, examples), with how many CVEs and CISA KEV entries name it. To list them, call the cve_search tool with its cwe_id argument.",
+        "description": "CWE weakness details (description, mitigations, examples, OWASP Top 10 category in 2021 and 2025), with how many CVEs and CISA KEV entries name it. To list them, call the cve_search tool with its cwe_id argument.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -730,7 +744,7 @@
       "get": {
         "operationId": "cve_risk_score",
         "summary": "CVE Risk Score",
-        "description": "Composite risk score of a CVE, from 0 to 100, for patch priority. It reads EPSS, CISA KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB. has_public_poc is null when no source names an exploit.",
+        "description": "Composite risk score of a CVE, 0-100, for patch priority. It reads EPSS, CISA KEV, Metasploit, CVSS, NVD and CNA exploit references, and ExploitDB. has_public_poc is null when no source names an exploit. For many CVEs, call cve_triage_bulk.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -782,7 +796,7 @@
       "get": {
         "operationId": "cve_exploit",
         "summary": "CVE Exploit Intelligence",
-        "description": "Public exploit intelligence (GitHub PoCs, Metasploit, NVD and CNA exploit references, ExploitDB). GitHub PoC repositories are listed but not counted as proof of a public exploit.",
+        "description": "Public exploit intelligence (GitHub PoCs, Metasploit, NVD and CNA exploit references, ExploitDB). GitHub PoC repositories are listed but not counted as proof of a public exploit. For a single patch-priority score, call cve_risk_score.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -844,6 +858,7 @@
             "name": "vendor",
             "in": "query",
             "required": false,
+            "description": "Exact vendor name as cpe_search lists it, e.g. apache",
             "schema": {
               "type": "string",
               "maxLength": 128
@@ -853,6 +868,7 @@
             "name": "product",
             "in": "query",
             "required": false,
+            "description": "Exact product name as cpe_search lists it, e.g. log4j",
             "schema": {
               "type": "string",
               "maxLength": 128
@@ -882,6 +898,7 @@
             "name": "limit",
             "in": "query",
             "required": false,
+            "description": "CVEs per page",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -893,6 +910,125 @@
             "name": "offset",
             "in": "query",
             "required": false,
+            "description": "CVEs to skip; pass next_offset of the previous page",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The answer of the endpoint.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "X-RateLimit-Reset-Machine": {
+                "$ref": "#/components/headers/X-RateLimit-Reset-Machine"
+              },
+              "X-RateLimit-Reset-Human": {
+                "$ref": "#/components/headers/X-RateLimit-Reset-Human"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/epss_risers": {
+      "get": {
+        "operationId": "epss_risers",
+        "summary": "EPSS Risers",
+        "description": "List the CVEs whose EPSS score rose most over the last 7 or 30 days, with the old and the new score. Filter by vendor, product, KEV state or a minimum score. Call the cve_lookup tool for the details of a CVE.",
+        "tags": [
+          "CVE Intelligence"
+        ],
+        "x-credit-cost": 1,
+        "parameters": [
+          {
+            "name": "window_days",
+            "in": "query",
+            "required": false,
+            "description": "Days to look back: 7 or 30. Default 7.",
+            "schema": {
+              "type": "integer",
+              "minimum": 7,
+              "maximum": 30,
+              "default": 7
+            }
+          },
+          {
+            "name": "vendor",
+            "in": "query",
+            "required": false,
+            "description": "Exact vendor name as cpe_search lists it, e.g. apache",
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          {
+            "name": "product",
+            "in": "query",
+            "required": false,
+            "description": "Exact product name as cpe_search lists it, e.g. log4j",
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          {
+            "name": "in_kev",
+            "in": "query",
+            "required": false,
+            "description": "true lists only CVEs in CISA KEV, false only CVEs not in it",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "min_epss",
+            "in": "query",
+            "required": false,
+            "description": "Lowest current EPSS score to list, 0.0 to 1.0.",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "CVEs per page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "CVEs to skip; pass next_offset of the previous page",
             "schema": {
               "type": "integer",
               "minimum": 0,
@@ -1012,6 +1148,7 @@
             "name": "vendor",
             "in": "query",
             "required": true,
+            "description": "Exact vendor name as cpe_search lists it, e.g. apache",
             "schema": {
               "type": "string",
               "maxLength": 128
@@ -1021,6 +1158,7 @@
             "name": "product",
             "in": "query",
             "required": true,
+            "description": "Exact product name as cpe_search lists it, e.g. log4j",
             "schema": {
               "type": "string",
               "maxLength": 128
@@ -1081,7 +1219,7 @@
       "get": {
         "operationId": "cpe_search",
         "summary": "CPE Search",
-        "description": "Find the CPE vendor and product names that hold a text, ranked by vulnerable CVE count. Pass a name that holds no % as it is to the vendor and product arguments of the cve_search, cve_triage, cve_leading and product_exposure tools.",
+        "description": "Find the CPE vendor and product names that hold a text, ranked by vulnerable CVE count. Pass a name with no % as it is to the vendor and product arguments of the cve_search, cve_triage, cve_leading, product_exposure and epss_risers tools.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -1101,6 +1239,7 @@
             "name": "limit",
             "in": "query",
             "required": false,
+            "description": "Vendor and product pairs per page",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -1112,6 +1251,7 @@
             "name": "offset",
             "in": "query",
             "required": false,
+            "description": "Pairs to skip; pass next_offset of the previous page",
             "schema": {
               "type": "integer",
               "minimum": 0,
@@ -1155,7 +1295,7 @@
       "get": {
         "operationId": "cvss_calculator",
         "summary": "CVSS Calculator",
-        "description": "Decode a CVSS v3.0/v3.1 vector into its base metrics and recompute its base, temporal and environmental scores.",
+        "description": "Decode a CVSS v3.0/v3.1 vector into its base metrics and recompute its base, temporal and environmental scores. Use it on a vector you hold; cve_lookup already gives the scores of a CVE. v2 and v4 are refused.",
         "tags": [
           "CVE Intelligence"
         ],
@@ -1165,7 +1305,7 @@
             "name": "vector",
             "in": "query",
             "required": true,
-            "description": "CVSS v3.0/v3.1 vector, e.g. CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+            "description": "CVSS:3.0/ or CVSS:3.1/ vector with all eight base metrics; temporal and environmental metrics are optional, e.g. CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
             "schema": {
               "type": "string",
               "maxLength": 127
@@ -1968,6 +2108,58 @@
         }
       }
     },
+    "/well_known/{domain}": {
+      "get": {
+        "operationId": "well_known",
+        "summary": "Robots.txt and security.txt Check",
+        "description": "Read robots.txt of https://<domain> and, if it allows us, /.well-known/security.txt, with up to 5 redirects on the host or its www pair. Gives the rules that bind us, sitemaps, fields such as Contact and Expires, and RFC 9309/9116 issues.",
+        "tags": [
+          "Domain Intelligence"
+        ],
+        "x-credit-cost": 1,
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "description": "Host name of the site, such as www.example.com",
+            "schema": {
+              "type": "string",
+              "maxLength": 253
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The answer of the endpoint.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "X-RateLimit-Reset-Machine": {
+                "$ref": "#/components/headers/X-RateLimit-Reset-Machine"
+              },
+              "X-RateLimit-Reset-Human": {
+                "$ref": "#/components/headers/X-RateLimit-Reset-Human"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
     "/whois_lookup/{domain}": {
       "get": {
         "operationId": "whois_lookup",
@@ -2180,7 +2372,7 @@
       "get": {
         "operationId": "ip_lookup",
         "summary": "IP Lookup",
-        "description": "Look up a public IP address: AS, country, cloud provider, CDN, datacenter or Tor exit, DROP listing and PTR name. A Pro key with its own Shodan or AbuseIPDB key adds exposure and reputation.",
+        "description": "Look up a public IP address: AS, country, cloud provider, CDN, datacenter or Tor exit, DROP listing and PTR name. A Pro key with its own Shodan or AbuseIPDB key adds exposure and reputation. For every prefix of the AS, call asn_lookup.",
         "tags": [
           "IP Intelligence"
         ],
@@ -2252,6 +2444,7 @@
             "name": "limit",
             "in": "query",
             "required": false,
+            "description": "Prefixes per page, in each address family",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -2263,6 +2456,7 @@
             "name": "offset",
             "in": "query",
             "required": false,
+            "description": "Prefixes to skip in each family; pass next_offset of the previous page",
             "schema": {
               "type": "integer",
               "minimum": 0,
@@ -2357,7 +2551,7 @@
       "get": {
         "operationId": "driver_lookup",
         "summary": "Windows Driver Lookup (LOLDrivers)",
-        "description": "Look up a Windows driver file hash in the LOLDrivers catalog of vulnerable and malicious drivers. Block on the file and Authenticode hashes, not on the detection rules. Source: LOLDrivers (Apache-2.0).",
+        "description": "Look up a Windows driver hash in the LOLDrivers catalog of vulnerable and malicious drivers. Block on the file and Authenticode hashes, not on the detection rules. For many hashes, call driver_lookup_bulk. Source: LOLDrivers (Apache-2.0).",
         "tags": [
           "Threat Defense"
         ],
@@ -2524,6 +2718,7 @@
             "name": "limit",
             "in": "query",
             "required": false,
+            "description": "Results per page",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -2535,6 +2730,7 @@
             "name": "offset",
             "in": "query",
             "required": false,
+            "description": "Results to skip; pass next_offset of the previous page",
             "schema": {
               "type": "integer",
               "minimum": 0,
@@ -2831,6 +3027,13 @@
               },
               "message": {
                 "type": "string"
+              },
+              "retry_after_seconds": {
+                "type": "integer"
+              },
+              "upgrade_url": {
+                "type": "string",
+                "format": "uri"
               }
             }
           }
