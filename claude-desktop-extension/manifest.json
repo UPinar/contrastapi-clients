@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "contrastapi",
   "display_name": "ContrastAPI Security Tools",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Security tools for Claude. Most need no API key. They cover CVE/KEV/EPSS, package vulnerabilities, DNS/SSL/email posture, IP and ASN, D3FEND, and CVE and domain monitoring.",
   "long_description": "ContrastAPI gives Claude security tools, most with no signup and no API key: CVE intelligence (CVE lookup and search, CISA KEV, EPSS, CVSS, CWE, exploits, risk score and triage, CPE product search), package vulnerabilities (OSV.dev advisories and malicious packages for npm, PyPI, Maven, Go and more, with bulk SBOM checks), domain intelligence (DNS, subdomain takeover, email authentication, email address checks, SSL/TLS, security headers, WHOIS/RDAP, Wayback Machine, Certificate Transparency, subdomains), IP intelligence (IP and ASN lookup), threat defense (MITRE D3FEND defenses for ATT&CK techniques, LOLDrivers vulnerable drivers), breached password checks, service health and the data the server keeps about you, and CVE and domain monitoring through a watchlist. Most tools work out of the box (keyless, 30 credits per hour per IP); an optional Pro key raises limits and is required for the watchlist tools. watchlist_edit changes data: it edits your watchlist. This extension is a thin stdio bridge to the hosted API at api.contrastcyber.com. No data is stored locally.",
   "author": {

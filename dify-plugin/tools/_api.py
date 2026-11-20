@@ -21,7 +21,7 @@ from tools._ops import OPERATIONS
 
 BASE_URL = "https://api.contrastcyber.com"
 TIMEOUT_SECONDS = 30
-PLUGIN_VERSION = "0.9.0"
+PLUGIN_VERSION = "0.10.0"
 USER_AGENT = f"contrastapi-dify/{PLUGIN_VERSION}"
 KEY_PREFIX = "contrastapi_"
 PRICING_URL = "https://api.contrastcyber.com/pricing"

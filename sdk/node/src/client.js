@@ -11,7 +11,7 @@ import {
 } from "./errors.js";
 
 /** VERSION is the package version. The User-Agent header carries it. */
-export const VERSION = "2.0.0";
+export const VERSION = "2.1.0";
 
 const USER_AGENT = `contrastapi-node/${VERSION}`;
 const DEFAULT_BASE_URL = "https://api.contrastcyber.com";

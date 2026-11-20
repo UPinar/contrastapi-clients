@@ -14,6 +14,12 @@ Source: https://github.com/UPinar/contrastapi-clients (directory `dify-plugin`).
 
 The Dify server must reach `https://api.contrastcyber.com` over HTTPS. The plugin calls no other host, follows no redirect and waits at most 30 seconds for an answer.
 
+## Changes in 0.10.0
+
+- New: `well_known` reads the robots.txt and the security.txt of a web site, and `epss_risers` lists the CVEs whose EPSS score rose most over 7 or 30 days.
+- `cve_search` takes `kev_added_after`, and its `sort` takes `kev_date_added`.
+- Each tool parameter carries the description that ContrastAPI gives it.
+
 ## Changes in 0.9.0
 
 Version 0.9.0 calls the current ContrastAPI. The `/v1` paths that 0.8.0 called no longer exist, so 0.8.0 fails on every call. A workflow that used one of the tools below must pick it again.

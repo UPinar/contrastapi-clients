@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.0 (2026-11-20)
+
+- New methods `wellKnown({ domain })` and `epssRisers(args)`. `wellKnown` reads the robots.txt and the security.txt of a site. `epssRisers` lists the CVEs whose EPSS score rose most over 7 or 30 days.
+- `cveSearch` takes `kev_added_after`, and its `sort` takes `kev_date_added`.
+- The argument types carry the server's description of each argument.
+- An error body may hold `retry_after_seconds` and `upgrade_url`. The client already reads the wait from `Retry-After`, so nothing changes in `ContrastAPIError`.
+
 ## 2.0.0 (2026-11-13)
 
 Rewritten as a client of the REST API.

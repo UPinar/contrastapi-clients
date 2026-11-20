@@ -102,7 +102,7 @@ def test_get_has_fixed_headers_and_no_content_type(api):
     assert server.url == "https://api.contrastcyber.com/health"
     assert request.headers["Accept"] == "application/json"
     assert request.headers["Accept-Encoding"] == "identity"
-    assert request.headers["User-Agent"] == "contrastapi-python/2.0.0"
+    assert request.headers["User-Agent"] == "contrastapi-python/2.1.0"
     assert "Content-Type" not in request.headers
     assert "X-API-Key" not in request.headers
     assert request.content == b""
@@ -272,7 +272,7 @@ def test_constructor_is_keyword_only(api):
 
 
 def test_version_and_exports():
-    assert contrastapi.__version__ == "2.0.0"
+    assert contrastapi.__version__ == "2.1.0"
     for name in contrastapi.__all__:
         assert getattr(contrastapi, name) is not None
     assert set(contrastapi.__all__) == {

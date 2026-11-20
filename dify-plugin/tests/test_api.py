@@ -98,7 +98,7 @@ class BuildRequestTest(unittest.TestCase):
         self.assertEqual(url, f"{BASE}/cve_lookup/CVE-2021-44228")
         self.assertEqual(query, {})
         self.assertIsNone(body)
-        self.assertEqual(headers["User-Agent"], "contrastapi-dify/0.9.0")
+        self.assertEqual(headers["User-Agent"], "contrastapi-dify/0.10.0")
         self.assertEqual(headers["Accept"], "application/json")
         self.assertNotIn("X-API-Key", headers)
         key = _make_key()

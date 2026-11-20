@@ -154,7 +154,7 @@ describe("headers and fetch init", () => {
     assert.deepEqual(c.init.headers, {
       Accept: "application/json",
       "Accept-Encoding": "identity",
-      "User-Agent": "contrastapi-node/2.0.0",
+      "User-Agent": "contrastapi-node/2.1.0",
     });
     assert.equal(c.init.redirect, "manual");
     assert.ok(c.init.signal instanceof AbortSignal);
